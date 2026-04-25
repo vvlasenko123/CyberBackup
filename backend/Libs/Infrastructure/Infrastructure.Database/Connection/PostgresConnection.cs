@@ -13,14 +13,19 @@ namespace Infrastructure.Database.Connection;
 public sealed class PostgresConnection : IAsyncDbConnection
 {
     /// <summary>
-    /// Соединение npgsql
-    /// </summary>
-    private NpgsqlConnection? _inner;
-
-    /// <summary>
     /// Строка подключения
     /// </summary>
     private readonly string _connectionString;
+    
+    /// <summary>
+    /// Ленивое создание соединения
+    /// </summary>
+    private readonly Lazy<NpgsqlConnection> _connection;
+
+    /// <summary>
+    /// Текущее соединение
+    /// </summary>
+    private NpgsqlConnection Connection => _connection.Value;
 
     /// <inheritdoc />
     [AllowNull]
@@ -31,13 +36,13 @@ public sealed class PostgresConnection : IAsyncDbConnection
     }
 
     /// <inheritdoc />
-    public int ConnectionTimeout => _inner?.ConnectionTimeout ?? 0;
+    public int ConnectionTimeout => Connection.ConnectionTimeout;
 
     /// <inheritdoc />
-    public string Database => _inner?.Database ?? string.Empty;
+    public string Database => Connection.Database;
 
     /// <inheritdoc />
-    public ConnectionState State => _inner?.State ?? ConnectionState.Closed;
+    public ConnectionState State => Connection.State;
 
     public PostgresConnection(IOptions<PostgresOptions> options)
     {
@@ -52,65 +57,60 @@ public sealed class PostgresConnection : IAsyncDbConnection
         {
             throw new ArgumentException("Некорректная строка подключения к Postgres", nameof(options), ex);
         }
+
+        _connection = new Lazy<NpgsqlConnection>(() => new NpgsqlConnection(_connectionString));
     }
 
     /// <inheritdoc />
     public void Open()
     {
-        if (_inner is null)
+        if (Connection.State is ConnectionState.Open)
         {
-            _inner = new NpgsqlConnection(_connectionString);
+            return;
         }
 
-        if (_inner.State is not ConnectionState.Open)
-        {
-            _inner.Open();
-        }
+        Connection.Open();
     }
 
     // <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken)
     {
-        EnsureCreated();
-
-        if (_inner!.State is not ConnectionState.Open)
+        if (Connection.State is ConnectionState.Open)
         {
-            await _inner.OpenAsync(cancellationToken);
+            return;
         }
+
+        await Connection.OpenAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public void Close()
     {
-        if (_inner is not null)
+        if (Connection.State is not ConnectionState.Closed)
         {
-            _inner.Close();
+            Connection.Close();
         }
     }
 
     /// <inheritdoc />
     public IDbCommand CreateCommand()
     {
-        if (_inner is null)
-        {
-            _inner = new NpgsqlConnection(_connectionString);
-        }
-
-        return _inner.CreateCommand();
+        IsOpenConnection();
+        return Connection.CreateCommand();
     }
 
     /// <inheritdoc />
     public IDbTransaction BeginTransaction()
     {
-        IsOpen();
-        return _inner?.BeginTransaction()!;
+        IsOpenConnection();
+        return Connection.BeginTransaction();
     }
 
     /// <inheritdoc />
     public IDbTransaction BeginTransaction(IsolationLevel il)
     {
-        IsOpen();
-        return _inner?.BeginTransaction(il)!;
+        IsOpenConnection();
+        return Connection.BeginTransaction(il);
     }
 
     /// <inheritdoc />
@@ -121,39 +121,27 @@ public sealed class PostgresConnection : IAsyncDbConnection
             throw new ArgumentException("Имя базы данных не должно быть пустым", nameof(databaseName));
         }
 
-        IsOpen();
-        _inner!.ChangeDatabase(databaseName);
+        IsOpenConnection();
+        Connection.ChangeDatabase(databaseName);
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        if (_inner is not null)
+        if (_connection.IsValueCreated)
         {
-            _inner.Dispose();
-            _inner = null;
+            Connection.Dispose();
         }
     }
 
     /// <summary>
     /// Проверка на открытость соединения
     /// </summary>
-    private void IsOpen()
+    private void IsOpenConnection()
     {
-        if (_inner is null || _inner.State != ConnectionState.Open)
+        if (Connection.State is not ConnectionState.Open)
         {
             throw new InvalidOperationException("Соединение закрыто");
-        }
-    }
-
-    /// <summary>
-    /// Проверка на созданное соединение
-    /// </summary>
-    private void EnsureCreated()
-    {
-        if (_inner is null)
-        {
-            _inner = new NpgsqlConnection(_connectionString);
         }
     }
 }

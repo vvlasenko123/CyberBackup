@@ -1,24 +1,23 @@
 using System.Data;
+using Infrastructure.Database.Connection.Contracts;
 
 namespace Infrastructure.Database.Extensions.Connection;
 
 /// <summary>
-/// Методы рашсирения
+/// Методы расширения
 /// </summary>
 public static class ConnectionExtension
 {
     /// <summary>
     /// Проверка открыто ли соединение
     /// </summary>
-    public static Task EnsureOpenAsync(this IDbConnection connection)
+    public static async Task EnsureOpenAsync(this IAsyncDbConnection connection, CancellationToken cancellationToken = default)
     {
         if (connection.State is ConnectionState.Open)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        connection.Open();
-
-        return Task.CompletedTask;
+        await connection.OpenAsync(cancellationToken);
     }
 }
