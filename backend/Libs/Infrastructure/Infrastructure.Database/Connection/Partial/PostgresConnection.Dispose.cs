@@ -3,7 +3,7 @@ namespace Infrastructure.Database.Connection.Partial;
 /// <summary>
 /// Реализация Dispose соеднинения
 /// </summary>
-public sealed partial class PostgresConnection : IDisposable
+public sealed partial class PostgresConnection
 {
     /// <inheritdoc />
     public void Dispose()

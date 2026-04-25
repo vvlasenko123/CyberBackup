@@ -1,4 +1,5 @@
 using System.Data;
+using Infrastructure.Database.Connection.Contracts;
 using Infrastructure.Database.Connection.Partial;
 using Infrastructure.Database.HostedService;
 using Infrastructure.Database.Options;
@@ -18,7 +19,8 @@ public static class DatabaseStartUp
     public static void AddPostgres(this IServiceCollection services)
     {
         services.AddOptions<PostgresOptions>().BindConfigurationOptions();
-        services.AddTransient<IDbConnection, PostgresConnection>();
+        services.AddTransient<IAsyncDbConnection, PostgresConnection>();
+        services.AddTransient<ISyncDbConnection, PostgresConnection>();
         services.AddHostedService<PostgresAutoMigrationHostedService>();
     }
 }

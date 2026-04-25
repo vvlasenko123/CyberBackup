@@ -1,12 +1,11 @@
 using System.Data;
-using Infrastructure.Database.Connection.Contracts;
 
 namespace Infrastructure.Database.Connection.Partial;
 
 /// <summary>
 /// Асинхронные методы для постгреса
 /// </summary>
-public sealed partial class PostgresConnection : IAsyncDbConnection
+public sealed partial class PostgresConnection
 {
     /// <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken)

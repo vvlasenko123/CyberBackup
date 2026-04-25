@@ -5,7 +5,7 @@ namespace Infrastructure.Database.Connection.Partial;
 /// <summary>
 /// Синхронные методы для постгреса
 /// </summary>
-public sealed partial class PostgresConnection : IDbConnection
+public sealed partial class PostgresConnection
 {
     /// <inheritdoc />
     public void Open()
