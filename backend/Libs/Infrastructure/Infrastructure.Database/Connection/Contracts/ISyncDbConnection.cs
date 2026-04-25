@@ -2,6 +2,7 @@ using System.Data;
 
 namespace Infrastructure.Database.Connection.Contracts;
 
+// todo удалим если не понадобится
 /// <summary>
 /// Контракт синхронного соединения
 /// </summary>
