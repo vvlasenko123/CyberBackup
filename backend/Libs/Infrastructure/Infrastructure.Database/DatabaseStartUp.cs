@@ -1,5 +1,5 @@
 using System.Data;
-using Infrastructure.Database.Connection;
+using Infrastructure.Database.Connection.Partial;
 using Infrastructure.Database.HostedService;
 using Infrastructure.Database.Options;
 using Infrastructure.Options.Configuration.Public;

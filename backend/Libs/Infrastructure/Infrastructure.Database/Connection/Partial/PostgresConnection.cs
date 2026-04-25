@@ -5,12 +5,12 @@ using Infrastructure.Database.Options;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
-namespace Infrastructure.Database.Connection;
+namespace Infrastructure.Database.Connection.Partial;
 
 /// <summary>
 /// Постгрес на всякий случай если решим что-то менять внутренне
 /// </summary>
-public sealed class PostgresConnection : IAsyncDbConnection
+public sealed partial class PostgresConnection : IAsyncDbConnection
 {
     /// <summary>
     /// Строка подключения
@@ -59,79 +59,6 @@ public sealed class PostgresConnection : IAsyncDbConnection
         }
 
         _connection = new Lazy<NpgsqlConnection>(() => new NpgsqlConnection(_connectionString));
-    }
-
-    /// <inheritdoc />
-    public void Open()
-    {
-        if (Connection.State is ConnectionState.Open)
-        {
-            return;
-        }
-
-        Connection.Open();
-    }
-
-    // <inheritdoc />
-    public async Task OpenAsync(CancellationToken cancellationToken)
-    {
-        if (Connection.State is ConnectionState.Open)
-        {
-            return;
-        }
-
-        await Connection.OpenAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public void Close()
-    {
-        if (Connection.State is not ConnectionState.Closed)
-        {
-            Connection.Close();
-        }
-    }
-
-    /// <inheritdoc />
-    public IDbCommand CreateCommand()
-    {
-        IsOpenConnection();
-        return Connection.CreateCommand();
-    }
-
-    /// <inheritdoc />
-    public IDbTransaction BeginTransaction()
-    {
-        IsOpenConnection();
-        return Connection.BeginTransaction();
-    }
-
-    /// <inheritdoc />
-    public IDbTransaction BeginTransaction(IsolationLevel il)
-    {
-        IsOpenConnection();
-        return Connection.BeginTransaction(il);
-    }
-
-    /// <inheritdoc />
-    public void ChangeDatabase(string databaseName)
-    {
-        if (string.IsNullOrWhiteSpace(databaseName))
-        {
-            throw new ArgumentException("Имя базы данных не должно быть пустым", nameof(databaseName));
-        }
-
-        IsOpenConnection();
-        Connection.ChangeDatabase(databaseName);
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        if (_connection.IsValueCreated)
-        {
-            Connection.Dispose();
-        }
     }
 
     /// <summary>
