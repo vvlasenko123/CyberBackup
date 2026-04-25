@@ -6,6 +6,7 @@ using Security.Host.Cors.Options;
 
 namespace Security.Host.Cors;
 
+// TODO надо может в одном сервисе сделать настройку или в библиотеке для всех сервисов?
 /// <summary>
 /// Расширения для настройки CORS
 /// </summary>
