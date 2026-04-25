@@ -1,0 +1,44 @@
+# git
+.git
+.gitignore
+
+# ide
+.idea
+.vs
+
+# build .net
+**/bin
+**/obj
+
+# logs
+*.log
+
+# macOS
+.DS_Store
+
+# env
+.env
+.env.*
+
+# nuget cache
+**/.nuget
+
+# временные файлы
+*.tmp
+*.temp
+**/*.user
+**/*.lock.json
+
+# test results
+**/TestResults
+
+# docker
+deploy/docker-compose.yml
+
+# frontend
+frontend/node_modules
+frontend/.next
+frontend/dist
+frontend/build
+frontend/.cache
+frontend/*.log

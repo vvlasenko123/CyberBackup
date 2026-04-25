@@ -1,0 +1,58 @@
+services:
+    postgres:
+        image: postgres:16-alpine
+        container_name: postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: postgres
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+    
+    auth-api:
+        build:
+            context: ..
+            dockerfile: backend/Apps/AuthApi/Api/Dockerfile
+        container_name: auth-api
+        restart: unless-stopped
+        ports:
+            - "8000:8080"
+        environment:
+            - ASPNETCORE_URLS=http://+:8080
+            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=auth-api
+            - PostgresOptions__AutoMigration=true
+            - CyberCorsOptions__Origins__0=http://frontend
+        depends_on:
+            - postgres
+    
+    lab-orchestrator-api:
+        build:
+            context: ..
+            dockerfile: backend/Apps/LabOrchestratorApi/Api/Dockerfile
+        container_name: lab-orchestrator-api
+        restart: unless-stopped
+        ports:
+            - "6666:8080"
+        environment:
+            - ASPNETCORE_URLS=http://+:8080
+            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=lab-orchestrator-api
+            - PostgresOptions__AutoMigration=true
+            - CyberCorsOptions__Origins__0=http://frontend
+        depends_on:
+            - postgres
+    
+    frontend:
+        build:
+            context: ../frontend
+            dockerfile: Dockerfile
+        container_name: frontend
+        restart: unless-stopped
+        ports:
+            - "80:80"
+        depends_on:
+            - auth-api
+            - lab-orchestrator-api
+
+volumes:
+    postgres_data:

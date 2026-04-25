@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-api:
+    build:
+      context: ..
+      dockerfile: backend/Apps/AuthApi/Api/Dockerfile
+      args:
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION}
+    container_name: auth-api
+    restart: unless-stopped
+    ports:
+      - "8000:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=auth-api
+      - PostgresOptions__AutoMigration=true
+      - CyberCorsOptions__Origins__0=http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  lab-orchestrator-api:
+    build:
+      context: ..
+      dockerfile: backend/Apps/LabOrchestratorApi/Api/Dockerfile
+    container_name: lab-orchestrator-api
+    restart: unless-stopped
+    ports:
+      - "6666:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=lab-orchestrator-api
+      - PostgresOptions__AutoMigration=true
+      - CyberCorsOptions__Origins__0=http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    image: node:20-alpine
+    container_name: frontend-dev
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      - # сами добавите
+    depends_on:
+      - auth-api
+      - lab-orchestrator-api
+
+volumes:
+  postgres_data:
