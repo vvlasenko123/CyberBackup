@@ -1,8 +1,9 @@
+using Infrastructure.Database.Base.Constants;
 using Infrastructure.Database.Options;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
-namespace Infrastructure.Database.Base;
+namespace Infrastructure.Database.Additional;
 
 /// <summary>
 /// Создатель базы в постгрес
@@ -30,7 +31,7 @@ public sealed class PostgresDatabaseCreator
             throw new InvalidOperationException("Имя базы данных не должно быть пустым");
         }
 
-        builder.Database = "postgres";
+        builder.Database = DatabaseConst.Postgres;
 
         await using var connection = new NpgsqlConnection(builder.ConnectionString);
         await connection.OpenAsync(cancellationToken);

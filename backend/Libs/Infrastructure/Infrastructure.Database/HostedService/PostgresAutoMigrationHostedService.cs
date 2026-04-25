@@ -1,4 +1,4 @@
-using Infrastructure.Database.Base;
+using Infrastructure.Database.Additional;
 using Infrastructure.Database.HostedService.Contracts;
 using Infrastructure.Database.Options;
 using Microsoft.Extensions.DependencyInjection;
