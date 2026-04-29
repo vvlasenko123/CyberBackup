@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 10
 
-  lab-orchestrator-api:
+  cyber_backup:
     build:
       context: ..
       dockerfile: backend/Apps/LabOrchestratorApi/Api/Dockerfile
@@ -34,22 +34,21 @@ services:
       postgres:
         condition: service_healthy
 
-#  frontend:
-#    image: node:20-alpine
-#    container_name: frontend-dev
-#    working_dir: /app
-#    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
-#    restart: unless-stopped
-#    ports:
-#      - "5173:5173"
-#    volumes:
-#      - ../frontend:/app
-#      - /app/node_modules
-#    environment:
-#      - # сами добавите
-#    depends_on:
-#      - auth-api
-#      - lab-orchestrator-api
+  frontend:
+    image: node:20-alpine
+    container_name: frontend-dev
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      - # сами добавите
+    depends_on:
+      - cyber_backup
 
 volumes:
   postgres_data:

@@ -10,7 +10,7 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
     
-    lab-orchestrator-api:
+    cyber_backup:
         build:
             context: ..
             dockerfile: backend/Apps/LabOrchestratorApi/Api/Dockerfile
