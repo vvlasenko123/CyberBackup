@@ -35,7 +35,7 @@ public class StartUp
         if (Environment.IsDevelopment())
         {
             services.AddHealthChecks();
-            services.AddSwaggerDocumentation(apiName: "LabOrchestratorApi", version: "v1");
+            services.AddSwaggerDocumentation(apiName: "CyberBackup", version: "v1");
         }
         
         services.AddCyberMapper(assemblies: Assembly.GetExecutingAssembly());

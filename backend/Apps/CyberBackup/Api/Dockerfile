@@ -4,10 +4,10 @@ WORKDIR /src
 ARG BUILD_CONFIGURATION
 ENV BUILD_CONFIGURATION=${BUILD_CONFIGURATION:-Release}
 
-COPY ["backend/Apps/LabOrchestratorApi/Api/Api.csproj", "backend/Apps/LabOrchestratorApi/Api/"]
-COPY ["backend/Apps/LabOrchestratorApi/Application/Application.csproj", "backend/Apps/LabOrchestratorApi/Application/"]
-COPY ["backend/Apps/LabOrchestratorApi/Domain/Domain.csproj", "backend/Apps/LabOrchestratorApi/Domain/"]
-COPY ["backend/Apps/LabOrchestratorApi/Infrastructure/Infrastructure.csproj", "backend/Apps/LabOrchestratorApi/Infrastructure/"]
+COPY ["backend/Apps/CyberBackup/Api/Api.csproj", "backend/Apps/CyberBackup/Api/"]
+COPY ["backend/Apps/CyberBackup/Application/Application.csproj", "backend/Apps/CyberBackup/Application/"]
+COPY ["backend/Apps/CyberBackup/Domain/Domain.csproj", "backend/Apps/CyberBackup/Domain/"]
+COPY ["backend/Apps/CyberBackup/Infrastructure/Infrastructure.csproj", "backend/Apps/CyberBackup/Infrastructure/"]
 COPY ["backend/Libs/Infrastructure/Infrastructure.AutoMapper/Infrastructure.AutoMapper.csproj", "backend/Libs/Infrastructure/Infrastructure.AutoMapper/"]
 COPY ["backend/Libs/Infrastructure/Infrastructure.Core/Infrastructure.Core.csproj", "backend/Libs/Infrastructure/Infrastructure.Core/"]
 COPY ["backend/Libs/Infrastructure/Infrastructure.Database/Infrastructure.Database.csproj", "backend/Libs/Infrastructure/Infrastructure.Database/"]
@@ -18,11 +18,11 @@ COPY ["backend/Libs/Infrastructure/Infrastructure.Swagger/Infrastructure.Swagger
 
 COPY ["backend/Libs/Security/Security.Host/Security.Host.csproj", "backend/Libs/Security/Security.Host/"]
 
-RUN dotnet restore "backend/Apps/LabOrchestratorApi/Api/Api.csproj"
+RUN dotnet restore "backend/Apps/CyberBackup/Api/Api.csproj"
 
 COPY . .
 
-WORKDIR "/src/backend/Apps/LabOrchestratorApi/Api"
+WORKDIR "/src/backend/Apps/CyberBackup/Api"
 
 RUN dotnet publish "Api.csproj" \
     -c $BUILD_CONFIGURATION \
