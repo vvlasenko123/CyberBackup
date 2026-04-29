@@ -12,7 +12,7 @@
 Перед сборкой необходимо указать конфигурацию в файле:
 
 ```
-CyberBackup/.env
+CyberBackup/deploy/.env
 ```
 
 Пример:
@@ -34,7 +34,7 @@ BUILD_CONFIGURATION=Release
 Запуск всех сервисов с hot reload для frontend:
 
 ```bash
-docker compose -f deploy/docker-compose.dev.yml up --build
+docker compose -f deploy/docker-compose.dev.yml up --build -d
 ```
 
 После запуска:

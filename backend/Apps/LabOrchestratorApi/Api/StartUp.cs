@@ -28,6 +28,8 @@ public class StartUp
     {
         services.AddControllers().AddDataAnnotationsLocalization();
 
+        services.AddHealthChecks();
+
         services.AddCyberCors();
         
         if (Environment.IsDevelopment())

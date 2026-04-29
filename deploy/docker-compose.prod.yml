@@ -10,22 +10,6 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
     
-    auth-api:
-        build:
-            context: ..
-            dockerfile: backend/Apps/AuthApi/Api/Dockerfile
-        container_name: auth-api
-        restart: unless-stopped
-        ports:
-            - "8000:8080"
-        environment:
-            - ASPNETCORE_URLS=http://+:8080
-            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=auth-api
-            - PostgresOptions__AutoMigration=true
-            - CyberCorsOptions__Origins__0=http://frontend
-        depends_on:
-            - postgres
-    
     lab-orchestrator-api:
         build:
             context: ..

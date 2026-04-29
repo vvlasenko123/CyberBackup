@@ -42,3 +42,6 @@ frontend/dist
 frontend/build
 frontend/.cache
 frontend/*.log
+
+# code analyze
+**/Analyze

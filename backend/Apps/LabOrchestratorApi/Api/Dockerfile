@@ -26,12 +26,15 @@ WORKDIR "/src/backend/Apps/LabOrchestratorApi/Api"
 
 RUN dotnet publish "Api.csproj" \
     -c $BUILD_CONFIGURATION \
-    -o /app/publish \
-    --no-restore \
-    --self-contained false
+    -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    libkrb5-3 \
+    libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV ASPNETCORE_URLS=http://+:8080
 
