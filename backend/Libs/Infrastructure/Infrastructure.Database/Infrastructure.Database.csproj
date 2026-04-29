@@ -1,16 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Apps\LabOrchestratorApi\Domain\Domain.csproj" />
+    <ProjectReference Include="..\..\..\Apps\CyberBackup\Domain\Domain.csproj" />
     <ProjectReference Include="..\Infrastructure.Options\Infrastructure.Options.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentDbTools.SqlBuilder" Version="1.2.49" />
     <PackageReference Include="FluentMigrator" Version="8.0.1" />
     <PackageReference Include="FluentMigrator.Runner.Postgres" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
     <PackageReference Include="Npgsql" Version="10.0.2" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
   </ItemGroup>
 
   <PropertyGroup>

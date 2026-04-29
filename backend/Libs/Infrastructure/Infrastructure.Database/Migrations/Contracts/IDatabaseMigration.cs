@@ -1,4 +1,4 @@
-namespace Infrastructure.Database.HostedService.Contracts;
+namespace Infrastructure.Database.Migrations.Contracts;
 
 /// <summary>
 /// Контракт миграций, сделаем свое, fluent мне не нравится
@@ -8,5 +8,10 @@ public interface IDatabaseMigration
     /// <summary>
     /// Применение миграций
     /// </summary>
-    Task ApplyAsync(CancellationToken token);
+    Task MigrateUp(CancellationToken token);
+
+    /// <summary>
+    /// Откат миграций
+    /// </summary>
+    Task MigrateDown(CancellationToken token);
 }

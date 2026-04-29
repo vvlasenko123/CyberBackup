@@ -1,5 +1,5 @@
 using Infrastructure.Database.Additional;
-using Infrastructure.Database.HostedService.Contracts;
+using Infrastructure.Database.Migrations.Contracts;
 using Infrastructure.Database.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -82,7 +82,7 @@ public sealed class PostgresAutoMigrationHostedService : IHostedService
                     break;
                 }
 
-                await migration.ApplyAsync(cancellationToken);
+                await migration.MigrateUp(cancellationToken);
             }
         }
 
