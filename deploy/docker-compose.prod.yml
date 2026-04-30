@@ -14,7 +14,7 @@ services:
         build:
             context: ..
             dockerfile: backend/Apps/CyberBackup/Api/Dockerfile
-        container_name: cyber-backup-api
+        container_name: backend
         restart: unless-stopped
         ports:
             - "5000:8080"
