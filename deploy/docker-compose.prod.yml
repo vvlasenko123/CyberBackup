@@ -9,23 +9,23 @@ services:
             POSTGRES_DB: postgres
         volumes:
             - postgres_data:/var/lib/postgresql/data
-    
-    cyber_backup:
+
+    backend:
         build:
             context: ..
             dockerfile: backend/Apps/CyberBackup/Api/Dockerfile
-        container_name: lab-orchestrator-api
+        container_name: backend
         restart: unless-stopped
         ports:
-            - "6666:8080"
+            - "5000:8080"
         environment:
             - ASPNETCORE_URLS=http://+:8080
-            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=lab-orchestrator-api
+            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=cyber-backup-api;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
             - PostgresOptions__AutoMigration=true
             - CyberCorsOptions__Origins__0=http://frontend
         depends_on:
             - postgres
-    
+
     frontend:
         build:
             context: ../frontend
@@ -35,7 +35,7 @@ services:
         ports:
             - "80:80"
         depends_on:
-            - cyber_backup
+            - backend
 
 volumes:
     postgres_data:

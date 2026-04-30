@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Reflection;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 
@@ -26,6 +27,22 @@ public static class SwaggerStartUp
                 Title = apiName,
                 Version = version
             });
+
+            var basePath = AppContext.BaseDirectory;
+
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+                .Where(x => !x.IsDynamic);
+
+            foreach (var assembly in assemblies)
+            {
+                var xmlFile = $"{assembly.GetName().Name}.xml";
+                var xmlPath = Path.Combine(basePath, xmlFile);
+
+                if (File.Exists(xmlPath))
+                {
+                    options.IncludeXmlComments(xmlPath);
+                }
+            }
         });
     }
 
@@ -40,6 +57,7 @@ public static class SwaggerStartUp
         app.UseSwaggerUI(options =>
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", apiName);
+            options.RoutePrefix = "swagger";
         });
     }
 }

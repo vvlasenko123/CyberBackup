@@ -1,14 +1,10 @@
-using Infrastructure.Core.Domain;
+using Infrastructure.Core.DDD.Aggregate.Contract;
 
 namespace Infrastructure.Core.Repositories.Contracts.Update;
 
 /// <summary>
 /// Базовый репозиторий обновления
 /// </summary>
-public interface IUpdateRepository<in TEntity> where TEntity : DomainEntity
+public interface IUpdateRepository<in TEntity, TType> where TEntity : IAggregateRoot<TType>
 {
-    /// <summary>
-    /// Обновление сущности
-    /// </summary>
-    Task<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken);
 }

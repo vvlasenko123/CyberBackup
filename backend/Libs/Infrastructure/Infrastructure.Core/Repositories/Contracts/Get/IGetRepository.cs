@@ -1,19 +1,10 @@
-using Infrastructure.Core.Domain;
+using Infrastructure.Core.DDD.Aggregate.Contract;
 
 namespace Infrastructure.Core.Repositories.Contracts.Get;
 
 /// <summary>
 /// Базовый репозиторий получения
 /// </summary>
-public interface IGetRepository<TEntity> where TEntity : DomainEntity
+public interface IGetRepository<TEntity, in TType> where TEntity : IAggregateRoot<TType>
 {
-    /// <summary>
-    /// Получение сущности по идентификатору
-    /// </summary>
-    Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Получение списка сущностей
-    /// </summary>
-    Task<List<TEntity>> GetAllAsync(CancellationToken cancellationToken);
 }

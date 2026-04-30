@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.Swagger\Infrastructure.Swagger.csproj" />
     <ProjectReference Include="..\..\..\Libs\Security\Security.Host\Security.Host.csproj" />
     <ProjectReference Include="..\Application\Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
