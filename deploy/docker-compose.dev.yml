@@ -20,7 +20,7 @@ services:
   cyber_backup:
     build:
       context: ..
-      dockerfile: backend/Apps/LabOrchestratorApi/Api/Dockerfile
+      dockerfile: backend/Apps/CyberBackup/Api/Dockerfile
     container_name: lab-orchestrator-api
     restart: unless-stopped
     ports:
@@ -46,7 +46,7 @@ services:
       - ../frontend:/app
       - /app/node_modules
     environment:
-      - # сами добавите
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - cyber_backup
 
