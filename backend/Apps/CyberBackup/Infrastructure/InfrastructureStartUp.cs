@@ -1,6 +1,4 @@
-﻿using Application.Abstractions.Services.User.Contracts;
-using Application.Abstractions.UseCases.User;
-using Domain.Repositories;
+﻿using Domain.Repositories;
 using Infrastructure.Database.Migrations;
 using Infrastructure.Database.Migrations.Contracts;
 using Infrastructure.Database.Users;
