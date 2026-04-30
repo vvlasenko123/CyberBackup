@@ -15,11 +15,6 @@ public sealed class PasswordHash : ValueObject<PasswordHash>
 
     public PasswordHash(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new InvalidPasswordException("Пароль не должен быть пустым");
-        }
-
         Value = value;
     }
 

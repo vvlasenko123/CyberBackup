@@ -1,10 +1,10 @@
 using Infrastructure.Core.DDD.Aggregate.Contract;
-using Infrastructure.Database.Repositories.Contracts.Create;
-using Infrastructure.Database.Repositories.Contracts.Delete;
-using Infrastructure.Database.Repositories.Contracts.Get;
-using Infrastructure.Database.Repositories.Contracts.Update;
+using Infrastructure.Core.Repositories.Contracts.Create;
+using Infrastructure.Core.Repositories.Contracts.Delete;
+using Infrastructure.Core.Repositories.Contracts.Get;
+using Infrastructure.Core.Repositories.Contracts.Update;
 
-namespace Infrastructure.Database.Repositories.Contracts.Base;
+namespace Infrastructure.Core.Repositories.Contracts.Base;
 
 /// <summary>
 /// Базовый репозиторий

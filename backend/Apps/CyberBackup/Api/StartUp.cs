@@ -1,7 +1,9 @@
 using System.Reflection;
+using Application;
 using Infrastructure;
 using Infrastructure.AutoMapper;
 using Infrastructure.Core;
+using Infrastructure.Core.Controllers;
 using Infrastructure.Database;
 using Infrastructure.Swagger;
 using Security.Host.Cors;
@@ -28,7 +30,7 @@ public class StartUp
     /// </summary>
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddCyberControllers();
 
         services.AddCyberCors();
         
@@ -42,6 +44,7 @@ public class StartUp
         services.AddCyberMapper(assemblies: Assembly.GetExecutingAssembly());
         services.AddPostgres();
         services.AddCore();
+        services.AddApplication();
     }
 
     /// <summary>

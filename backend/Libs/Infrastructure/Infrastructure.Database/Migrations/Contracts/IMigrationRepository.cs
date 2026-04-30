@@ -1,13 +1,23 @@
+using Infrastructure.Core.Repositories.Contracts.Get;
 using Infrastructure.Database.Migrations.Aggregate;
-using Infrastructure.Database.Repositories.Contracts.Base;
 
 namespace Infrastructure.Database.Migrations.Contracts;
 
 /// <summary>
 /// Репозиторий для работы с состоянием миграций базы данных
 /// </summary>
-public interface IMigrationRepository : IRepository<Migration, string>
+public interface IMigrationRepository : IGetRepository<Migration, string>
 {
+    /// <summary>
+    /// Применение миграций
+    /// </summary>
+    Task<IReadOnlyCollection<Migration>> GetAllMigrations(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получение последней примененной миграции
+    /// </summary>
+    Task<Migration?> GetLatestAsync(CancellationToken cancellationToken);
+
     /// <summary>
     /// Применение миграций
     /// </summary>
@@ -17,9 +27,4 @@ public interface IMigrationRepository : IRepository<Migration, string>
     /// Откат последней миграции
     /// </summary>
     Task MigrateDownAsync(CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Получение последней примененной миграции
-    /// </summary>
-    Task<Migration?> GetLatestAsync(CancellationToken cancellationToken);
 }

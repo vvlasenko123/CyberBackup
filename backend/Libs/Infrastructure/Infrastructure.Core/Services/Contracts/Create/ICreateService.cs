@@ -3,10 +3,10 @@ namespace Infrastructure.Core.Services.Contracts.Create;
 /// <summary>
 /// Контракт для логики создания Service
 /// </summary>
-public interface ICreateService<in TRequest, TResponse>
+public interface ICreateService<in TRequest>
 {
     /// <summary>
     /// Создание без параметров
     /// </summary>
-    Task<TResponse> Create(TRequest request);
+    Task Create(TRequest request, CancellationToken token);
 }

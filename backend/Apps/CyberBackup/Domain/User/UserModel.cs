@@ -7,7 +7,7 @@ namespace Domain.User;
 /// <summary>
 /// Пользователь
 /// </summary>
-public sealed class IdentityUser : AggregateRoot<Guid>
+public sealed class UserModel : AggregateRoot<Guid>
 {
     /// <summary>
     /// Почта
@@ -54,7 +54,7 @@ public sealed class IdentityUser : AggregateRoot<Guid>
     /// </summary>
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    public IdentityUser(
+    public UserModel(
         Guid id,
         Email email,
         FullName fullName, 

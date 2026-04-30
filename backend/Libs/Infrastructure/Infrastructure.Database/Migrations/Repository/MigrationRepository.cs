@@ -29,21 +29,7 @@ public sealed class MigrationRepository : IMigrationRepository
     }
 
     /// <inheritdoc />
-    public async Task<Migration?> GetByIdAsync(string id, CancellationToken cancellationToken)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(id);
-
-        const string sql = """
-            SELECT id, applied_at
-            FROM migrations
-            WHERE id = @Id
-        """;
-
-        return await _connection.QueryFirstOrDefaultAsync<Migration>(sql, new { Id = id }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task<IReadOnlyCollection<Migration>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<Migration>> GetAllMigrations(CancellationToken cancellationToken)
     {
         const string sql = """
                                SELECT 
