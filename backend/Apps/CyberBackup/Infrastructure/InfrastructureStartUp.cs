@@ -23,7 +23,7 @@ public static class InfrastructureStartUp
         # endregion
         
         # region repositories
-        services.AddTransient<IUserRepository, UserRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         # endregion
     }
 }
