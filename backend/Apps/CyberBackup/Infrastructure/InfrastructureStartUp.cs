@@ -1,7 +1,7 @@
 ﻿using Domain.Repositories;
-using Infrastructure.Database.Migrations;
 using Infrastructure.Database.Migrations.Contracts;
-using Infrastructure.Database.Users;
+using Infrastructure.Migrations;
+using Infrastructure.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure;

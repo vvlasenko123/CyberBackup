@@ -2,7 +2,7 @@ using Domain.Repositories;
 using Domain.User;
 using Infrastructure.Database.Connection.Contracts;
 
-namespace Infrastructure.Database.Users;
+namespace Infrastructure.Repositories;
 
 /// <inheritdoc />
 public sealed class UserRepository : IUserRepository

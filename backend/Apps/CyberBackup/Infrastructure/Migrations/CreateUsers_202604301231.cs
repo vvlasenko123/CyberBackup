@@ -1,7 +1,7 @@
 using Infrastructure.Database.Connection.Contracts;
 using Infrastructure.Database.Migrations.Contracts;
 
-namespace Infrastructure.Database.Migrations;
+namespace Infrastructure.Migrations;
 
 /// <summary>
 /// Миграция создания пользователей
