@@ -31,7 +31,7 @@ public sealed class PostgresDatabaseCreator
             throw new InvalidOperationException("Имя базы данных не должно быть пустым");
         }
 
-        builder.Database = DatabaseConst.Postgres;
+        builder.Database = DbConst.Database.Postgres;
 
         await using var connection = new NpgsqlConnection(builder.ConnectionString);
         await connection.OpenAsync(cancellationToken);

@@ -1,4 +1,6 @@
+using Dapper;
 using Infrastructure.Database.Additional;
+using Infrastructure.Database.Connection.Contracts;
 using Infrastructure.Database.Migrations.Contracts;
 using Infrastructure.Database.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,11 @@ public sealed class PostgresAutoMigrationHostedService : IHostedService
     private readonly ILogger<PostgresAutoMigrationHostedService> _logger;
 
     /// <summary>
+    /// Соединение с бд
+    /// </summary>
+    private readonly IAsyncDbConnection _connection;
+
+    /// <summary>
     /// Создатель бд
     /// </summary>
     private readonly PostgresDatabaseCreator _databaseCreator;
@@ -37,12 +44,13 @@ public sealed class PostgresAutoMigrationHostedService : IHostedService
         IServiceProvider serviceProvider,
         IOptions<PostgresOptions> options,
         ILogger<PostgresAutoMigrationHostedService> logger,
+        IAsyncDbConnection connection,
         PostgresDatabaseCreator databaseCreator)
     {
         _serviceProvider = serviceProvider;
         _options = options;
         _logger = logger;
-        _databaseCreator = databaseCreator;
+        _connection = connection;
         _databaseCreator = databaseCreator;
     }
 
@@ -67,7 +75,22 @@ public sealed class PostgresAutoMigrationHostedService : IHostedService
 
         using (var scope = _serviceProvider.CreateScope())
         {
-            var migrations = scope.ServiceProvider.GetServices<IDatabaseMigration>().ToList();
+            var connection = await _connection.CreateConnectionAsync(cancellationToken);
+            await connection.ExecuteAsync("""
+                CREATE TABLE IF NOT EXISTS migrations (
+                    id TEXT PRIMARY KEY,
+                    applied_at TIMESTAMPTZ NOT NULL
+                );
+            """);
+
+            var applied = (await connection.QueryAsync<string>(
+                "SELECT id FROM migrations"))
+                .ToHashSet();
+
+            var migrations = scope.ServiceProvider
+                .GetServices<IDatabaseMigration>()
+                .OrderBy(x => x.Id)
+                .ToList();
 
             if (!migrations.Any())
             {
@@ -82,7 +105,18 @@ public sealed class PostgresAutoMigrationHostedService : IHostedService
                     break;
                 }
 
+                if (applied.Contains(migration.Id))
+                {
+                    continue;
+                }
+
+                _logger.LogInformation("Применение миграции {MigrationId}", migration.Id);
+
                 await migration.MigrateUp(cancellationToken);
+
+                await connection.ExecuteAsync(
+                    "INSERT INTO migrations (id, applied_at) VALUES (@Id, now())",
+                    new { migration.Id });
             }
         }
 

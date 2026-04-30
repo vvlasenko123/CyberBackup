@@ -1,5 +1,7 @@
 using System.Reflection;
+using Infrastructure;
 using Infrastructure.AutoMapper;
+using Infrastructure.Core;
 using Infrastructure.Database;
 using Infrastructure.Swagger;
 using Security.Host.Cors;
@@ -26,9 +28,7 @@ public class StartUp
     /// </summary>
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers().AddDataAnnotationsLocalization();
-
-        services.AddHealthChecks();
+        services.AddControllers();
 
         services.AddCyberCors();
         
@@ -37,9 +37,11 @@ public class StartUp
             services.AddHealthChecks();
             services.AddSwaggerDocumentation(apiName: "CyberBackup", version: "v1");
         }
-        
+
+        services.AddInfrastructure();
         services.AddCyberMapper(assemblies: Assembly.GetExecutingAssembly());
         services.AddPostgres();
+        services.AddCore();
     }
 
     /// <summary>
@@ -47,19 +49,19 @@ public class StartUp
     /// </summary>
     public void Configure(IApplicationBuilder app)
     {
+        app.UseRouting();
+        app.UseCyberCors();
+
         if (Environment.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
-            app.UseSwaggerDocumentation();
+            app.UseSwaggerDocumentation("CyberBackupApi");
         }
-
-        app.UseCyberCors();
-        app.UseRouting();
 
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
-            endpoints.MapHealthChecks(pattern: "/health");
+            endpoints.MapHealthChecks("/health");
         });
     }
 }

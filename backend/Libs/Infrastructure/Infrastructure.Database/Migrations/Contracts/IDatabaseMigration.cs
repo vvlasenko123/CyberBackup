@@ -6,6 +6,11 @@ namespace Infrastructure.Database.Migrations.Contracts;
 public interface IDatabaseMigration
 {
     /// <summary>
+    /// айди миграции
+    /// </summary>
+    string Id { get; }
+
+    /// <summary>
     /// Применение миграций
     /// </summary>
     Task MigrateUp(CancellationToken token);
