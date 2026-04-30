@@ -40,8 +40,7 @@ docker compose -f deploy/docker-compose.dev.yml up --build -d
 После запуска:
 
 * Frontend: http://localhost:5173
-* Auth API: http://localhost:8000
-* Lab Orchestrator API: http://localhost:6666
+* CyberBackup API: http://localhost:5000
 * Postgres: localhost:5432
 
 ---
@@ -57,8 +56,7 @@ docker compose -f deploy/docker-compose.prod.yml up --build -d
 После запуска:
 
 * Frontend (nginx): http://localhost
-* Auth API: http://localhost:8000
-* Lab Orchestrator API: http://localhost:6666
+* CyberBackup API: http://localhost:5000
 
 ---
 

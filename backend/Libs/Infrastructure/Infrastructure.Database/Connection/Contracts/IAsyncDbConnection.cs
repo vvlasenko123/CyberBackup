@@ -1,12 +1,29 @@
+using Npgsql;
+
 namespace Infrastructure.Database.Connection.Contracts;
 
 /// <summary>
-/// Контракт асинхронного соединения
+/// Асинхронный доступ к базе данных
 /// </summary>
-public interface IAsyncDbConnection : ISyncDbConnection
+public interface IAsyncDbConnection
 {
     /// <summary>
-    /// Открыть соединение асинхронно
+    /// Создание соединения
     /// </summary>
-    Task OpenAsync(CancellationToken cancellationToken);
+    Task<NpgsqlConnection> CreateConnectionAsync(CancellationToken token);
+
+    /// <summary>
+    /// Выполнение команды
+    /// </summary>
+    Task<int> ExecuteAsync(string sql, object? param, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получение списка
+    /// </summary>
+    Task<IReadOnlyCollection<T>> QueryAsync<T>(string sql, object? param, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получение одного значения
+    /// </summary>
+    Task<T?> QueryFirstOrDefaultAsync<T>(string sql, object? param, CancellationToken cancellationToken);
 }

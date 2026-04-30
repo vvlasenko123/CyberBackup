@@ -40,6 +40,7 @@ public static class SwaggerStartUp
         app.UseSwaggerUI(options =>
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", apiName);
+            options.RoutePrefix = "swagger";
         });
     }
 }
