@@ -13,7 +13,7 @@ services:
     cyber_backup:
         build:
             context: ..
-            dockerfile: backend/Apps/LabOrchestratorApi/Api/Dockerfile
+            dockerfile: backend/Apps/CyberBackup/Api/Dockerfile
         container_name: lab-orchestrator-api
         restart: unless-stopped
         ports:
@@ -35,8 +35,7 @@ services:
         ports:
             - "80:80"
         depends_on:
-            - auth-api
-            - lab-orchestrator-api
+            - cyber_backup
 
 volumes:
     postgres_data:
