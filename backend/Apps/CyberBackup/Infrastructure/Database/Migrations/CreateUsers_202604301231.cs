@@ -25,7 +25,7 @@ internal sealed class CreateUsers_202604301231 : IDatabaseMigration
                                CREATE TABLE IF NOT EXISTS users (
                                    id UUID PRIMARY KEY,
                                    email VARCHAR(255) NOT NULL,
-                                   password_hash VARCHAR(255) NOT NULL,
+                                   password VARCHAR(255) NOT NULL,
                                    full_name VARCHAR(255) NOT NULL,
                                    role INTEGER NOT NULL,
                                    is_active BOOLEAN NOT NULL,

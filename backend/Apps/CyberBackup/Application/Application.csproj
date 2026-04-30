@@ -1,7 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.AutoMapper\Infrastructure.AutoMapper.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Abstractions\UseCases\" />
   </ItemGroup>
 
   <PropertyGroup>

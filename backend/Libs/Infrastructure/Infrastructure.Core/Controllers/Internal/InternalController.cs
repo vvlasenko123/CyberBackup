@@ -7,6 +7,7 @@ namespace Infrastructure.Core.Controllers.Internal;
 /// Базовый контроллер, доступный только вне production
 /// </summary>
 [ServiceFilter(typeof(InternalFilter))]
+[Route("")]
 public abstract class InternalController : ControllerBase
 {
 }

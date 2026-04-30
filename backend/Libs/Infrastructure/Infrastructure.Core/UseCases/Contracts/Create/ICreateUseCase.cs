@@ -3,10 +3,10 @@ namespace Infrastructure.Core.UseCases.Contracts.Create;
 /// <summary>
 /// Контракт use case для создания
 /// </summary>
-public interface ICreateUseCase<in TRequest, TResponse>
+public interface ICreateUseCase<in TRequest>
 {
     /// <summary>
     /// Выполнение операции создания
     /// </summary>
-    Task<TResponse> Execute(TRequest request);
+    Task Execute(TRequest request, CancellationToken cancellationToken);
 }

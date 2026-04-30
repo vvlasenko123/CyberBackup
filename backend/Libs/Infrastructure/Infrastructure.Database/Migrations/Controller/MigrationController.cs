@@ -1,7 +1,6 @@
 using Infrastructure.Core.Controllers.Internal;
 using Infrastructure.Database.Migrations.Contracts;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
 
 namespace Infrastructure.Database.Migrations.Controller;
 
@@ -23,9 +22,9 @@ public class MigrationController : InternalController
     /// Получение списка примененных миграций
     /// </summary>
     [HttpGet("get-all")]
-    public async Task<IActionResult> GetMigrations(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAllMigrations(CancellationToken cancellationToken)
     {
-        var result = await _migrationRepository.GetAllAsync(cancellationToken);
+        var result = await _migrationRepository.GetAllMigrations(cancellationToken);
         return Ok(result);
     }
 
@@ -43,7 +42,7 @@ public class MigrationController : InternalController
     /// Применение всех непримененных миграций
     /// </summary>
     [HttpPost("apply")]
-    public async Task<IActionResult> UpMigration(CancellationToken cancellationToken)
+    public async Task<IActionResult> MigrateUpAsync(CancellationToken cancellationToken)
     {
         await _migrationRepository.MigrateUpAsync(cancellationToken);
         return Ok();
@@ -53,7 +52,7 @@ public class MigrationController : InternalController
     /// Откат последней примененной миграции
     /// </summary>
     [HttpPost("rollback")]
-    public async Task<IActionResult> DownMigration(CancellationToken cancellationToken)
+    public async Task<IActionResult> MigrateDownAsync(CancellationToken cancellationToken)
     {
         await _migrationRepository.MigrateDownAsync(cancellationToken);
         return Ok();

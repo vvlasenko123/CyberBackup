@@ -11,4 +11,8 @@
     <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.Exceptions\Infrastructure.Exceptions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="UUIDNext" Version="4.2.4" />
+  </ItemGroup>
+
 </Project>
