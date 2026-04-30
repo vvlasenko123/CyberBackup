@@ -46,7 +46,7 @@ services:
       - ../frontend:/app
       - /app/node_modules
     environment:
-      - # сами добавите
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
 
