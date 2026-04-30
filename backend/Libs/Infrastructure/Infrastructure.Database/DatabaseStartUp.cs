@@ -6,6 +6,7 @@ using Infrastructure.Database.HostedService;
 using Infrastructure.Database.Migrations.Contracts;
 using Infrastructure.Database.Migrations.Repository;
 using Infrastructure.Database.Options;
+using Infrastructure.Database.Repositories.Contracts.Base;
 using Infrastructure.Options.Configuration.Public;
 using Microsoft.Extensions.DependencyInjection;
 
