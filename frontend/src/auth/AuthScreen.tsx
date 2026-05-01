@@ -3,6 +3,7 @@ import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import type { LoginCredentials, RegisterData, User, UserRole } from '../types';
 import { PasswordChangeForm } from './PasswordChangeForm';
+import './auth.css';
 
 interface AuthScreenProps {
   onLogin: (role: UserRole, user: User) => void;

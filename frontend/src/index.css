@@ -62,8 +62,20 @@
   box-sizing: border-box;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: #F7F8FA;
+  color: #1A1A1A;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,

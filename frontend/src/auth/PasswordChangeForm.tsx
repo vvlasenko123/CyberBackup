@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Input } from '../components/Input';
+import { Input } from '../components/Input/Input';
 
 interface PasswordChangeFormProps {
   onSubmit: (newPassword: string) => void;

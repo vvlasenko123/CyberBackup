@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { LoginCredentials } from '../types';
 import { EyeIcon, EyeOffIcon } from '../components/Icons';
-import { Input } from '../components/Input';
+import { Input } from '../components/Input/Input';
 
 interface LoginFormProps {
   onSubmit: (credentials: LoginCredentials) => void;
@@ -25,7 +25,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
 
     setTimeout(() => {
       setLoading(false);
-      
+
       if (email === 'bad@bad.ru') {
         setError('Неверный email или пароль');
         return;

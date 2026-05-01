@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import type { User, UserRole } from './types';
 import { AuthScreen } from './auth/AuthScreen';
-import './styles.css'
 
 const App: React.FC = () => {
   const [authed, setAuthed] = useState(true);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { RegisterData } from '../types';
-import { Input } from '../components/Input';
+import { Input } from '../components/Input/Input';
 import { EyeIcon, EyeOffIcon } from '../components/Icons';
 
 interface RegisterFormProps {
