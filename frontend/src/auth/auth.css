@@ -1,0 +1,49 @@
+/* .login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 40px;
+  width: 380px;
+}
+
+.auth-tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.auth-tabs button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+}
+
+.auth-tabs .active {
+  background: #0077FF;
+  color: white;
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 10px;
+  background: #0077FF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.auth-error {
+  background: #FEF2F2;
+  color: #DC2626;
+  padding: 10px;
+  margin-bottom: 10px;
+} */
