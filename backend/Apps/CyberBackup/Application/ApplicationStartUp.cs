@@ -1,7 +1,9 @@
 ﻿using Application.Abstractions.Services.User;
 using Application.Abstractions.Services.User.Contracts;
+using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.Abstractions.UseCases.User;
 using Application.Abstractions.UseCases.User.Contracts;
+using Application.Features.Auth.Register;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application;
@@ -18,6 +20,8 @@ public static class ApplicationStartUp
     {
         services.AddScoped<ICreateUserUseCase, CreateUserUseCase>();
         services.AddScoped<ICreateUserService, CreateUserService>();
+        
+        services.AddScoped<IRegisterUseCase, RegisterUseCase>();
 
         //todo после добавления токена надо удалить
         services.AddScoped<ICurrentUser, FakeCurrentUser>();
