@@ -71,10 +71,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           <RegisterForm onSubmit={handleRegister} />
         )}
 
-        <div className="demo-info">
+        {/* <div className="demo-info">
           <strong>Demo:</strong> любой email → студент · «admin» в email → Admin · «teacher/prof» → Преподаватель · пароль{' '}
           <code>12345</code> → смена пароля
-        </div>
+        </div> */}
       </div>
     </div>
   );

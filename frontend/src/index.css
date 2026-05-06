@@ -2,7 +2,7 @@
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
-  --border: #e5e4e7;
+  /* --border: #e5e4e7; */
   --code-bg: #f4f3ec;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
@@ -73,9 +73,8 @@
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, sans-serif;
-  background: #F7F8FA;
-  color: #1A1A1A;
-  -webkit-font-smoothing: antialiased;
+  background: #1E1F25;
+  color: #E5E7EB;
 }
 
 h1,

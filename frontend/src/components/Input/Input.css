@@ -4,17 +4,16 @@
 
 .input-field {
     width: 100%;
-    padding: 9px 12px;
-    border: 1px solid #E5E7EB;
-    border-radius: 6px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #3A3D46;
+    background: #1F2027;
+    color: #E5E7EB;
     font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 150ms;
 }
 
 .input-field:focus {
-    border-color: #0077FF;
+    border-color: #4EA1FF;
 }
 
 .input-field.error {
