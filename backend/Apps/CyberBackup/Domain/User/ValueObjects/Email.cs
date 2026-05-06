@@ -21,6 +21,14 @@ public sealed class Email : ValueObject<Email>
             throw new InvalidEmailException("Email не должен быть пустым");
         }
 
+        var email = value.Trim();
+        var emailAddressAttribute = new EmailAddressAttribute();
+
+        if (!emailAddressAttribute.IsValid(email))
+        {
+            throw new InvalidEmailException("Email имеет некорректный формат");
+        }
+        
         Value = value;
     }
 

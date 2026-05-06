@@ -12,4 +12,9 @@ public interface IUserRepository : ICreateRepository<UserModel, Guid>
     /// Создать пользователя
     /// </summary>
     Task CreateUserAsync(UserModel userModel, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Проверить, занят ли email при регистрации пользователя.
+    /// </summary>
+    Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken);
 }

@@ -6,6 +6,6 @@ namespace Application.Abstractions.UseCases.User.Contracts;
 /// <summary>
 /// UseCase создания пользователя
 /// </summary>
-public interface ICreateUserUseCase : ICreateUseCase<UserDto>
+public interface ICreateUserUseCaseManager : ICreateUseCase<UserDto>
 {
 }

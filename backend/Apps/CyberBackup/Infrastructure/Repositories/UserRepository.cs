@@ -42,4 +42,25 @@ public sealed class UserRepository : IUserRepository
             userModel.UpdatedAt
         }, cancellationToken);
     }
+    
+    /// <inheritdoc />
+    public async Task<bool> ExistsByEmailAsync(
+        string email,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT EXISTS (
+                                   SELECT 1
+                                   FROM users
+                                   WHERE LOWER(email) = LOWER(@Email)
+                               );
+                           """;
+
+        var exists = await _connection.QueryFirstOrDefaultAsync<bool>(
+            sql,
+            new { Email = email },
+            cancellationToken);
+
+        return exists;
+    }
 }
