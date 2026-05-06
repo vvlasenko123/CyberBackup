@@ -42,7 +42,7 @@ public sealed class UserModel : AggregateRoot<Guid>
     /// <summary>
     /// Кто создал пользователя
     /// </summary>
-    public Guid CreatedBy { get; private set; }
+    public Guid? CreatedBy { get; private set; }
 
     /// <summary>
     /// Дата создания
@@ -62,7 +62,7 @@ public sealed class UserModel : AggregateRoot<Guid>
         UserRole role,
         bool isActive,
         bool mustChangePassword,
-        Guid createdBy,
+        Guid? createdBy,
         DateTimeOffset createdAt,
         DateTimeOffset updatedAt) : base(id)
     {

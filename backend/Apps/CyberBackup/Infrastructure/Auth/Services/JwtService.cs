@@ -9,20 +9,32 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Infrastructure.Auth.Services;
 
-public sealed class JwtTokenService : IJwtTokenService
+/// <summary>
+/// Сервис генерации JWT.
+/// </summary>
+public sealed class JwtService : IJwtService
 {
     private const string AccessTokenType = "at+jwt";
+
+    private const string ClientIdClaimName = "client_id";
+
+    private const string SessionIdClaimName = "sid";
+
+    private const string ScopeClaimName = "scope";
+
+    private const string RoleClaimName = "role";
 
     private readonly JwtOptions _options;
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly SigningCredentials _signingCredentials;
 
-    public JwtTokenService(IOptions<JwtOptions> options)
+    /// <summary>
+    /// Создать сервис генерации JWT.
+    /// </summary>
+    public JwtService(IOptions<JwtOptions> options)
     {
         _options = options.Value;
         _tokenHandler = new JwtSecurityTokenHandler();
-
-        ValidateOptions(_options);
 
         var signingKeyBytes = Encoding.UTF8.GetBytes(_options.SigningKey);
         var securityKey = new SymmetricSecurityKey(signingKeyBytes);
@@ -32,18 +44,20 @@ public sealed class JwtTokenService : IJwtTokenService
             SecurityAlgorithms.HmacSha256);
     }
 
+    /// <inheritdoc />
     public GeneratedAccessTokenDto GenerateAccessToken(TokenUserDataDto userData)
     {
         ArgumentNullException.ThrowIfNull(userData);
 
         var issuedAtUtc = DateTimeOffset.UtcNow;
         var expiresAtUtc = issuedAtUtc.AddMinutes(_options.AccessTokenLifetimeMinutes);
-        var jwtId = Guid.CreateVersion7().ToString("N");
+        var jwtId = UUIDNext.Uuid.NewSequential().ToString("N");
 
-        var claims = BuildClaims(userData, issuedAtUtc, jwtId);
+        var claims = BuildCustomClaims(userData, issuedAtUtc, jwtId);
 
         var descriptor = new SecurityTokenDescriptor
         {
+            // iss, aud, nbf, exp добавляются в payload через descriptor.
             Issuer = _options.Issuer,
             Audience = _options.Audience,
             Subject = new ClaimsIdentity(claims),
@@ -64,73 +78,58 @@ public sealed class JwtTokenService : IJwtTokenService
             ExpiresAtUtc: expiresAtUtc);
     }
 
-    private static List<Claim> BuildClaims(
+    /// <summary>
+    /// Собрать custom claims для access token.
+    /// </summary>
+    private static List<Claim> BuildCustomClaims(
         TokenUserDataDto userData,
         DateTimeOffset issuedAtUtc,
         string jwtId)
     {
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, userData.SubjectId),
+            new(JwtRegisteredClaimNames.Sub, userData.SubjectId.ToString("D")),
             new(JwtRegisteredClaimNames.Jti, jwtId),
             new(
                 JwtRegisteredClaimNames.Iat,
                 issuedAtUtc.ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64),
-            new("client_id", userData.ClientId),
-            new("sid", userData.SessionId.ToString("D"))
+            new(ClientIdClaimName, userData.ClientId),
+            new(SessionIdClaimName, userData.SessionId.ToString("D"))
         };
 
-        var scopes = userData.Scopes
-            .Where(scope => !string.IsNullOrWhiteSpace(scope))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
+        var scopeSet = new HashSet<string>(StringComparer.Ordinal);
 
-        if (scopes.Length > 0)
+        foreach (var scope in userData.Scopes)
         {
-            claims.Add(new Claim("scope", string.Join(' ', scopes)));
+            if (string.IsNullOrWhiteSpace(scope))
+            {
+                continue;
+            }
+
+            scopeSet.Add(scope);
         }
 
-        var roles = userData.Roles
-            .Where(role => !string.IsNullOrWhiteSpace(role))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-
-        foreach (var role in roles)
+        if (scopeSet.Count > 0)
         {
-            claims.Add(new Claim("role", role));
+            claims.Add(new Claim(ScopeClaimName, string.Join(' ', scopeSet)));
+        }
+
+        var roleSet = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var role in userData.Roles)
+        {
+            if (string.IsNullOrWhiteSpace(role))
+            {
+                continue;
+            }
+
+            if (roleSet.Add(role))
+            {
+                claims.Add(new Claim(RoleClaimName, role));
+            }
         }
 
         return claims;
-    }
-
-    private static void ValidateOptions(JwtOptions options)
-    {
-        if (string.IsNullOrWhiteSpace(options.Issuer))
-        {
-            throw new InvalidOperationException("JWT issuer is not configured.");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.Audience))
-        {
-            throw new InvalidOperationException("JWT audience is not configured.");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.SigningKey))
-        {
-            throw new InvalidOperationException("JWT signing key is not configured.");
-        }
-
-        var signingKeyBytes = Encoding.UTF8.GetBytes(options.SigningKey);
-
-        if (signingKeyBytes.Length < 32)
-        {
-            throw new InvalidOperationException("JWT signing key must be at least 32 bytes long.");
-        }
-
-        if (options.AccessTokenLifetimeMinutes <= 0)
-        {
-            throw new InvalidOperationException("JWT access token lifetime must be greater than zero.");
-        }
     }
 }

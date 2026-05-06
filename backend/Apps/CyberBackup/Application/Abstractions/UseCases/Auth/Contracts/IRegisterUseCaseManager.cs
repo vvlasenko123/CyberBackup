@@ -5,7 +5,7 @@ namespace Application.Abstractions.UseCases.Auth.Contracts;
 /// <summary>
 /// UseCase регистрации.
 /// </summary>
-public interface IRegisterUseCase
+public interface IRegisterUseCaseManager
 {
     /// <summary>
     /// Зарегистрировать пользователя.

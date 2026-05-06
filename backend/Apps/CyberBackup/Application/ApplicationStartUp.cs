@@ -18,10 +18,10 @@ public static class ApplicationStartUp
     /// </summary>
     public static void AddApplication(this IServiceCollection services)
     {
-        services.AddScoped<ICreateUserUseCase, CreateUserUseCase>();
+        services.AddScoped<ICreateUserUseCaseManager, CreateUserUseCaseManager>();
         services.AddScoped<ICreateUserService, CreateUserService>();
         
-        services.AddScoped<IRegisterUseCase, RegisterUseCase>();
+        services.AddScoped<IRegisterUseCaseManager, RegisterUseCaseManager>();
 
         //todo после добавления токена надо удалить
         services.AddScoped<ICurrentUser, FakeCurrentUser>();

@@ -7,12 +7,12 @@ using Microsoft.AspNetCore.Authentication;
 namespace Application.Abstractions.UseCases.User;
 
 /// <inheritdoc />
-public class CreateUserUseCase : ICreateUserUseCase
+public class CreateUserUseCaseManager : ICreateUserUseCaseManager
 {
     private readonly ICreateUserService _createUserService;
     private readonly ICurrentUser _currentUser;
 
-    public CreateUserUseCase(
+    public CreateUserUseCaseManager(
         ICreateUserService createUserService,
         ICurrentUser currentUser)
     {

@@ -26,16 +26,11 @@ internal sealed class CreateRefreshTokens_202605030001 : IDatabaseMigration
                                    id UUID PRIMARY KEY,
                                    user_id UUID NOT NULL,
                                    token_hash VARCHAR(512) NOT NULL,
-                                   access_token_jti VARCHAR(64) NOT NULL,
                                    session_id UUID NOT NULL,
-                                   client_id VARCHAR(128) NOT NULL,
                                    created_at_utc TIMESTAMPTZ NOT NULL,
                                    expires_at_utc TIMESTAMPTZ NOT NULL,
-                                   consumed_at_utc TIMESTAMPTZ NULL,
                                    revoked_at_utc TIMESTAMPTZ NULL,
                                    replaced_by_token_id UUID NULL,
-                                   created_by_ip VARCHAR(64) NULL,
-                                   user_agent_hash VARCHAR(512) NULL,
 
                                    CONSTRAINT fk_refresh_tokens_users
                                        FOREIGN KEY (user_id)
@@ -56,9 +51,6 @@ internal sealed class CreateRefreshTokens_202605030001 : IDatabaseMigration
 
                                CREATE INDEX IF NOT EXISTS ix_refresh_tokens_session_id
                                    ON refresh_tokens(session_id);
-
-                               CREATE INDEX IF NOT EXISTS ix_refresh_tokens_expires_at_utc
-                                   ON refresh_tokens(expires_at_utc);
                            """;
 
         await _connection.ExecuteAsync(sql, null, token);

@@ -5,27 +5,33 @@ using Domain.Repositories;
 using Domain.User;
 using Domain.User.Enums;
 using Domain.User.ValueObjects;
+using Infrastructure.Exceptions.User;
 
 namespace Application.Features.Auth.Register;
 
 /// <inheritdoc />
-public sealed class RegisterUseCase : IRegisterUseCase
+public sealed class RegisterUseCaseManager : IRegisterUseCaseManager
 {
-    private const string DefaultClientId = "web-client";
-    private const string DefaultScope = "api";
+    private const string DefaultRole = nameof(UserRole.Student);
+
+    private static readonly IReadOnlyCollection<string> DefaultRoles = Array.AsReadOnly([DefaultRole]);
+
+    private readonly IAuthTokenDefaultsService _authTokenDefaultsService;
 
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHashService _passwordHashService;
-    private readonly IJwtTokenService _jwtTokenService;
+    private readonly IJwtService _jwtService;
 
-    public RegisterUseCase(
+    public RegisterUseCaseManager(
         IUserRepository userRepository,
         IPasswordHashService passwordHashService,
-        IJwtTokenService jwtTokenService)
+        IJwtService jwtService,
+        IAuthTokenDefaultsService authTokenDefaultsService)
     {
         _userRepository = userRepository;
         _passwordHashService = passwordHashService;
-        _jwtTokenService = jwtTokenService;
+        _jwtService = jwtService;
+        _authTokenDefaultsService = authTokenDefaultsService;
     }
 
     /// <inheritdoc />
@@ -33,42 +39,42 @@ public sealed class RegisterUseCase : IRegisterUseCase
         RegisterRequestDto request,
         CancellationToken cancellationToken)
     {
-        var email = request.Email.Trim();
+        var email = new Email(request.Email);
 
-        var exists = await _userRepository.ExistsByEmailAsync(email, cancellationToken);
+        var exists = await _userRepository.ExistsByEmailAsync(email.Value, cancellationToken);
 
         if (exists)
         {
-            throw new InvalidOperationException("Пользователь с такой почтой уже существует");
+            throw new InvalidEmailException("Пользователь с такой почтой уже существует");
         }
 
         var nowUtc = DateTimeOffset.UtcNow;
-        var userId = Guid.CreateVersion7();
-        var sessionId = Guid.CreateVersion7();
+        var userId = UUIDNext.Uuid.NewSequential();
+        var sessionId = UUIDNext.Uuid.NewSequential();
         var passwordHash = _passwordHashService.Hash(request.Password);
 
         var user = new UserModel(
             id: userId,
-            email: new Email(email),
+            email: email,
             fullName: new FullName(request.FullName),
             password: new PasswordHash(passwordHash),
             role: UserRole.Student,
             isActive: true,
             mustChangePassword: false,
-            createdBy: userId,
+            createdBy: null,  
             createdAt: nowUtc,
             updatedAt: nowUtc);
 
         await _userRepository.CreateUserAsync(user, cancellationToken);
 
         var tokenUserData = new TokenUserDataDto(
-            SubjectId: userId.ToString(),
-            ClientId: DefaultClientId,
+            SubjectId: userId,
+            ClientId: _authTokenDefaultsService.ClientId,
             SessionId: sessionId,
-            Scopes: [DefaultScope],
-            Roles: [UserRole.Student.ToString()]);
+            Scopes: _authTokenDefaultsService.Scopes,
+            Roles: DefaultRoles);
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(tokenUserData);
+        var accessToken = _jwtService.GenerateAccessToken(tokenUserData);
 
         return new RegisterResultDto(
             UserId: userId,
@@ -76,9 +82,9 @@ public sealed class RegisterUseCase : IRegisterUseCase
             AccessToken: accessToken.AccessToken,
             JwtId: accessToken.JwtId,
             SessionId: sessionId,
-            ClientId: DefaultClientId,
-            Scopes: [DefaultScope],
-            Roles: [UserRole.Student.ToString()],
+            ClientId: _authTokenDefaultsService.ClientId,
+            Scopes: _authTokenDefaultsService.Scopes,
+            Roles: DefaultRoles,
             IssuedAtUtc: accessToken.IssuedAtUtc,
             ExpiresAtUtc: accessToken.ExpiresAtUtc);
     }

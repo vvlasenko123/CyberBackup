@@ -1,6 +1,8 @@
 ﻿using Api.Controllers.Models.Request;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.DTO.Auth;
+using AutoMapper;
+using Infrastructure.Core.Controllers.Public;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -10,13 +12,15 @@ namespace Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("auth")]
-public sealed class AuthController : ControllerBase
+public sealed class AuthController : PublicController
 {
-    private readonly IRegisterUseCase _registerUseCase;
+    private readonly IMapper _mapper;
+    private readonly IRegisterUseCaseManager _registerUseCaseManager;
 
-    public AuthController(IRegisterUseCase registerUseCase)
+    public AuthController(IMapper mapper, IRegisterUseCaseManager registerUseCaseManager)
     {
-        _registerUseCase = registerUseCase;
+        _mapper = mapper;
+        _registerUseCaseManager = registerUseCaseManager;
     }
 
     /// <summary>
@@ -27,30 +31,9 @@ public sealed class AuthController : ControllerBase
         RegisterRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _registerUseCase.Execute(
-            new RegisterRequestDto(
-                Email: request.Email,
-                FullName: request.FullName,
-                Password: request.Password),
-            cancellationToken);
+        var dto = _mapper.Map<RegisterRequestDto>(request);
+        var result = await _registerUseCaseManager.Execute(dto, cancellationToken);
 
-        return Ok(new
-        {
-            result.UserId,
-            Role = result.Role.ToString(),
-            result.AccessToken,
-
-            TokenMetadata = new
-            {
-                SubjectId = result.UserId.ToString(),
-                result.JwtId,
-                result.ClientId,
-                result.SessionId,
-                result.Scopes,
-                result.Roles,
-                result.IssuedAtUtc,
-                result.ExpiresAtUtc
-            }
-        });
+        return Ok(result);
     }
 }

@@ -5,7 +5,7 @@ namespace Application.Abstractions.Services.Auth.Contracts;
 /// <summary>
 /// Сервис генерации JWT токена.
 /// </summary>
-public interface IJwtTokenService
+public interface IJwtService
 {
     /// <summary>
     /// Сгенерировать access token.

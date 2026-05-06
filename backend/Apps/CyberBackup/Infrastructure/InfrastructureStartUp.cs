@@ -23,6 +23,8 @@ public static class InfrastructureStartUp
         #region options
         services.AddOptions<JwtOptions>().BindConfigurationOptions();
         services.AddOptions<RefreshTokenOptions>().BindConfigurationOptions();
+        services.AddOptions<AuthTokenOptions>().BindConfigurationOptions();
+        services.AddOptions<PasswordHashOptions>().BindConfigurationOptions();
         #endregion
 
         #region migrations
@@ -38,8 +40,9 @@ public static class InfrastructureStartUp
 
         #region auth
         services.AddScoped<IPasswordHashService, BcryptPasswordHashService>();
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddSingleton<IAuthTokenDefaultsService, AuthTokenDefaultsService>();
         #endregion
     }
 }

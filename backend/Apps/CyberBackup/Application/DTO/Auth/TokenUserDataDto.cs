@@ -1,7 +1,10 @@
 ﻿namespace Application.DTO.Auth;
 
+/// <summary>
+/// Данные пользователя для генерации токена.
+/// </summary>
 public sealed record TokenUserDataDto(
-    string SubjectId,
+    Guid SubjectId,
     string ClientId,
     Guid SessionId,
     IReadOnlyCollection<string> Scopes,
