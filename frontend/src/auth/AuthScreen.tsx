@@ -25,9 +25,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
     let role: UserRole = 'student';
     if (credentials.email.includes('admin')) role = 'admin';
-    else if (credentials.email.includes('teacher') || credentials.email.includes('prof')) role = 'instructor';
+    else if (credentials.email.includes('teacher') || credentials.email.includes('prof')) role = 'teacher';
 
-    onLogin(role, { name: role === 'admin' ? 'Орлов И.П.' : role === 'instructor' ? 'Смирнов В.А.' : 'Иванов Алексей' });
+    onLogin(role, { name: role === 'admin' ? 'Орлов И.П.' : role === 'teacher' ? 'Смирнов В.А.' : 'Иванов Алексей' });
   };
 
   const handleRegister = (data: RegisterData) => {

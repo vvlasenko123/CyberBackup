@@ -69,6 +69,7 @@ export const AppLayout: React.FC<Props> = ({
                     role={role}
                     user={user}
                     onRoleChange={onRoleChange}
+                    activePage={activePage}
                 />
 
                 <main className="layout__page">

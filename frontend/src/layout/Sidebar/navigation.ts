@@ -17,7 +17,7 @@ export const navigationByRole: Record<UserRole, NavItem[]> = {
         { id: 'calendar', label: 'Календарь', icon: 'calendar' },
     ],
 
-    instructor: [
+    teacher: [
         { id: 'dashboard', label: 'Главная', icon: 'home' },
         { id: 'labs', label: 'Отчеты студентов', icon: 'lightbulb' },
         { id: 'questions', label: 'Вопросы студентов', icon: 'messageSquare' },

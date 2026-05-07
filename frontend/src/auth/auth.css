@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1E1F25;
+  background: #0F1720;
 }
 
 .login-card {
@@ -11,7 +11,7 @@
   max-height: 685px;
   padding: 32px;
   border-radius: 16px;
-  background: #2A2C33;
+  background: #1E2025;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   text-align: left;
 }
@@ -85,12 +85,13 @@
 
 .password-input {
   width: 100%;
-  padding: 12px;
+  padding: 12px 44px 12px 12px;
   border-radius: 8px;
   border: 1px solid #3A3D46;
   background: #1F2027;
   color: #E5E7EB;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .password-input:focus {
