@@ -36,6 +36,7 @@ public static class InfrastructureStartUp
 
         #region repositories
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         #endregion
 
         #region auth
