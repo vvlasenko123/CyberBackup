@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import type { User, UserRole } from './types';
 import { AuthScreen } from './auth/AuthScreen';
+import { AppLayout } from './layout/AppLayout';
 
 const App: React.FC = () => {
-  const [authed, setAuthed] = useState(true);
+  const [authed, setAuthed] = useState(false);
   const [role, setRole] = useState<UserRole>('student');
-  const [user, setUser] = useState<User>({ name: 'Иванов Алексей' });
+  const [user, setUser] = useState<User>({
+    name: 'Степа Мокрушин',
+  });
 
   const handleLogin = (r: UserRole, u: User) => {
     setRole(r);
@@ -19,8 +22,16 @@ const App: React.FC = () => {
     setUser({ name: '' });
   };
 
-  return <AuthScreen onLogin={handleLogin} />;
-
+  return !authed ? (
+    <AuthScreen onLogin={handleLogin} />
+  ) : (
+    <AppLayout
+      role={role}
+      user={user}
+      onLogout={handleLogout}
+      onRoleChange={setRole}
+    />
+  );
 };
 
 export default App;

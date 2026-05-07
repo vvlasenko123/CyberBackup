@@ -1,0 +1,40 @@
+.header {
+    height: 44px;
+    border-bottom: 1px solid #1F2937;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0F1720;
+}
+
+.header__title {
+    color: white;
+    font-size: 30px;
+    font-weight: 400;
+}
+
+.header__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid #1F2937;
+    background: #111827;
+    color: white;
+    cursor: pointer;
+}
+
+.header__select {
+    height: 42px;
+    background: #111827;
+    border: 1px solid #1F2937;
+    border-radius: 12px;
+    color: white;
+    padding: 0 14px;
+}
