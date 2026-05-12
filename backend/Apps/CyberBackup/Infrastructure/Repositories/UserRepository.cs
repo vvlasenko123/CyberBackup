@@ -1,6 +1,9 @@
 using Domain.Repositories;
 using Domain.User;
+using Domain.User.Enums;
+using Domain.User.ValueObjects;
 using Infrastructure.Database.Connection.Contracts;
+using Infrastructure.Repositories.Models;
 
 namespace Infrastructure.Repositories;
 
@@ -62,5 +65,50 @@ public sealed class UserRepository : IUserRepository
             cancellationToken);
 
         return exists;
+    }
+    
+        /// <inheritdoc />
+    public async Task<UserModel?> GetByEmailAsync(
+        string email,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT
+                                   id AS Id,
+                                   email AS Email,
+                                   full_name AS FullName,
+                                   password AS Password,
+                                   role AS Role,
+                                   is_active AS IsActive,
+                                   must_change_password AS MustChangePassword,
+                                   created_by AS CreatedBy,
+                                   created_at AS CreatedAt,
+                                   updated_at AS UpdatedAt
+                               FROM users
+                               WHERE LOWER(email) = LOWER(@Email)
+                               LIMIT 1;
+                           """;
+
+        var user = await _connection.QueryFirstOrDefaultAsync<UserDbModel>(
+            sql,
+            new { Email = email },
+            cancellationToken);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        return new UserModel(
+            id: user.Id,
+            email: new Email(user.Email),
+            fullName: new FullName(user.FullName),
+            password: new PasswordHash(user.Password),
+            role: (UserRole)user.Role,
+            isActive: user.IsActive,
+            mustChangePassword: user.MustChangePassword,
+            createdBy: user.CreatedBy,
+            createdAt: user.CreatedAt,
+            updatedAt: user.UpdatedAt);
     }
 }

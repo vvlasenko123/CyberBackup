@@ -17,4 +17,9 @@ public interface IUserRepository : ICreateRepository<UserModel, Guid>
     /// Проверить, занят ли email при регистрации пользователя.
     /// </summary>
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Получить пользователя по email.
+    /// </summary>
+    Task<UserModel?> GetByEmailAsync(string email, CancellationToken cancellationToken);
 }

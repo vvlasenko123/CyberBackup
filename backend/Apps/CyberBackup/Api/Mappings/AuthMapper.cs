@@ -15,5 +15,9 @@ public class AuthMapper : Profile
             .ForCtorParam(nameof(RegisterRequestDto.Email), y => y.MapFrom(z => z.Email))
             .ForCtorParam(nameof(RegisterRequestDto.FullName), y => y.MapFrom(z => z.FullName))
             .ForCtorParam(nameof(RegisterRequestDto.Password), y => y.MapFrom(z => z.Password));
+        
+        CreateMap<LoginRequest, LoginRequestDto>()
+            .ForCtorParam(nameof(LoginRequestDto.Email), y => y.MapFrom(z => z.Email))
+            .ForCtorParam(nameof(LoginRequestDto.Password), y => y.MapFrom(z => z.Password));
     }
 }

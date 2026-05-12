@@ -16,14 +16,6 @@ public sealed class JwtService : IJwtService
 {
     private const string AccessTokenType = "at+jwt";
 
-    private const string ClientIdClaimName = "client_id";
-
-    private const string SessionIdClaimName = "sid";
-
-    private const string ScopeClaimName = "scope";
-
-    private const string RoleClaimName = "role";
-
     private readonly JwtOptions _options;
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly SigningCredentials _signingCredentials;
@@ -94,8 +86,8 @@ public sealed class JwtService : IJwtService
                 JwtRegisteredClaimNames.Iat,
                 issuedAtUtc.ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64),
-            new(ClientIdClaimName, userData.ClientId),
-            new(SessionIdClaimName, userData.SessionId.ToString("D"))
+            new(AuthClaimNames.ClientId, userData.ClientId),
+            new(AuthClaimNames.SessionId, userData.SessionId.ToString("D"))
         };
 
         var scopeSet = new HashSet<string>(StringComparer.Ordinal);
@@ -112,7 +104,7 @@ public sealed class JwtService : IJwtService
 
         if (scopeSet.Count > 0)
         {
-            claims.Add(new Claim(ScopeClaimName, string.Join(' ', scopeSet)));
+            claims.Add(new Claim(AuthClaimNames.Scope, string.Join(' ', scopeSet)));
         }
 
         var roleSet = new HashSet<string>(StringComparer.Ordinal);
@@ -126,7 +118,7 @@ public sealed class JwtService : IJwtService
 
             if (roleSet.Add(role))
             {
-                claims.Add(new Claim(RoleClaimName, role));
+                claims.Add(new Claim(AuthClaimNames.Role, role));
             }
         }
 

@@ -7,6 +7,9 @@ using Infrastructure.Core.Controllers;
 using Infrastructure.Database;
 using Infrastructure.Swagger;
 using Security.Host.Cors;
+using Api.Auth;
+using Api.Extensions;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Api;
 
@@ -41,6 +44,12 @@ public class StartUp
         }
 
         services.AddInfrastructure();
+
+        services.AddSingleton<ICookieManager, ChunkingCookieManager>();
+        services.AddScoped<AppendLoginCookiesFilter>();
+
+        services.AddCyberJwtAuthentication();
+
         services.AddCyberMapper(assemblies: Assembly.GetExecutingAssembly());
         services.AddPostgres();
         services.AddCore();
@@ -60,6 +69,9 @@ public class StartUp
             app.UseDeveloperExceptionPage();
             app.UseSwaggerDocumentation("CyberBackupApi");
         }
+        
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
         {

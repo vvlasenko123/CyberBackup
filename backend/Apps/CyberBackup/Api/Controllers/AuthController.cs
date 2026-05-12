@@ -1,8 +1,11 @@
-﻿using Api.Controllers.Models.Request;
+﻿using Api.Auth;
+using Api.Controllers.Models.Request;
+using Api.Services.Auth;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.DTO.Auth;
 using AutoMapper;
 using Infrastructure.Core.Controllers.Public;
+using Infrastructure.Exceptions.User;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -16,11 +19,16 @@ public sealed class AuthController : PublicController
 {
     private readonly IMapper _mapper;
     private readonly IRegisterUseCaseManager _registerUseCaseManager;
+    private readonly ILoginUseCaseManager _loginUseCaseManager;
 
-    public AuthController(IMapper mapper, IRegisterUseCaseManager registerUseCaseManager)
+    public AuthController(
+        IMapper mapper,
+        IRegisterUseCaseManager registerUseCaseManager,
+        ILoginUseCaseManager loginUseCaseManager)
     {
         _mapper = mapper;
         _registerUseCaseManager = registerUseCaseManager;
+        _loginUseCaseManager = loginUseCaseManager;
     }
 
     /// <summary>
@@ -33,6 +41,29 @@ public sealed class AuthController : PublicController
     {
         var dto = _mapper.Map<RegisterRequestDto>(request);
         var result = await _registerUseCaseManager.Execute(dto, cancellationToken);
+
+        return Ok(result);
+    }
+    
+    /// <summary>
+    /// Вход пользователя.
+    /// </summary>
+    [HttpPost("login")]
+    [AppendLoginCookies]
+    public async Task<IActionResult> Login(
+        LoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        var dto = _mapper.Map<LoginRequestDto>(request);
+        var result = await _loginUseCaseManager.Execute(dto, cancellationToken);
+
+        if (result is null)
+        {
+            return Unauthorized(new
+            {
+                Message = "Неверный email или пароль"
+            });
+        }
 
         return Ok(result);
     }

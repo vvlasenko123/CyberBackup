@@ -54,7 +54,8 @@ public static class CorsStartUp
             policy
                 .WithOrigins(settings.Origins!)
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials();
         });
     }
 }
