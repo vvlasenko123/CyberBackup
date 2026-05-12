@@ -1,4 +1,5 @@
-﻿using Api.Controllers.Models.Request;
+﻿using Api.Auth;
+using Api.Controllers.Models.Request;
 using Api.Services.Auth;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.DTO.Auth;
@@ -19,18 +20,15 @@ public sealed class AuthController : PublicController
     private readonly IMapper _mapper;
     private readonly IRegisterUseCaseManager _registerUseCaseManager;
     private readonly ILoginUseCaseManager _loginUseCaseManager;
-    private readonly IAuthCookieService _authCookieService;
 
     public AuthController(
         IMapper mapper,
         IRegisterUseCaseManager registerUseCaseManager,
-        ILoginUseCaseManager loginUseCaseManager,
-        IAuthCookieService authCookieService)
+        ILoginUseCaseManager loginUseCaseManager)
     {
         _mapper = mapper;
         _registerUseCaseManager = registerUseCaseManager;
         _loginUseCaseManager = loginUseCaseManager;
-        _authCookieService = authCookieService;
     }
 
     /// <summary>
@@ -51,6 +49,7 @@ public sealed class AuthController : PublicController
     /// Вход пользователя.
     /// </summary>
     [HttpPost("login")]
+    [AppendLoginCookies]
     public async Task<IActionResult> Login(
         LoginRequest request,
         CancellationToken cancellationToken)
@@ -66,13 +65,6 @@ public sealed class AuthController : PublicController
             });
         }
 
-        _authCookieService.AppendAuthenticationCookies(
-            Response,
-            result.AccessToken,
-            result.RefreshToken,
-            result.AccessTokenExpiresAtUtc,
-            result.RefreshTokenExpiresAtUtc);
-
-        return Ok();
+        return Ok(result);
     }
 }

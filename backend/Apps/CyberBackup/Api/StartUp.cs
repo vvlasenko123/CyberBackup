@@ -7,14 +7,9 @@ using Infrastructure.Core.Controllers;
 using Infrastructure.Database;
 using Infrastructure.Swagger;
 using Security.Host.Cors;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
 using Api.Auth;
-using Api.Services.Auth;
-using Infrastructure.Auth.Options;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+using Api.Extensions;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Api;
 
@@ -50,56 +45,10 @@ public class StartUp
 
         services.AddInfrastructure();
 
-        services.AddScoped<IAuthCookieService, AuthCookieService>();
+        services.AddSingleton<ICookieManager, ChunkingCookieManager>();
+        services.AddScoped<AppendLoginCookiesFilter>();
 
-        services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer();
-
-        services
-            .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<IOptions<JwtOptions>>((options, jwtOptionsAccessor) =>
-            {
-                var jwtOptions = jwtOptionsAccessor.Value;
-                var signingKeyBytes = Encoding.UTF8.GetBytes(jwtOptions.SigningKey);
-
-                options.MapInboundClaims = false;
-
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtOptions.Issuer,
-
-                    ValidateAudience = true,
-                    ValidAudience = jwtOptions.Audience,
-
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(signingKeyBytes),
-
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero,
-
-                    NameClaimType = JwtRegisteredClaimNames.Sub,
-                    RoleClaimType = "role"
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var accessToken = context.Request.Cookies[AuthCookieNames.AccessToken];
-
-                        if (!string.IsNullOrWhiteSpace(accessToken))
-                        {
-                            context.Token = accessToken;
-                        }
-
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-
-        services.AddAuthorization();
+        services.AddCyberJwtAuthentication();
 
         services.AddCyberMapper(assemblies: Assembly.GetExecutingAssembly());
         services.AddPostgres();

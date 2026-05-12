@@ -29,7 +29,7 @@ public sealed class Email : ValueObject<Email>
             throw new InvalidEmailException("Email имеет некорректный формат");
         }
         
-        Value = value;
+        Value = email;
     }
 
     /// <inheritdoc />
