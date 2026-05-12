@@ -76,9 +76,7 @@ public sealed class LoginUseCaseManager : ILoginUseCaseManager
             tokenHash: refreshToken.RefreshTokenHash,
             sessionId: sessionId,
             createdAtUtc: nowUtc,
-            expiresAtUtc: refreshToken.ExpiresAtUtc,
-            revokedAtUtc: null,
-            replacedByTokenId: null);
+            expiresAtUtc: refreshToken.ExpiresAtUtc);
 
         await _refreshTokenRepository.CreateRefreshTokenAsync(
             refreshTokenModel,

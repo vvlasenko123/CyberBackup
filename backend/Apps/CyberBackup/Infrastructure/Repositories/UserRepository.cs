@@ -3,6 +3,7 @@ using Domain.User;
 using Domain.User.Enums;
 using Domain.User.ValueObjects;
 using Infrastructure.Database.Connection.Contracts;
+using Infrastructure.Repositories.Models;
 
 namespace Infrastructure.Repositories;
 
@@ -88,7 +89,7 @@ public sealed class UserRepository : IUserRepository
                                LIMIT 1;
                            """;
 
-        var user = await _connection.QueryFirstOrDefaultAsync<UserRow>(
+        var user = await _connection.QueryFirstOrDefaultAsync<UserDbModel>(
             sql,
             new { Email = email },
             cancellationToken);
@@ -109,28 +110,5 @@ public sealed class UserRepository : IUserRepository
             createdBy: user.CreatedBy,
             createdAt: user.CreatedAt,
             updatedAt: user.UpdatedAt);
-    }
-
-    private sealed class UserRow
-    {
-        public Guid Id { get; init; }
-
-        public string Email { get; init; }
-
-        public string FullName { get; init; }
-
-        public string Password { get; init; }
-
-        public int Role { get; init; }
-
-        public bool IsActive { get; init; }
-
-        public bool MustChangePassword { get; init; }
-
-        public Guid? CreatedBy { get; init; }
-
-        public DateTimeOffset CreatedAt { get; init; }
-
-        public DateTimeOffset UpdatedAt { get; init; }
     }
 }

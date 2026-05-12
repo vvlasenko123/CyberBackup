@@ -51,17 +51,13 @@ public sealed class RefreshTokenModel : AggregateRoot<Guid>
         string tokenHash,
         Guid sessionId,
         DateTimeOffset createdAtUtc,
-        DateTimeOffset expiresAtUtc,
-        DateTimeOffset? revokedAtUtc,
-        Guid? replacedByTokenId) : base(id)
+        DateTimeOffset expiresAtUtc) : base(id)
     {
         UserId = userId;
         TokenHash = tokenHash;
         SessionId = sessionId;
         CreatedAtUtc = createdAtUtc;
         ExpiresAtUtc = expiresAtUtc;
-        RevokedAtUtc = revokedAtUtc;
-        ReplacedByTokenId = replacedByTokenId;
     }
 
     /// <summary>
