@@ -11,6 +11,8 @@ using Api.Auth;
 using Api.Extensions;
 using Application.Abstractions.Services.Calendar.Hubs;
 using Infrastucture.S3;
+using Api.Services.Auth;
+using Application.Abstractions.UseCases.User;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Api;
@@ -58,6 +60,8 @@ public class StartUp
         services.AddMinioStorage();
         services.AddCore();
         services.AddApplication();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, CurrentUser>();
     }
 
     /// <summary>
