@@ -7,7 +7,7 @@ using Domain.User.Enums;
 using Domain.User.ValueObjects;
 using Infrastructure.Exceptions.User;
 
-namespace Application.Features.Auth.Register;
+namespace Application.Abstractions.UseCases.Auth.Register;
 
 /// <inheritdoc />
 public sealed class RegisterUseCaseManager : IRegisterUseCaseManager
@@ -45,7 +45,7 @@ public sealed class RegisterUseCaseManager : IRegisterUseCaseManager
 
         if (exists)
         {
-            throw new InvalidEmailException("Пользователь с такой почтой уже существует");
+            throw new InvalidEmailException("Неверный логин или пароль");
         }
 
         var nowUtc = DateTimeOffset.UtcNow;
@@ -61,7 +61,7 @@ public sealed class RegisterUseCaseManager : IRegisterUseCaseManager
             role: UserRole.Student,
             isActive: true,
             mustChangePassword: false,
-            createdBy: null,  
+            createdBy: null,
             createdAt: nowUtc,
             updatedAt: nowUtc);
 
@@ -80,12 +80,6 @@ public sealed class RegisterUseCaseManager : IRegisterUseCaseManager
             UserId: userId,
             Role: UserRole.Student,
             AccessToken: accessToken.AccessToken,
-            JwtId: accessToken.JwtId,
-            SessionId: sessionId,
-            ClientId: _authTokenDefaultsService.ClientId,
-            Scopes: _authTokenDefaultsService.Scopes,
-            Roles: DefaultRoles,
-            IssuedAtUtc: accessToken.IssuedAtUtc,
             ExpiresAtUtc: accessToken.ExpiresAtUtc);
     }
 }

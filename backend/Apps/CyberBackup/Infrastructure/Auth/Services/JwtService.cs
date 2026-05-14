@@ -3,7 +3,9 @@ using System.Security.Claims;
 using System.Text;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.DTO.Auth;
+using Domain.User.Enums;
 using Infrastructure.Auth.Options;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -19,12 +21,14 @@ public sealed class JwtService : IJwtService
     private readonly JwtOptions _options;
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly SigningCredentials _signingCredentials;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     /// <summary>
     /// Создать сервис генерации JWT.
     /// </summary>
-    public JwtService(IOptions<JwtOptions> options)
+    public JwtService(IOptions<JwtOptions> options, IHttpContextAccessor httpContextAccessor)
     {
+        _httpContextAccessor = httpContextAccessor;
         _options = options.Value;
         _tokenHandler = new JwtSecurityTokenHandler();
 
@@ -68,6 +72,43 @@ public sealed class JwtService : IJwtService
             JwtId: jwtId,
             IssuedAtUtc: issuedAtUtc,
             ExpiresAtUtc: expiresAtUtc);
+    }
+
+    /// <inheritdoc />
+    public CurrentTokenUserDto GetCurrentUser()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+
+        if (user is null)
+        {
+            throw new InvalidOperationException("Контекст пользователя отсутствует");
+        }
+
+        var userIdText = user.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+        if (string.IsNullOrWhiteSpace(userIdText))
+        {
+            throw new InvalidOperationException("В токене отсутствует идентификатор пользователя");
+        }
+
+        if (!Guid.TryParse(userIdText, out var userId))
+        {
+            throw new InvalidOperationException("В токене некорректный идентификатор пользователя");
+        }
+        
+        var roleText = user.FindFirstValue(ClaimTypes.Role) ?? user.FindFirstValue(AuthClaimNames.Role);
+
+        if (string.IsNullOrWhiteSpace(roleText))
+        {
+            throw new InvalidOperationException("В токене отсутствует роль пользователя");
+        }
+
+        if (!Enum.TryParse<UserRole>(roleText, true, out var role))
+        {
+            throw new InvalidOperationException("В токене некорректная роль пользователя");
+        }
+
+        return new CurrentTokenUserDto(UserId: userId, Role: role);
     }
 
     /// <summary>
@@ -118,7 +159,7 @@ public sealed class JwtService : IJwtService
 
             if (roleSet.Add(role))
             {
-                claims.Add(new Claim(AuthClaimNames.Role, role));
+                claims.Add(new Claim(AuthClaimNames.Role, role.ToLowerInvariant()));
             }
         }
 

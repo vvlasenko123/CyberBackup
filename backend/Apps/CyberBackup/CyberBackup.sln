@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.AutoMapper",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.Exceptions", "..\..\Libs\Infrastructure\Infrastructure.Exceptions\Infrastructure.Exceptions.csproj", "{64713C7B-0B9D-484F-BA0D-8C980255A66A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Security.Auth", "..\..\Libs\Security\Security.Auth\Security.Auth.csproj", "{C106EAB3-D89C-489B-869C-74EF125DD5DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -197,6 +199,18 @@ Global
 		{64713C7B-0B9D-484F-BA0D-8C980255A66A}.Release|x64.Build.0 = Release|Any CPU
 		{64713C7B-0B9D-484F-BA0D-8C980255A66A}.Release|x86.ActiveCfg = Release|Any CPU
 		{64713C7B-0B9D-484F-BA0D-8C980255A66A}.Release|x86.Build.0 = Release|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Debug|x64.Build.0 = Debug|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Debug|x86.Build.0 = Debug|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Release|x64.ActiveCfg = Release|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Release|x64.Build.0 = Release|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Release|x86.ActiveCfg = Release|Any CPU
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -211,5 +225,6 @@ Global
 		{4EB24A10-6BAF-455D-AB86-05D82470E686} = {E2C4CE85-02E7-47A5-8F29-E326F26AC71C}
 		{4E722AB2-E846-4F83-9D8F-80C9CCE72EBA} = {E2C4CE85-02E7-47A5-8F29-E326F26AC71C}
 		{64713C7B-0B9D-484F-BA0D-8C980255A66A} = {E2C4CE85-02E7-47A5-8F29-E326F26AC71C}
+		{C106EAB3-D89C-489B-869C-74EF125DD5DD} = {E2C4CE85-02E7-47A5-8F29-E326F26AC71C}
 	EndGlobalSection
 EndGlobal

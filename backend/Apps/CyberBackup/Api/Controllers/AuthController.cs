@@ -1,12 +1,11 @@
 ﻿using Api.Auth;
 using Api.Controllers.Models.Request;
-using Api.Services.Auth;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.DTO.Auth;
 using AutoMapper;
 using Infrastructure.Core.Controllers.Public;
-using Infrastructure.Exceptions.User;
 using Microsoft.AspNetCore.Mvc;
+using Security.Auth.Admin.Constants;
 
 namespace Api.Controllers;
 
@@ -61,7 +60,7 @@ public sealed class AuthController : PublicController
         {
             return Unauthorized(new
             {
-                Message = "Неверный email или пароль"
+                Message = SecurityText.InvalidEmailOrPassword
             });
         }
 

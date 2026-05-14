@@ -84,11 +84,9 @@ public sealed class LoginUseCaseManager : ILoginUseCaseManager
 
         return new LoginResultDto(
             UserId: user.Id,
-            Role: user.Role,
             AccessToken: accessToken.AccessToken,
             RefreshToken: refreshToken.RefreshToken,
-            SessionId: sessionId,
-            AccessTokenExpiresAtUtc: accessToken.ExpiresAtUtc,
+            ExpiresAt: accessToken.ExpiresAtUtc,
             RefreshTokenExpiresAtUtc: refreshToken.ExpiresAtUtc);
     }
 }

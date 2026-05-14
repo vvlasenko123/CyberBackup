@@ -28,7 +28,7 @@ public sealed class Email : ValueObject<Email>
         {
             throw new InvalidEmailException("Email имеет некорректный формат");
         }
-        
+
         Value = email;
     }
 
@@ -42,5 +42,11 @@ public sealed class Email : ValueObject<Email>
     public override int GetHashCode()
     {
         return Value.GetHashCode();
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return Value;
     }
 }

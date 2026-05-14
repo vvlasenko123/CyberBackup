@@ -52,4 +52,10 @@ public sealed class FullName : ValueObject<FullName>
     {
         return Value.GetHashCode();
     }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return Value;
+    }
 }

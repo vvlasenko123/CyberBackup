@@ -3,10 +3,10 @@ namespace Infrastructure.Core.Services.Contracts.Delete;
 /// <summary>
 /// Контракт для логики удаления Service
 /// </summary>
-public interface IDeleteService<in TRequest, TResponse>
+public interface IDeleteService<in TRequest>
 {
     /// <summary>
-    /// Создание без параметров
+    /// удаление без параметров
     /// </summary>
-    Task<TResponse> Delete(TRequest request);
+    Task Delete(TRequest request, CancellationToken cancellationToken);
 }

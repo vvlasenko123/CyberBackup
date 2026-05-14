@@ -11,4 +11,9 @@ public interface IJwtService
     /// Сгенерировать access token.
     /// </summary>
     GeneratedAccessTokenDto GenerateAccessToken(TokenUserDataDto userData);
+
+    /// <summary>
+    /// Получить текущего пользователя из токена
+    /// </summary>
+    CurrentTokenUserDto GetCurrentUser();
 }

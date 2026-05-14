@@ -6,7 +6,9 @@ using Infrastructure.Database.Migrations.Contracts;
 using Infrastructure.Migrations;
 using Infrastructure.Options.Configuration.Public;
 using Infrastructure.Repositories;
+using Infrastructure.Seeds;
 using Microsoft.Extensions.DependencyInjection;
+using Security.Auth.Admin.Options;
 
 namespace Infrastructure;
 
@@ -25,6 +27,7 @@ public static class InfrastructureStartUp
         services.AddOptions<RefreshTokenOptions>().BindConfigurationOptions();
         services.AddOptions<AuthTokenOptions>().BindConfigurationOptions();
         services.AddOptions<PasswordHashOptions>().BindConfigurationOptions();
+        services.AddOptions<SuperAdminOptions>().BindConfigurationOptions();
         #endregion
 
         #region migrations
@@ -40,10 +43,15 @@ public static class InfrastructureStartUp
         #endregion
 
         #region auth
+        services.AddHttpContextAccessor();
         services.AddScoped<IPasswordHashService, BcryptPasswordHashService>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddSingleton<IAuthTokenDefaultsService, AuthTokenDefaultsService>();
+        #endregion
+
+        #region seeds
+        services.AddHostedService<SuperAdminSeedHostedService>();
         #endregion
     }
 }

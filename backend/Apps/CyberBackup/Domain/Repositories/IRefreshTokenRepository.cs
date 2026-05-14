@@ -1,12 +1,11 @@
 ﻿using Domain.Auth;
-using Infrastructure.Core.Repositories.Contracts.Create;
 
 namespace Domain.Repositories;
 
 /// <summary>
 /// Репозиторий refresh token
 /// </summary>
-public interface IRefreshTokenRepository : ICreateRepository<RefreshTokenModel, Guid>
+public interface IRefreshTokenRepository
 {
     /// <summary>
     /// Создать refresh token

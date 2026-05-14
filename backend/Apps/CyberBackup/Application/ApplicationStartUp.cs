@@ -1,10 +1,10 @@
 ﻿using Application.Abstractions.Services.User;
 using Application.Abstractions.Services.User.Contracts;
 using Application.Abstractions.UseCases.Auth.Contracts;
+using Application.Abstractions.UseCases.Auth.Register;
 using Application.Abstractions.UseCases.User;
 using Application.Abstractions.UseCases.User.Contracts;
 using Application.Features.Auth.Login;
-using Application.Features.Auth.Register;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application;
@@ -20,12 +20,17 @@ public static class ApplicationStartUp
     public static void AddApplication(this IServiceCollection services)
     {
         services.AddScoped<ICreateUserUseCaseManager, CreateUserUseCaseManager>();
+        services.AddScoped<IUpdateUserUseCaseManager, UpdateUserUseCaseManager>();
+        services.AddScoped<IDeleteUserUseCaseManager, DeleteUserUseCaseManager>();
+        services.AddScoped<IGetUserUseCaseManager, GetUserUseCaseManager>();
+        services.AddScoped<IChangePasswordUseCaseManager, ChangePasswordUseCaseManager>();
+
         services.AddScoped<ICreateUserService, CreateUserService>();
-        
+        services.AddScoped<IUpdateUserService, UpdateUserService>();
+        services.AddScoped<IDeleteUserService, DeleteUserService>();
+        services.AddScoped<IGetUserService, GetUserService>();
+
         services.AddScoped<IRegisterUseCaseManager, RegisterUseCaseManager>();
         services.AddScoped<ILoginUseCaseManager, LoginUseCaseManager>();
-        
-        //todo после добавления токена надо удалить
-        services.AddScoped<ICurrentUser, FakeCurrentUser>();
     }
 }

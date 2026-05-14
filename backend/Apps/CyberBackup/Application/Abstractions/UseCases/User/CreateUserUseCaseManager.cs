@@ -1,55 +1,32 @@
+using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.User.Contracts;
 using Application.Abstractions.UseCases.User.Contracts;
-using Application.DTO;
-using Domain.User.Enums;
-using Microsoft.AspNetCore.Authentication;
+using Application.DTO.User;
+using Application.DTO.User.Validate;
 
 namespace Application.Abstractions.UseCases.User;
 
 /// <inheritdoc />
-public class CreateUserUseCaseManager : ICreateUserUseCaseManager
+public sealed class CreateUserUseCaseManager : ICreateUserUseCaseManager
 {
     private readonly ICreateUserService _createUserService;
-    private readonly ICurrentUser _currentUser;
+    private readonly IJwtService _jwtService;
 
     public CreateUserUseCaseManager(
         ICreateUserService createUserService,
-        ICurrentUser currentUser)
+        IJwtService jwtService)
     {
         _createUserService = createUserService;
-        _currentUser = currentUser;
+        _jwtService = jwtService;
     }
 
     /// <inheritdoc />
     public async Task Execute(UserDto request, CancellationToken cancellationToken)
     {
-        // todo currentUser получаем из токена
-        Validate(request);
-        await _createUserService.Create(request, cancellationToken);
+        var currentUser = _jwtService.GetCurrentUser();
+
+        UserRolePermissionValidator.ValidateCreate(currentUserRole: currentUser.Role, newUserRole: request.Role);
+
+        await _createUserService.Create(request, currentUser.UserId, cancellationToken);
     }
-
-    /// <summary>
-    /// Проверка прав пользователя
-    /// </summary>
-    private void Validate(UserDto request)
-    {
-        if (_currentUser.Role != UserRole.Admin && request.Role != UserRole.Student)
-        {
-            throw new InvalidOperationException("Недостаточно прав для создания пользователя с такой ролью");
-        }
-    }
-}
-
-// todo после добавленя токена надо удалить
-public sealed class FakeCurrentUser : ICurrentUser
-{
-    public Guid UserId { get; } = Guid.NewGuid();
-
-    public UserRole Role { get; } = UserRole.Admin;
-}
-
-public interface ICurrentUser
-{
-    Guid UserId { get; }
-    UserRole Role { get; }
 }

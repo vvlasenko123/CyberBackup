@@ -18,5 +18,10 @@ public enum UserRole
     /// <summary>
     /// Роль администратора
     /// </summary>
-    Admin = 2
+    Admin = 2,
+
+    /// <summary>
+    /// Роль суперадминистратора
+    /// </summary>
+    SuperAdmin = 3
 }

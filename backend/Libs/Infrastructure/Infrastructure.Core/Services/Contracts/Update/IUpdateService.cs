@@ -3,10 +3,10 @@ namespace Infrastructure.Core.Services.Contracts.Update;
 /// <summary>
 /// Контракт для логики обновления Service
 /// </summary>
-public interface IUpdateService<in TRequest, TResponse>
+public interface IUpdateService<in TRequest>
 {
     /// <summary>
-    /// Создание без параметров
+    /// Обновление без параметров
     /// </summary>
-    Task<TResponse> Update(TRequest request);
+    Task Update(TRequest request, CancellationToken cancellationToken);
 }

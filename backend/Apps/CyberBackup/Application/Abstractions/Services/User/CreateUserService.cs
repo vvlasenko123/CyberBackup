@@ -1,8 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.User.Contracts;
 using Application.DTO;
+using Application.DTO.User;
 using Domain.Repositories;
 using Domain.User;
 using Domain.User.ValueObjects;
@@ -25,19 +24,28 @@ public class CreateUserService : ICreateUserService
     }
 
     /// <inheritdoc />
-    public async Task Create(UserDto request, CancellationToken token)
+    public async Task Create(UserDto request, Guid currentUserId, CancellationToken token)
     {
+        var email = new Email(request.Email);
+
+        var exists = await _userRepository.ExistsByEmailAsync(email.Value, token);
+
+        if (exists)
+        {
+            throw new InvalidEmailException("Пользователь с такой почтой уже существует");
+        }
+
         var passwordHash = _passwordHashService.Hash(request.Password);
         
         var user = new UserModel(
             id: UUIDNext.Uuid.NewSequential(),
-            new Email(request.Email),
-            new FullName(request.FullName),
-            new PasswordHash(passwordHash),
-            request.Role,
+            email: email,
+            fullName: new FullName(request.FullName),
+            password: new PasswordHash(passwordHash),
+            role: request.Role,
             isActive: true,
             mustChangePassword: false,
-            createdBy: request.CurrentUserId,
+            createdBy: currentUserId,
             createdAt: DateTimeOffset.UtcNow,
             updatedAt: DateTimeOffset.UtcNow);
 

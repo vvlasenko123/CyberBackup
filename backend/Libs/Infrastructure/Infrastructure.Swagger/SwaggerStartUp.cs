@@ -11,6 +11,11 @@ namespace Infrastructure.Swagger;
 public static class SwaggerStartUp
 {
     /// <summary>
+    /// Название схемы авторизации.
+    /// </summary>
+    private const string BearerSecurityScheme = "Bearer";
+
+    /// <summary>
     /// Регистрация Swagger в DI
     /// </summary>
     public static void AddSwaggerDocumentation(this IServiceCollection services, string? apiName, string? version)
@@ -26,6 +31,21 @@ public static class SwaggerStartUp
             {
                 Title = apiName,
                 Version = version
+            });
+
+            options.AddSecurityDefinition(BearerSecurityScheme, new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Description = "Введите JWT токен в формате: Bearer {token}",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
+            });
+
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference(BearerSecurityScheme, document)] = []
             });
 
             var basePath = AppContext.BaseDirectory;

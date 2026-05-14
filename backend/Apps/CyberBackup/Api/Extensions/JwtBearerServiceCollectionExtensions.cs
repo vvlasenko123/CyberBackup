@@ -58,7 +58,7 @@ public static class JwtBearerServiceCollectionExtensions
             ClockSkew = TimeSpan.Zero,
 
             NameClaimType = JwtRegisteredClaimNames.Sub,
-            RoleClaimType = AuthClaimNames.Role
+            RoleClaimType = AuthClaimNames.Role.ToLowerInvariant()
         };
 
         options.Events = new JwtBearerEvents

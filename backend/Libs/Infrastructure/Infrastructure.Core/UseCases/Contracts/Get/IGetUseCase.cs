@@ -8,5 +8,5 @@ public interface IGetUseCase<in TRequest, TResponse>
     /// <summary>
     /// Выполнение операции получения
     /// </summary>
-    Task<TResponse> Execute(TRequest request);
+    Task<TResponse?> Execute(TRequest request, CancellationToken cancellationToken);
 }

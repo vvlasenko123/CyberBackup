@@ -8,5 +8,5 @@ public interface ICreateService<in TRequest>
     /// <summary>
     /// Создание без параметров
     /// </summary>
-    Task Create(TRequest request, CancellationToken token);
+    Task Create(TRequest request, Guid currentUserId, CancellationToken token);
 }

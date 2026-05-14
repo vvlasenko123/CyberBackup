@@ -1,39 +1,116 @@
 using Api.Controllers.Models.Request;
+using Api.Controllers.Models.Response;
 using Application.Abstractions.UseCases.User.Contracts;
 using Application.DTO;
+using Application.DTO.User;
 using AutoMapper;
 using Infrastructure.Core.Controllers.Public;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Security.Auth.Admin.Constants;
 
 namespace Api.Controllers;
 
 /// <summary>
-/// Контроллер с пользователями
+/// Контроллер с пользователями.
 /// </summary>
 [ApiController]
 [Route("user")]
+[Authorize(Roles = AuthRoleNames.AdminOrSuperAdmin)]
 public class UserController : PublicController
 {
     private readonly IMapper _mapper;
     private readonly ICreateUserUseCaseManager _createUserUseCaseManager;
+    private readonly IUpdateUserUseCaseManager _updateUserUseCaseManager;
+    private readonly IDeleteUserUseCaseManager _deleteUserUseCaseManager;
+    private readonly IGetUserUseCaseManager _getUserUseCaseManager;
 
-    /// <summary>
-    /// флоу
-    /// 1) из токена мы получаем текущего пользователя
-    /// 2) исходя из роли определяем может ли создать пользователь другого пользователя
-    /// </summary>
-    public UserController(IMapper mapper, ICreateUserUseCaseManager createUserUseCaseManager)
+    public UserController(
+        IMapper mapper,
+        ICreateUserUseCaseManager createUserUseCaseManager,
+        IUpdateUserUseCaseManager updateUserUseCaseManager,
+        IDeleteUserUseCaseManager deleteUserUseCaseManager,
+        IGetUserUseCaseManager getUserUseCaseManager)
     {
         _mapper = mapper;
         _createUserUseCaseManager = createUserUseCaseManager;
+        _updateUserUseCaseManager = updateUserUseCaseManager;
+        _deleteUserUseCaseManager = deleteUserUseCaseManager;
+        _getUserUseCaseManager = getUserUseCaseManager;
     }
 
+    /// <summary>
+    /// Создать пользователя
+    /// </summary>
     [HttpPost("create")]
-    public async Task<IActionResult> CreateUser(CreateUserRequest request, CancellationToken token)
+    public async Task<IActionResult> CreateUser(
+        CreateUserRequest request,
+        CancellationToken token)
     {
         var dto = _mapper.Map<UserDto>(request);
+
         await _createUserUseCaseManager.Execute(dto, token);
 
         return Created();
+    }
+
+    /// <summary>
+    /// Изменить пользователя
+    /// </summary>
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateUser(Guid id, UpdateUserRequest request, CancellationToken token)
+    {
+        var dto = _mapper.Map<UpdateUserDto>(request) with
+        {
+            Id = id
+        };
+
+        await _updateUserUseCaseManager.Execute(dto, token);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Удалить пользователя
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteUser(Guid id, CancellationToken token)
+    {
+        await _deleteUserUseCaseManager.Execute(id, token);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Получить пользователя
+    /// </summary>
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetUser(Guid id, CancellationToken token)
+    {
+        var user = await _getUserUseCaseManager.Execute(id, token);
+
+        if (user is null)
+        {
+            return NotFound(new
+            {
+                Message = "Пользователь не найден"
+            });
+        }
+
+        var response = _mapper.Map<UserResponse>(user);
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Получить всех пользователей
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetAllUsers(CancellationToken token)
+    {
+        var users = await _getUserUseCaseManager.Execute(token);
+        var response = _mapper.Map<IReadOnlyCollection<UserResponse>>(users);
+
+        return Ok(response);
     }
 }

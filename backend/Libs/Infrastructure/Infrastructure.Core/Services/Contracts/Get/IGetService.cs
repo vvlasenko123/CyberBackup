@@ -8,5 +8,5 @@ public interface IGetService<in TRequest, TResponse>
     /// <summary>
     /// Создание без параметров
     /// </summary>
-    Task<TResponse> Get(TRequest request);
+    Task<TResponse?> Get(TRequest request, CancellationToken cancellationToken);
 }

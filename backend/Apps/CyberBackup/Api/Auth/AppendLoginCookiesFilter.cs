@@ -1,4 +1,5 @@
-﻿using Application.DTO.Auth;
+﻿using Api.Controllers.Models.Response;
+using Application.DTO.Auth;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -41,7 +42,7 @@ public sealed class AppendLoginCookiesFilter : IAsyncResultFilter
             context.HttpContext,
             AuthCookieNames.AccessToken,
             result.AccessToken,
-            CreateCookieOptions(context.HttpContext, result.AccessTokenExpiresAtUtc));
+            CreateCookieOptions(context.HttpContext, result.ExpiresAt));
 
         _cookieManager.AppendResponseCookie(
             context.HttpContext,
@@ -49,7 +50,9 @@ public sealed class AppendLoginCookiesFilter : IAsyncResultFilter
             result.RefreshToken,
             CreateCookieOptions(context.HttpContext, result.RefreshTokenExpiresAtUtc));
 
-        context.Result = new OkResult();
+        context.Result = new OkObjectResult(new LoginResponse(
+            AccessToken: result.AccessToken,
+            ExpiresAt: result.ExpiresAt));
 
         await next();
     }

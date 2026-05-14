@@ -19,14 +19,14 @@ public sealed class PostgresAutoMigrationHostedService : IHostedService
     /// Провайдер
     /// </summary>
     private readonly IServiceProvider _serviceProvider;
-    
+
     /// <summary>
-    /// опции
+    /// Опции
     /// </summary>
     private readonly IOptions<PostgresOptions> _options;
-    
+
     /// <summary>
-    /// логгер
+    /// Логгер
     /// </summary>
     private readonly ILogger<PostgresAutoMigrationHostedService> _logger;
 
@@ -55,7 +55,7 @@ public sealed class PostgresAutoMigrationHostedService : IHostedService
     }
 
     /// <summary>
-    /// старт миграций
+    /// Старт миграций
     /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -73,61 +73,83 @@ public sealed class PostgresAutoMigrationHostedService : IHostedService
 
         _logger.LogInformation("Начато применение миграций Postgres");
 
-        using (var scope = _serviceProvider.CreateScope())
+        using var scope = _serviceProvider.CreateScope();
+
+        await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
+
+        await connection.ExecuteAsync("""
+            CREATE TABLE IF NOT EXISTS public.migrations (
+                id TEXT PRIMARY KEY,
+                applied_at TIMESTAMPTZ NOT NULL
+            );
+        """);
+
+        var applied = (await connection.QueryAsync<string>(
+                "SELECT id FROM public.migrations"))
+            .ToHashSet();
+
+        var migrations = scope.ServiceProvider
+            .GetServices<IDatabaseMigration>()
+            .OrderBy(x => GetMigrationOrder(x.Id))
+            .ToList();
+
+        if (!migrations.Any())
         {
-            var connection = await _connection.CreateConnectionAsync(cancellationToken);
-            await connection.ExecuteAsync("""
-                CREATE TABLE IF NOT EXISTS migrations (
-                    id TEXT PRIMARY KEY,
-                    applied_at TIMESTAMPTZ NOT NULL
-                );
-            """);
+            _logger.LogInformation("Миграции Postgres не найдены");
+            return;
+        }
 
-            var applied = (await connection.QueryAsync<string>(
-                "SELECT id FROM migrations"))
-                .ToHashSet();
-
-            var migrations = scope.ServiceProvider
-                .GetServices<IDatabaseMigration>()
-                .OrderBy(x => x.Id)
-                .ToList();
-
-            if (!migrations.Any())
+        foreach (var migration in migrations)
+        {
+            if (cancellationToken.IsCancellationRequested)
             {
-                _logger.LogInformation("Миграции Postgres не найдены");
-                return;
+                break;
             }
 
-            foreach (var migration in migrations)
+            if (applied.Contains(migration.Id))
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-
-                if (applied.Contains(migration.Id))
-                {
-                    continue;
-                }
-
-                _logger.LogInformation("Применение миграции {MigrationId}", migration.Id);
-
-                await migration.MigrateUp(cancellationToken);
-
-                await connection.ExecuteAsync(
-                    "INSERT INTO migrations (id, applied_at) VALUES (@Id, now())",
-                    new { migration.Id });
+                continue;
             }
+
+            _logger.LogInformation("Применение миграции {MigrationId}", migration.Id);
+
+            await migration.MigrateUp(cancellationToken);
+
+            await connection.ExecuteAsync(
+                "INSERT INTO public.migrations (id, applied_at) VALUES (@Id, now())",
+                new { migration.Id });
         }
 
         _logger.LogInformation("Применение миграций завершено");
     }
 
     /// <summary>
-    /// стоп миграциям
+    /// Стоп миграциям
     /// </summary>
     public Task StopAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Получить порядок миграции из названия.
+    /// </summary>
+    private static long GetMigrationOrder(string migrationId)
+    {
+        var separatorIndex = migrationId.LastIndexOf('_');
+
+        if (separatorIndex < 0)
+        {
+            throw new InvalidOperationException($"Некорректное имя миграции: {migrationId}");
+        }
+
+        var orderText = migrationId[(separatorIndex + 1)..];
+
+        if (!long.TryParse(orderText, out var order))
+        {
+            throw new InvalidOperationException($"Некорректный порядок миграции: {migrationId}");
+        }
+
+        return order;
     }
 }

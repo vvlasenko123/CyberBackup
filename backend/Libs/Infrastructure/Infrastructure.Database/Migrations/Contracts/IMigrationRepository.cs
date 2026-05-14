@@ -1,4 +1,3 @@
-using Infrastructure.Core.Repositories.Contracts.Get;
 using Infrastructure.Database.Migrations.Aggregate;
 
 namespace Infrastructure.Database.Migrations.Contracts;
@@ -6,7 +5,7 @@ namespace Infrastructure.Database.Migrations.Contracts;
 /// <summary>
 /// Репозиторий для работы с состоянием миграций базы данных
 /// </summary>
-public interface IMigrationRepository : IGetRepository<Migration, string>
+public interface IMigrationRepository
 {
     /// <summary>
     /// Применение миграций

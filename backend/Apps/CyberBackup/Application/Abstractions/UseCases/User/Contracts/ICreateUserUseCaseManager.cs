@@ -1,4 +1,4 @@
-using Application.DTO;
+using Application.DTO.User;
 using Infrastructure.Core.UseCases.Contracts.Create;
 
 namespace Application.Abstractions.UseCases.User.Contracts;
