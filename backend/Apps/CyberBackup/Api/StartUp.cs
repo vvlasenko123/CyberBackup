@@ -10,6 +10,7 @@ using Security.Host.Cors;
 using Api.Auth;
 using Api.Extensions;
 using Application.Abstractions.Services.Calendar.Hubs;
+using Infrastucture.S3;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Api;
@@ -53,6 +54,7 @@ public class StartUp
 
         services.AddCyberMapper(assemblies: Assembly.GetExecutingAssembly());
         services.AddPostgres();
+        services.AddMinioStorage();
         services.AddCore();
         services.AddApplication();
     }

@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.Logging\Infrastructure.Logging.csproj" />
     <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.Options\Infrastructure.Options.csproj" />
     <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.Swagger\Infrastructure.Swagger.csproj" />
+    <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastucture.S3\Infrastucture.S3.csproj" />
     <ProjectReference Include="..\..\..\Libs\Security\Security.Host\Security.Host.csproj" />
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
