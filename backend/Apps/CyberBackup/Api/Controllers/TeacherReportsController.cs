@@ -35,9 +35,7 @@ public sealed class TeacherReportsController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetTeacherReportsAsync(request, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -49,9 +47,7 @@ public sealed class TeacherReportsController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetTeacherReportDetailsAsync(reportId, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -80,8 +76,6 @@ public sealed class TeacherReportsController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.ReviewReportAsync(reportId, request, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 }

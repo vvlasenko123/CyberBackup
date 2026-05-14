@@ -31,9 +31,7 @@ public sealed class TeacherLaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetTeacherLaboratoriesAsync(request, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -45,9 +43,7 @@ public sealed class TeacherLaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetTeacherLaboratoryDetailsAsync(laboratoryId, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -59,9 +55,7 @@ public sealed class TeacherLaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.CreateLaboratoryAsync(request, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -74,9 +68,7 @@ public sealed class TeacherLaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         await _laboratoryService.UpdateLaboratoryAsync(laboratoryId, request, cancellationToken);
-        var result = Ok();
-
-        return result;
+        return Ok();
     }
 
     /// <summary>
@@ -88,8 +80,6 @@ public sealed class TeacherLaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         await _laboratoryService.DeleteLaboratoryAsync(laboratoryId, cancellationToken);
-        var result = Ok();
-
-        return result;
+        return Ok();
     }
 }

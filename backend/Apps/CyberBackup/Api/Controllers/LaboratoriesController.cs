@@ -37,9 +37,7 @@ public sealed class LaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetStudentLaboratoriesAsync(request, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -51,9 +49,7 @@ public sealed class LaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetStudentLaboratoryDetailsAsync(laboratoryId, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -66,9 +62,7 @@ public sealed class LaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.OpenHintAsync(laboratoryId, hintId, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -81,9 +75,7 @@ public sealed class LaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.SubmitFlagAsync(laboratoryId, request, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -98,9 +90,7 @@ public sealed class LaboratoriesController : PublicController
     {
         var file = _uploadRequestFactory.Create(request.File);
         var response = await _laboratoryService.UploadReportAsync(laboratoryId, file, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -112,9 +102,7 @@ public sealed class LaboratoriesController : PublicController
         CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetMyReportAsync(laboratoryId, cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 
     /// <summary>
@@ -124,8 +112,6 @@ public sealed class LaboratoriesController : PublicController
     public async Task<IActionResult> GetMyProgress(CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetMyProgressAsync(cancellationToken);
-        var result = Ok(response);
-
-        return result;
+        return Ok(response);
     }
 }
