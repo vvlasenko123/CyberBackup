@@ -57,7 +57,7 @@ public class UserController : PublicController
     /// <summary>
     /// Изменить пользователя
     /// </summary>
-    [HttpPut("{id:guid}")]
+    [HttpPut("update/{id:guid}")]
     public async Task<IActionResult> UpdateUser(Guid id, UpdateUserRequest request, CancellationToken token)
     {
         var dto = _mapper.Map<UpdateUserDto>(request) with
@@ -73,7 +73,7 @@ public class UserController : PublicController
     /// <summary>
     /// Удалить пользователя
     /// </summary>
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("delete/{id:guid}")]
     public async Task<IActionResult> DeleteUser(Guid id, CancellationToken token)
     {
         await _deleteUserUseCaseManager.Execute(id, token);
@@ -84,7 +84,7 @@ public class UserController : PublicController
     /// <summary>
     /// Получить пользователя
     /// </summary>
-    [HttpGet("{id:guid}")]
+    [HttpGet("get/{id:guid}")]
     public async Task<IActionResult> GetUser(Guid id, CancellationToken token)
     {
         var user = await _getUserUseCaseManager.Execute(id, token);
@@ -105,7 +105,7 @@ public class UserController : PublicController
     /// <summary>
     /// Получить всех пользователей
     /// </summary>
-    [HttpGet]
+    [HttpGet("get-all")]
     public async Task<IActionResult> GetAllUsers(CancellationToken token)
     {
         var users = await _getUserUseCaseManager.Execute(token);
