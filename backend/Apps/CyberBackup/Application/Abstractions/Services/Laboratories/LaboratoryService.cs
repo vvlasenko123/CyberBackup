@@ -2,6 +2,7 @@ using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.Abstractions.UseCases.User;
 using Application.DTO.Laboratories;
 using Domain.Laboratories.Enums;
+using Domain.User.Enums;
 
 namespace Application.Abstractions.Services.Laboratories;
 
@@ -115,16 +116,14 @@ public sealed class LaboratoryService : ILaboratoryService
             throw new LaboratoryException("laboratory_flag.too_long", "Флаг слишком длинный");
         }
 
-        var details = await _repository.GetTeacherLaboratoryDetailsAsync(laboratoryId, cancellationToken);
+        var details = await _repository.GetStudentLaboratoryDetailsAsync(
+            _currentUser.UserId,
+            laboratoryId,
+            cancellationToken);
 
-        if (details is null || details.DeleteDateUtc.HasValue)
+        if (details is null)
         {
             throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
-        }
-
-        if (!details.IsPublished)
-        {
-            throw new LaboratoryException("laboratory.not_published", "Лабораторная работа не опубликована");
         }
 
         if (!details.HasFlag)
@@ -221,7 +220,11 @@ public sealed class LaboratoryService : ILaboratoryService
         CancellationToken cancellationToken)
     {
         var normalizedRequest = NormalizePaging(request);
-        var result = _repository.GetTeacherLaboratoriesAsync(normalizedRequest, cancellationToken);
+        var result = _repository.GetTeacherLaboratoriesAsync(
+            normalizedRequest,
+            _currentUser.UserId,
+            IsAdmin(),
+            cancellationToken);
 
         return result;
     }
@@ -233,6 +236,8 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         var laboratory = await _repository.GetTeacherLaboratoryDetailsAsync(
             laboratoryId,
+            _currentUser.UserId,
+            IsAdmin(),
             cancellationToken);
 
         if (laboratory is null)
@@ -254,7 +259,11 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         ValidateLaboratory(request, expectedFlagRequired: request.HasFlag);
         var expectedFlagHash = request.HasFlag ? _flagHashService.HashFlag(request.ExpectedFlag!) : null;
-        var id = await _repository.CreateLaboratoryAsync(request, expectedFlagHash, cancellationToken);
+        var id = await _repository.CreateLaboratoryAsync(
+            request,
+            expectedFlagHash,
+            _currentUser.UserId,
+            cancellationToken);
         var result = new CreateLaboratoryResponse
         {
             Id = id
@@ -278,6 +287,8 @@ public sealed class LaboratoryService : ILaboratoryService
             request,
             expectedFlagHash,
             updateFlagHash,
+            _currentUser.UserId,
+            IsAdmin(),
             cancellationToken);
 
         return result;
@@ -286,7 +297,11 @@ public sealed class LaboratoryService : ILaboratoryService
     /// <inheritdoc />
     public Task DeleteLaboratoryAsync(Guid laboratoryId, CancellationToken cancellationToken)
     {
-        var result = _repository.DeleteLaboratoryAsync(laboratoryId, cancellationToken);
+        var result = _repository.DeleteLaboratoryAsync(
+            laboratoryId,
+            _currentUser.UserId,
+            IsAdmin(),
+            cancellationToken);
 
         return result;
     }
@@ -297,7 +312,11 @@ public sealed class LaboratoryService : ILaboratoryService
         CancellationToken cancellationToken)
     {
         var normalizedRequest = NormalizePaging(request);
-        var result = _repository.GetTeacherReportsAsync(normalizedRequest, cancellationToken);
+        var result = _repository.GetTeacherReportsAsync(
+            normalizedRequest,
+            _currentUser.UserId,
+            IsAdmin(),
+            cancellationToken);
 
         return result;
     }
@@ -307,7 +326,11 @@ public sealed class LaboratoryService : ILaboratoryService
         Guid reportId,
         CancellationToken cancellationToken)
     {
-        var report = await _repository.GetTeacherReportDetailsAsync(reportId, cancellationToken);
+        var report = await _repository.GetTeacherReportDetailsAsync(
+            reportId,
+            _currentUser.UserId,
+            IsAdmin(),
+            cancellationToken);
 
         if (report is null)
         {
@@ -327,7 +350,12 @@ public sealed class LaboratoryService : ILaboratoryService
         Guid versionId,
         CancellationToken cancellationToken)
     {
-        var file = await _repository.GetReportFileAsync(reportId, versionId, cancellationToken);
+        var file = await _repository.GetReportFileAsync(
+            reportId,
+            versionId,
+            _currentUser.UserId,
+            IsAdmin(),
+            cancellationToken);
 
         if (file is null)
         {
@@ -374,6 +402,7 @@ public sealed class LaboratoryService : ILaboratoryService
 
         var result = _repository.ReviewReportAsync(
             _currentUser.UserId,
+            IsAdmin(),
             reportId,
             request,
             cancellationToken);
@@ -387,7 +416,11 @@ public sealed class LaboratoryService : ILaboratoryService
         CancellationToken cancellationToken)
     {
         var normalizedRequest = NormalizePaging(request);
-        var result = _repository.GetTeacherGradebookAsync(normalizedRequest, cancellationToken);
+        var result = _repository.GetTeacherGradebookAsync(
+            normalizedRequest,
+            _currentUser.UserId,
+            IsAdmin(),
+            cancellationToken);
 
         return result;
     }
@@ -407,6 +440,7 @@ public sealed class LaboratoryService : ILaboratoryService
             _currentUser.UserId,
             studentId,
             request,
+            IsAdmin(),
             cancellationToken);
 
         return result;
@@ -414,7 +448,11 @@ public sealed class LaboratoryService : ILaboratoryService
 
     private async Task<string?> GetExpectedFlagHashAsync(Guid laboratoryId, CancellationToken cancellationToken)
     {
-        var laboratory = await _repository.GetTeacherLaboratoryDetailsAsync(laboratoryId, cancellationToken);
+        var laboratory = await _repository.GetTeacherLaboratoryDetailsAsync(
+            laboratoryId,
+            _currentUser.UserId,
+            true,
+            cancellationToken);
 
         string? result = null;
 
@@ -529,6 +567,13 @@ public sealed class LaboratoryService : ILaboratoryService
             Page = Math.Max(1, request.Page),
             PageSize = Math.Clamp(request.PageSize, 1, 100)
         };
+
+        return result;
+    }
+
+    private bool IsAdmin()
+    {
+        var result = _currentUser.Role == UserRole.Admin;
 
         return result;
     }

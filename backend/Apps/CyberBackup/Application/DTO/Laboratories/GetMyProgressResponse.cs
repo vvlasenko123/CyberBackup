@@ -7,6 +7,11 @@ namespace Application.DTO.Laboratories;
 /// </summary>
 public sealed record GetMyProgressResponse
 {
+    /// <summary>
+    /// Текстовое описание прогресса для MVP
+    /// </summary>
+    public string Summary { get; init; } = string.Empty;
+
     public int TotalLaboratories { get; init; }
     public int CompletedLaboratories { get; init; }
     public int PendingReviewLaboratories { get; init; }

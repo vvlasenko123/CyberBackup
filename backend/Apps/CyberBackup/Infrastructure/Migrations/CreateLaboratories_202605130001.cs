@@ -36,6 +36,7 @@ internal sealed class CreateZLaboratories_202605130001 : IDatabaseMigration
                                max_points INTEGER NOT NULL,
                                has_flag BOOLEAN NOT NULL,
                                expected_flag_hash VARCHAR(255) NULL,
+                               created_by_teacher_id UUID NULL REFERENCES users (id) ON DELETE SET NULL,
                                is_published BOOLEAN NOT NULL,
                                sort_order INTEGER NOT NULL,
                                create_date_utc TIMESTAMPTZ NOT NULL,
@@ -48,6 +49,11 @@ internal sealed class CreateZLaboratories_202605130001 : IDatabaseMigration
                            CREATE INDEX IF NOT EXISTS ix_laboratory_works_difficulty ON laboratory_works (difficulty);
                            CREATE INDEX IF NOT EXISTS ix_laboratory_works_sort_order ON laboratory_works (sort_order);
                            CREATE INDEX IF NOT EXISTS ix_laboratory_works_delete_date_utc ON laboratory_works (delete_date_utc);
+
+                           ALTER TABLE laboratory_works
+                           ADD COLUMN IF NOT EXISTS created_by_teacher_id UUID NULL REFERENCES users (id) ON DELETE SET NULL;
+
+                           CREATE INDEX IF NOT EXISTS ix_laboratory_works_created_by_teacher_id ON laboratory_works (created_by_teacher_id);
 
                            CREATE TABLE IF NOT EXISTS laboratory_hints (
                                id UUID PRIMARY KEY,

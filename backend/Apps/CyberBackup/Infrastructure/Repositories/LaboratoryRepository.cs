@@ -26,17 +26,17 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     {
         const string sql = """
                            WITH penalties AS (
-                               SELECT laboratory_work_id, COALESCE(SUM(h.penalty_points), 0)::int AS penalty_points
+                               SELECT sh.laboratory_work_id, COALESCE(SUM(h.penalty_points), 0)::int AS penalty_points
                                FROM student_laboratory_hints sh
                                JOIN laboratory_hints h ON h.id = sh.laboratory_hint_id
                                WHERE sh.student_id = @StudentId
-                               GROUP BY laboratory_work_id
+                               GROUP BY sh.laboratory_work_id
                            ),
                            flags AS (
-                               SELECT laboratory_work_id, BOOL_OR(is_correct) AS is_correct
-                               FROM laboratory_flag_attempts
-                               WHERE student_id = @StudentId
-                               GROUP BY laboratory_work_id
+                               SELECT fa.laboratory_work_id, BOOL_OR(fa.is_correct) AS is_correct
+                               FROM laboratory_flag_attempts fa
+                               WHERE fa.student_id = @StudentId
+                               GROUP BY fa.laboratory_work_id
                            ),
                            source AS (
                                SELECT
@@ -79,17 +79,17 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            SELECT COUNT(*) FROM source WHERE (@Status IS NULL OR "Status" = @Status);
 
                            WITH penalties AS (
-                               SELECT laboratory_work_id, COALESCE(SUM(h.penalty_points), 0)::int AS penalty_points
+                               SELECT sh.laboratory_work_id, COALESCE(SUM(h.penalty_points), 0)::int AS penalty_points
                                FROM student_laboratory_hints sh
                                JOIN laboratory_hints h ON h.id = sh.laboratory_hint_id
                                WHERE sh.student_id = @StudentId
-                               GROUP BY laboratory_work_id
+                               GROUP BY sh.laboratory_work_id
                            ),
                            flags AS (
-                               SELECT laboratory_work_id, BOOL_OR(is_correct) AS is_correct
-                               FROM laboratory_flag_attempts
-                               WHERE student_id = @StudentId
-                               GROUP BY laboratory_work_id
+                               SELECT fa.laboratory_work_id, BOOL_OR(fa.is_correct) AS is_correct
+                               FROM laboratory_flag_attempts fa
+                               WHERE fa.student_id = @StudentId
+                               GROUP BY fa.laboratory_work_id
                            ),
                            source AS (
                                SELECT
@@ -556,6 +556,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         return new GetMyProgressResponse
         {
+            Summary = $"Выполнено {completed} из {laboratories.TotalCount}, баллов {earnedPoints}",
             TotalLaboratories = laboratories.TotalCount,
             CompletedLaboratories = completed,
             PendingReviewLaboratories = pending,
@@ -631,12 +632,15 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     /// <inheritdoc />
     public async Task<PagedResultDto<TeacherLaboratoryListItemDto>> GetTeacherLaboratoriesAsync(
         GetTeacherLaboratoryListRequest request,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken)
     {
         const string sql = """
                            SELECT COUNT(*)
                            FROM laboratory_works
                            WHERE delete_date_utc IS NULL
+                             AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
                              AND (@Block IS NULL OR block = @Block)
                              AND (@Difficulty IS NULL OR difficulty = @Difficulty)
                              AND (@IsPublished IS NULL OR is_published = @IsPublished)
@@ -656,6 +660,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                update_date_utc AS "UpdateDateUtc"
                            FROM laboratory_works
                            WHERE delete_date_utc IS NULL
+                             AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
                              AND (@Block IS NULL OR block = @Block)
                              AND (@Difficulty IS NULL OR difficulty = @Difficulty)
                              AND (@IsPublished IS NULL OR is_published = @IsPublished)
@@ -671,6 +676,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             Difficulty = (int?)request.Difficulty,
             request.IsPublished,
             request.Search,
+            TeacherId = teacherId,
+            IncludeAll = includeAll,
             Offset = (request.Page - 1) * request.PageSize,
             request.PageSize
         });
@@ -684,6 +691,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     /// <inheritdoc />
     public async Task<GetTeacherLaboratoryDetailsResponse?> GetTeacherLaboratoryDetailsAsync(
         Guid laboratoryId,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken)
     {
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
@@ -711,9 +720,10 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 delete_date_utc AS "DeleteDateUtc"
             FROM laboratory_works
             WHERE id = @LaboratoryId
+              AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
             LIMIT 1;
             """,
-            new { LaboratoryId = laboratoryId });
+            new { LaboratoryId = laboratoryId, TeacherId = teacherId, IncludeAll = includeAll });
 
         if (laboratory is null)
         {
@@ -754,6 +764,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     public async Task<Guid> CreateLaboratoryAsync(
         CreateLaboratoryRequest request,
         string? expectedFlagHash,
+        Guid teacherId,
         CancellationToken cancellationToken)
     {
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
@@ -767,13 +778,13 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             INSERT INTO laboratory_works (
                 id, title, short_description, description, narrative, goal,
                 environment_url, credentials, difficulty, block, max_points,
-                has_flag, expected_flag_hash, is_published, sort_order,
+                has_flag, expected_flag_hash, created_by_teacher_id, is_published, sort_order,
                 create_date_utc, update_date_utc, delete_date_utc
             )
             VALUES (
                 @Id, @Title, @ShortDescription, @Description, @Narrative, @Goal,
                 @EnvironmentUrl, @Credentials, @Difficulty, @Block, @MaxPoints,
-                @HasFlag, @ExpectedFlagHash, @IsPublished, @SortOrder,
+                @HasFlag, @ExpectedFlagHash, @TeacherId, @IsPublished, @SortOrder,
                 @NowUtc, NULL, NULL
             );
             """,
@@ -792,6 +803,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 request.MaxPoints,
                 request.HasFlag,
                 ExpectedFlagHash = expectedFlagHash,
+                TeacherId = teacherId,
                 request.IsPublished,
                 request.SortOrder,
                 NowUtc = nowUtc
@@ -811,14 +823,24 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         UpdateLaboratoryRequest request,
         string? expectedFlagHash,
         bool updateFlagHash,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken)
     {
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
         var exists = await connection.QuerySingleAsync<bool>(
-            "SELECT EXISTS (SELECT 1 FROM laboratory_works WHERE id = @LaboratoryId AND delete_date_utc IS NULL);",
-            new { LaboratoryId = laboratoryId },
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM laboratory_works
+                WHERE id = @LaboratoryId
+                  AND delete_date_utc IS NULL
+                  AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
+            );
+            """,
+            new { LaboratoryId = laboratoryId, TeacherId = teacherId, IncludeAll = includeAll },
             transaction);
 
         if (!exists)
@@ -924,7 +946,11 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     }
 
     /// <inheritdoc />
-    public async Task DeleteLaboratoryAsync(Guid laboratoryId, CancellationToken cancellationToken)
+    public async Task DeleteLaboratoryAsync(
+        Guid laboratoryId,
+        Guid teacherId,
+        bool includeAll,
+        CancellationToken cancellationToken)
     {
         var affected = await _connection.ExecuteAsync(
             """
@@ -933,9 +959,16 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 is_published = false,
                 update_date_utc = @DeleteDateUtc
             WHERE id = @LaboratoryId
+              AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
               AND delete_date_utc IS NULL;
             """,
-            new { LaboratoryId = laboratoryId, DeleteDateUtc = DateTimeOffset.UtcNow },
+            new
+            {
+                LaboratoryId = laboratoryId,
+                TeacherId = teacherId,
+                IncludeAll = includeAll,
+                DeleteDateUtc = DateTimeOffset.UtcNow
+            },
             cancellationToken);
 
         if (affected == 0)
@@ -947,6 +980,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     /// <inheritdoc />
     public async Task<PagedResultDto<TeacherReportListItemDto>> GetTeacherReportsAsync(
         GetTeacherReportListRequest request,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken)
     {
         const string sql = """
@@ -957,6 +992,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            LEFT JOIN user_groups ug ON ug.user_id = u.id
                            LEFT JOIN groups g ON g.id = ug.group_id
                            WHERE (@Status IS NULL OR r.status = @Status)
+                             AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
                              AND (@LaboratoryId IS NULL OR lw.id = @LaboratoryId)
                              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
                              AND (@GroupName IS NULL OR g.name = @GroupName);
@@ -983,6 +1019,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            LEFT JOIN groups g ON g.id = ug.group_id
                            JOIN laboratory_report_versions rv ON rv.laboratory_report_id = r.id AND rv.version_number = r.current_version_number
                            WHERE (@Status IS NULL OR r.status = @Status)
+                             AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
                              AND (@LaboratoryId IS NULL OR lw.id = @LaboratoryId)
                              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
                              AND (@GroupName IS NULL OR g.name = @GroupName)
@@ -997,6 +1034,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             request.LaboratoryId,
             request.Search,
             request.GroupName,
+            TeacherId = teacherId,
+            IncludeAll = includeAll,
             Offset = (request.Page - 1) * request.PageSize,
             request.PageSize
         });
@@ -1010,6 +1049,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     /// <inheritdoc />
     public async Task<GetTeacherReportDetailsResponse?> GetTeacherReportDetailsAsync(
         Guid reportId,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken)
     {
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
@@ -1023,9 +1064,11 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 r.teacher_comment AS "TeacherComment",
                 r.allow_resubmit AS "AllowResubmit"
             FROM laboratory_reports r
-            WHERE r.id = @ReportId;
+            JOIN laboratory_works lw ON lw.id = r.laboratory_work_id
+            WHERE r.id = @ReportId
+              AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId);
             """,
-            new { ReportId = reportId });
+            new { ReportId = reportId, TeacherId = teacherId, IncludeAll = includeAll });
 
         if (report is null)
         {
@@ -1093,24 +1136,31 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     public Task<LaboratoryReportFileDto?> GetReportFileAsync(
         Guid reportId,
         Guid versionId,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken)
     {
         return _connection.QueryFirstOrDefaultAsync<LaboratoryReportFileDto>(
             """
             SELECT
-                storage_path AS "StoragePath",
-                original_file_name AS "OriginalFileName",
-                content_type AS "ContentType"
-            FROM laboratory_report_versions
-            WHERE id = @VersionId AND laboratory_report_id = @ReportId;
+                rv.storage_path AS "StoragePath",
+                rv.original_file_name AS "OriginalFileName",
+                rv.content_type AS "ContentType"
+            FROM laboratory_report_versions rv
+            JOIN laboratory_reports r ON r.id = rv.laboratory_report_id
+            JOIN laboratory_works lw ON lw.id = r.laboratory_work_id
+            WHERE rv.id = @VersionId
+              AND rv.laboratory_report_id = @ReportId
+              AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId);
             """,
-            new { ReportId = reportId, VersionId = versionId },
+            new { ReportId = reportId, VersionId = versionId, TeacherId = teacherId, IncludeAll = includeAll },
             cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<ReviewLaboratoryReportResponse> ReviewReportAsync(
         Guid teacherId,
+        bool includeAll,
         Guid reportId,
         ReviewLaboratoryReportRequest request,
         CancellationToken cancellationToken)
@@ -1128,9 +1178,10 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             FROM laboratory_reports r
             JOIN laboratory_works lw ON lw.id = r.laboratory_work_id
             WHERE r.id = @ReportId
+              AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
             FOR UPDATE;
             """,
-            new { ReportId = reportId },
+            new { ReportId = reportId, TeacherId = teacherId, IncludeAll = includeAll },
             transaction);
 
         if (report is null)
@@ -1214,6 +1265,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     /// <inheritdoc />
     public async Task<PagedResultDto<TeacherGradebookItemDto>> GetTeacherGradebookAsync(
         GetTeacherGradebookRequest request,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken)
     {
         const string sql = """
@@ -1223,6 +1276,15 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            LEFT JOIN groups g ON g.id = ug.group_id
                            LEFT JOIN student_gradebook_records sgr ON sgr.student_id = u.id
                            WHERE u.role = @StudentRole
+                             AND (
+                                 @IncludeAll = true
+                                 OR EXISTS (
+                                     SELECT 1
+                                     FROM user_groups teacher_groups
+                                     WHERE teacher_groups.user_id = @TeacherId
+                                       AND teacher_groups.group_id = ug.group_id
+                                 )
+                             )
                              AND (@GroupName IS NULL OR g.name = @GroupName)
                              AND (@IsExamAllowed IS NULL OR COALESCE(sgr.is_exam_allowed, false) = @IsExamAllowed)
                              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'));
@@ -1247,6 +1309,15 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            LEFT JOIN student_gradebook_records sgr ON sgr.student_id = u.id
                            LEFT JOIN laboratory_reports r ON r.student_id = u.id
                            WHERE u.role = @StudentRole
+                             AND (
+                                 @IncludeAll = true
+                                 OR EXISTS (
+                                     SELECT 1
+                                     FROM user_groups teacher_groups
+                                     WHERE teacher_groups.user_id = @TeacherId
+                                       AND teacher_groups.group_id = ug.group_id
+                                 )
+                             )
                              AND (@GroupName IS NULL OR g.name = @GroupName)
                              AND (@IsExamAllowed IS NULL OR COALESCE(sgr.is_exam_allowed, false) = @IsExamAllowed)
                              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
@@ -1262,6 +1333,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             request.GroupName,
             request.IsExamAllowed,
             request.Search,
+            TeacherId = teacherId,
+            IncludeAll = includeAll,
             Offset = (request.Page - 1) * request.PageSize,
             request.PageSize
         });
@@ -1277,9 +1350,46 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         Guid teacherId,
         Guid studentId,
         UpdateTeacherGradebookRequest request,
+        bool includeAll,
         CancellationToken cancellationToken)
     {
-        await _connection.ExecuteAsync(
+        await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
+
+        var hasAccess = await connection.QuerySingleAsync<bool>(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM users u
+                LEFT JOIN user_groups ug ON ug.user_id = u.id
+                WHERE u.id = @StudentId
+                  AND u.role = @StudentRole
+                  AND (
+                      @IncludeAll = true
+                      OR EXISTS (
+                          SELECT 1
+                          FROM user_groups teacher_groups
+                          WHERE teacher_groups.user_id = @TeacherId
+                            AND teacher_groups.group_id = ug.group_id
+                      )
+                  )
+            );
+            """,
+            new
+            {
+                StudentId = studentId,
+                StudentRole = (int)UserRole.Student,
+                TeacherId = teacherId,
+                IncludeAll = includeAll
+            },
+            commandTimeout: null,
+            commandType: null);
+
+        if (!hasAccess)
+        {
+            throw new LaboratoryException("gradebook.not_found", "Запись ведомости не найдена");
+        }
+
+        await connection.ExecuteAsync(
             """
             INSERT INTO student_gradebook_records (
                 id, student_id, group_id, attendance_percent, is_exam_allowed,
@@ -1291,6 +1401,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             FROM users u
             LEFT JOIN user_groups ug ON ug.user_id = u.id
             WHERE u.id = @StudentId
+            ORDER BY ug.group_id NULLS LAST
+            LIMIT 1
             ON CONFLICT (student_id) DO UPDATE
             SET attendance_percent = EXCLUDED.attendance_percent,
                 is_exam_allowed = EXCLUDED.is_exam_allowed,
@@ -1307,11 +1419,12 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 request.HasAutomaticGrade,
                 UpdateDateUtc = DateTimeOffset.UtcNow,
                 TeacherId = teacherId
-            },
-            cancellationToken);
+            });
 
         var gradebook = await GetTeacherGradebookAsync(
             new GetTeacherGradebookRequest { Search = null, Page = 1, PageSize = 100 },
+            teacherId,
+            includeAll,
             cancellationToken);
 
         return gradebook.Items.FirstOrDefault(x => x.StudentId == studentId)

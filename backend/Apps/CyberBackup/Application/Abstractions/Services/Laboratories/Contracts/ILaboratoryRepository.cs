@@ -79,6 +79,8 @@ public interface ILaboratoryRepository
     /// </summary>
     Task<PagedResultDto<TeacherLaboratoryListItemDto>> GetTeacherLaboratoriesAsync(
         GetTeacherLaboratoryListRequest request,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -86,6 +88,8 @@ public interface ILaboratoryRepository
     /// </summary>
     Task<GetTeacherLaboratoryDetailsResponse?> GetTeacherLaboratoryDetailsAsync(
         Guid laboratoryId,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -101,6 +105,7 @@ public interface ILaboratoryRepository
     Task<Guid> CreateLaboratoryAsync(
         CreateLaboratoryRequest request,
         string? expectedFlagHash,
+        Guid teacherId,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -111,18 +116,22 @@ public interface ILaboratoryRepository
         UpdateLaboratoryRequest request,
         string? expectedFlagHash,
         bool updateFlagHash,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken);
 
     /// <summary>
     /// Удалить лабораторную работу
     /// </summary>
-    Task DeleteLaboratoryAsync(Guid laboratoryId, CancellationToken cancellationToken);
+    Task DeleteLaboratoryAsync(Guid laboratoryId, Guid teacherId, bool includeAll, CancellationToken cancellationToken);
 
     /// <summary>
     /// Получить список отчетов студентов для преподавателя
     /// </summary>
     Task<PagedResultDto<TeacherReportListItemDto>> GetTeacherReportsAsync(
         GetTeacherReportListRequest request,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -130,6 +139,8 @@ public interface ILaboratoryRepository
     /// </summary>
     Task<GetTeacherReportDetailsResponse?> GetTeacherReportDetailsAsync(
         Guid reportId,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -138,6 +149,8 @@ public interface ILaboratoryRepository
     Task<LaboratoryReportFileDto?> GetReportFileAsync(
         Guid reportId,
         Guid versionId,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -145,6 +158,7 @@ public interface ILaboratoryRepository
     /// </summary>
     Task<ReviewLaboratoryReportResponse> ReviewReportAsync(
         Guid teacherId,
+        bool includeAll,
         Guid reportId,
         ReviewLaboratoryReportRequest request,
         CancellationToken cancellationToken);
@@ -154,6 +168,8 @@ public interface ILaboratoryRepository
     /// </summary>
     Task<PagedResultDto<TeacherGradebookItemDto>> GetTeacherGradebookAsync(
         GetTeacherGradebookRequest request,
+        Guid teacherId,
+        bool includeAll,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -163,5 +179,6 @@ public interface ILaboratoryRepository
         Guid teacherId,
         Guid studentId,
         UpdateTeacherGradebookRequest request,
+        bool includeAll,
         CancellationToken cancellationToken);
 }
