@@ -1,5 +1,4 @@
 using Api.Auth;
-using Application.Abstractions.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Infrastructure.Core.Controllers.Public;
 using Microsoft.AspNetCore.Authorization;
@@ -28,15 +27,9 @@ public sealed class GradebookController : PublicController
     [HttpGet("my")]
     public async Task<IActionResult> GetMyGradebook(CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await _laboratoryService.GetMyGradebookAsync(cancellationToken);
+        var response = await _laboratoryService.GetMyGradebookAsync(cancellationToken);
+        var result = Ok(response);
 
-            return Ok(result);
-        }
-        catch (LaboratoryException exception)
-        {
-            return BadRequest(new { exception.Code, exception.Message });
-        }
+        return result;
     }
 }

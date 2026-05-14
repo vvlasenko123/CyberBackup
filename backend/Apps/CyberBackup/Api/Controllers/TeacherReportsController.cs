@@ -1,5 +1,4 @@
 using Api.Auth;
-using Application.Abstractions.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
 using Infrastructure.Core.Controllers.Public;
@@ -35,9 +34,10 @@ public sealed class TeacherReportsController : PublicController
         [FromQuery] GetTeacherReportListRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _laboratoryService.GetTeacherReportsAsync(request, cancellationToken);
+        var response = await _laboratoryService.GetTeacherReportsAsync(request, cancellationToken);
+        var result = Ok(response);
 
-        return Ok(result);
+        return result;
     }
 
     /// <summary>
@@ -48,7 +48,10 @@ public sealed class TeacherReportsController : PublicController
         Guid reportId,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(() => _laboratoryService.GetTeacherReportDetailsAsync(reportId, cancellationToken));
+        var response = await _laboratoryService.GetTeacherReportDetailsAsync(reportId, cancellationToken);
+        var result = Ok(response);
+
+        return result;
     }
 
     /// <summary>
@@ -60,17 +63,11 @@ public sealed class TeacherReportsController : PublicController
         Guid versionId,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var file = await _laboratoryService.GetReportFileAsync(reportId, versionId, cancellationToken);
-            var stream = await _fileStorage.OpenReadAsync(file.StoragePath, cancellationToken);
+        var file = await _laboratoryService.GetReportFileAsync(reportId, versionId, cancellationToken);
+        var stream = await _fileStorage.OpenReadAsync(file.StoragePath, cancellationToken);
+        var result = File(stream, file.ContentType, file.OriginalFileName);
 
-            return File(stream, file.ContentType, file.OriginalFileName);
-        }
-        catch (LaboratoryException exception)
-        {
-            return BadRequest(new { exception.Code, exception.Message });
-        }
+        return result;
     }
 
     /// <summary>
@@ -82,18 +79,9 @@ public sealed class TeacherReportsController : PublicController
         ReviewLaboratoryReportRequest request,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(() => _laboratoryService.ReviewReportAsync(reportId, request, cancellationToken));
-    }
+        var response = await _laboratoryService.ReviewReportAsync(reportId, request, cancellationToken);
+        var result = Ok(response);
 
-    private async Task<IActionResult> ExecuteAsync<T>(Func<Task<T>> action)
-    {
-        try
-        {
-            return Ok(await action());
-        }
-        catch (LaboratoryException exception)
-        {
-            return BadRequest(new { exception.Code, exception.Message });
-        }
+        return result;
     }
 }

@@ -1,5 +1,6 @@
 using Api.Auth;
-using Application.Abstractions.Services.Laboratories;
+using Api.Controllers.Models.Request.Laboratories;
+using Api.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
 using Infrastructure.Core.Controllers.Public;
@@ -17,10 +18,14 @@ namespace Api.Controllers;
 public sealed class LaboratoriesController : PublicController
 {
     private readonly ILaboratoryService _laboratoryService;
+    private readonly ILaboratoryReportUploadRequestFactory _uploadRequestFactory;
 
-    public LaboratoriesController(ILaboratoryService laboratoryService)
+    public LaboratoriesController(
+        ILaboratoryService laboratoryService,
+        ILaboratoryReportUploadRequestFactory uploadRequestFactory)
     {
         _laboratoryService = laboratoryService;
+        _uploadRequestFactory = uploadRequestFactory;
     }
 
     /// <summary>
@@ -31,9 +36,10 @@ public sealed class LaboratoriesController : PublicController
         [FromQuery] GetLaboratoryListRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _laboratoryService.GetStudentLaboratoriesAsync(request, cancellationToken);
+        var response = await _laboratoryService.GetStudentLaboratoriesAsync(request, cancellationToken);
+        var result = Ok(response);
 
-        return Ok(result);
+        return result;
     }
 
     /// <summary>
@@ -44,7 +50,10 @@ public sealed class LaboratoriesController : PublicController
         Guid laboratoryId,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(() => _laboratoryService.GetStudentLaboratoryDetailsAsync(laboratoryId, cancellationToken));
+        var response = await _laboratoryService.GetStudentLaboratoryDetailsAsync(laboratoryId, cancellationToken);
+        var result = Ok(response);
+
+        return result;
     }
 
     /// <summary>
@@ -56,7 +65,10 @@ public sealed class LaboratoriesController : PublicController
         Guid hintId,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(() => _laboratoryService.OpenHintAsync(laboratoryId, hintId, cancellationToken));
+        var response = await _laboratoryService.OpenHintAsync(laboratoryId, hintId, cancellationToken);
+        var result = Ok(response);
+
+        return result;
     }
 
     /// <summary>
@@ -68,7 +80,10 @@ public sealed class LaboratoriesController : PublicController
         SubmitLaboratoryFlagRequest request,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(() => _laboratoryService.SubmitFlagAsync(laboratoryId, request, cancellationToken));
+        var response = await _laboratoryService.SubmitFlagAsync(laboratoryId, request, cancellationToken);
+        var result = Ok(response);
+
+        return result;
     }
 
     /// <summary>
@@ -78,26 +93,14 @@ public sealed class LaboratoriesController : PublicController
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadReport(
         Guid laboratoryId,
-        IFormFile? file,
+        [FromForm] UploadLaboratoryReportRequest request,
         CancellationToken cancellationToken)
     {
-        if (file is null)
-        {
-            return BadRequest(new
-            {
-                Code = "laboratory_report.file_required",
-                Message = "Файл отчета обязателен"
-            });
-        }
+        var file = _uploadRequestFactory.Create(request.File);
+        var response = await _laboratoryService.UploadReportAsync(laboratoryId, file, cancellationToken);
+        var result = Ok(response);
 
-        await using var stream = file.OpenReadStream();
-        var request = new UploadLaboratoryReportFileDto(
-            Content: stream,
-            FileName: file.FileName,
-            ContentType: file.ContentType,
-            Length: file.Length);
-
-        return await ExecuteAsync(() => _laboratoryService.UploadReportAsync(laboratoryId, request, cancellationToken));
+        return result;
     }
 
     /// <summary>
@@ -108,7 +111,10 @@ public sealed class LaboratoriesController : PublicController
         Guid laboratoryId,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(() => _laboratoryService.GetMyReportAsync(laboratoryId, cancellationToken));
+        var response = await _laboratoryService.GetMyReportAsync(laboratoryId, cancellationToken);
+        var result = Ok(response);
+
+        return result;
     }
 
     /// <summary>
@@ -117,20 +123,9 @@ public sealed class LaboratoriesController : PublicController
     [HttpGet("progress/my")]
     public async Task<IActionResult> GetMyProgress(CancellationToken cancellationToken)
     {
-        var result = await _laboratoryService.GetMyProgressAsync(cancellationToken);
+        var response = await _laboratoryService.GetMyProgressAsync(cancellationToken);
+        var result = Ok(response);
 
-        return Ok(result);
-    }
-
-    private async Task<IActionResult> ExecuteAsync<T>(Func<Task<T>> action)
-    {
-        try
-        {
-            return Ok(await action());
-        }
-        catch (LaboratoryException exception)
-        {
-            return BadRequest(new { exception.Code, exception.Message });
-        }
+        return result;
     }
 }

@@ -44,10 +44,13 @@ public sealed class LaboratoryService : ILaboratoryService
         GetLaboratoryListRequest request,
         CancellationToken cancellationToken)
     {
-        return _repository.GetStudentLaboratoriesAsync(
+        var normalizedRequest = NormalizePaging(request);
+        var result = _repository.GetStudentLaboratoriesAsync(
             _currentUser.UserId,
-            NormalizePaging(request),
+            normalizedRequest,
             cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -60,9 +63,16 @@ public sealed class LaboratoryService : ILaboratoryService
             laboratoryId,
             cancellationToken);
 
-        return laboratory ?? throw new LaboratoryException(
-            "laboratory.not_found",
-            "Лабораторная работа не найдена");
+        if (laboratory is null)
+        {
+            throw new LaboratoryException(
+                "laboratory.not_found",
+                "Лабораторная работа не найдена");
+        }
+
+        var result = laboratory;
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -77,9 +87,16 @@ public sealed class LaboratoryService : ILaboratoryService
             hintId,
             cancellationToken);
 
-        return hint ?? throw new LaboratoryException(
-            "laboratory_hint.not_found",
-            "Подсказка не найдена");
+        if (hint is null)
+        {
+            throw new LaboratoryException(
+                "laboratory_hint.not_found",
+                "Подсказка не найдена");
+        }
+
+        var result = hint;
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -119,13 +136,15 @@ public sealed class LaboratoryService : ILaboratoryService
         var isCorrect = !string.IsNullOrWhiteSpace(expectedHash)
                         && _flagHashService.VerifyFlag(request.Flag, expectedHash);
 
-        return await _repository.SubmitFlagAttemptAsync(
+        var result = await _repository.SubmitFlagAttemptAsync(
             _currentUser.UserId,
             laboratoryId,
             _flagHashService.HashFlag(request.Flag),
             _flagHashService.MaskFlag(request.Flag),
             isCorrect,
             cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -134,15 +153,19 @@ public sealed class LaboratoryService : ILaboratoryService
         UploadLaboratoryReportFileDto file,
         CancellationToken cancellationToken)
     {
+        await using var content = file.Content;
+
         ValidateReportFile(file);
 
         var savedFile = await _fileStorage.SaveAsync(file, cancellationToken);
 
-        return await _repository.UploadReportAsync(
+        var result = await _repository.UploadReportAsync(
             _currentUser.UserId,
             laboratoryId,
             savedFile,
             cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -155,15 +178,24 @@ public sealed class LaboratoryService : ILaboratoryService
             laboratoryId,
             cancellationToken);
 
-        return report ?? throw new LaboratoryException(
-            "laboratory_report.not_found",
-            "Отчет не найден");
+        if (report is null)
+        {
+            throw new LaboratoryException(
+                "laboratory_report.not_found",
+                "Отчет не найден");
+        }
+
+        var result = report;
+
+        return result;
     }
 
     /// <inheritdoc />
     public Task<GetMyProgressResponse> GetMyProgressAsync(CancellationToken cancellationToken)
     {
-        return _repository.GetMyProgressAsync(_currentUser.UserId, cancellationToken);
+        var result = _repository.GetMyProgressAsync(_currentUser.UserId, cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -171,9 +203,16 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         var gradebook = await _repository.GetMyGradebookAsync(_currentUser.UserId, cancellationToken);
 
-        return gradebook ?? throw new LaboratoryException(
-            "gradebook.not_found",
-            "Запись ведомости не найдена");
+        if (gradebook is null)
+        {
+            throw new LaboratoryException(
+                "gradebook.not_found",
+                "Запись ведомости не найдена");
+        }
+
+        var result = gradebook;
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -181,7 +220,10 @@ public sealed class LaboratoryService : ILaboratoryService
         GetTeacherLaboratoryListRequest request,
         CancellationToken cancellationToken)
     {
-        return _repository.GetTeacherLaboratoriesAsync(NormalizePaging(request), cancellationToken);
+        var normalizedRequest = NormalizePaging(request);
+        var result = _repository.GetTeacherLaboratoriesAsync(normalizedRequest, cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -193,20 +235,32 @@ public sealed class LaboratoryService : ILaboratoryService
             laboratoryId,
             cancellationToken);
 
-        return laboratory ?? throw new LaboratoryException(
-            "laboratory.not_found",
-            "Лабораторная работа не найдена");
+        if (laboratory is null)
+        {
+            throw new LaboratoryException(
+                "laboratory.not_found",
+                "Лабораторная работа не найдена");
+        }
+
+        var result = laboratory;
+
+        return result;
     }
 
     /// <inheritdoc />
-    public Task<Guid> CreateLaboratoryAsync(
+    public async Task<CreateLaboratoryResponse> CreateLaboratoryAsync(
         CreateLaboratoryRequest request,
         CancellationToken cancellationToken)
     {
         ValidateLaboratory(request, expectedFlagRequired: request.HasFlag);
         var expectedFlagHash = request.HasFlag ? _flagHashService.HashFlag(request.ExpectedFlag!) : null;
+        var id = await _repository.CreateLaboratoryAsync(request, expectedFlagHash, cancellationToken);
+        var result = new CreateLaboratoryResponse
+        {
+            Id = id
+        };
 
-        return _repository.CreateLaboratoryAsync(request, expectedFlagHash, cancellationToken);
+        return result;
     }
 
     /// <inheritdoc />
@@ -219,18 +273,22 @@ public sealed class LaboratoryService : ILaboratoryService
         var updateFlagHash = request.HasFlag && !string.IsNullOrWhiteSpace(request.ExpectedFlag);
         var expectedFlagHash = updateFlagHash ? _flagHashService.HashFlag(request.ExpectedFlag!) : null;
 
-        return _repository.UpdateLaboratoryAsync(
+        var result = _repository.UpdateLaboratoryAsync(
             laboratoryId,
             request,
             expectedFlagHash,
             updateFlagHash,
             cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
     public Task DeleteLaboratoryAsync(Guid laboratoryId, CancellationToken cancellationToken)
     {
-        return _repository.DeleteLaboratoryAsync(laboratoryId, cancellationToken);
+        var result = _repository.DeleteLaboratoryAsync(laboratoryId, cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -238,7 +296,10 @@ public sealed class LaboratoryService : ILaboratoryService
         GetTeacherReportListRequest request,
         CancellationToken cancellationToken)
     {
-        return _repository.GetTeacherReportsAsync(NormalizePaging(request), cancellationToken);
+        var normalizedRequest = NormalizePaging(request);
+        var result = _repository.GetTeacherReportsAsync(normalizedRequest, cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -248,9 +309,16 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         var report = await _repository.GetTeacherReportDetailsAsync(reportId, cancellationToken);
 
-        return report ?? throw new LaboratoryException(
-            "laboratory_report.not_found",
-            "Отчет не найден");
+        if (report is null)
+        {
+            throw new LaboratoryException(
+                "laboratory_report.not_found",
+                "Отчет не найден");
+        }
+
+        var result = report;
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -261,9 +329,16 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         var file = await _repository.GetReportFileAsync(reportId, versionId, cancellationToken);
 
-        return file ?? throw new LaboratoryException(
-            "laboratory_report_version.not_found",
-            "Версия отчета не найдена");
+        if (file is null)
+        {
+            throw new LaboratoryException(
+                "laboratory_report_version.not_found",
+                "Версия отчета не найдена");
+        }
+
+        var result = file;
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -297,11 +372,13 @@ public sealed class LaboratoryService : ILaboratoryService
             throw new LaboratoryException("laboratory_review.comment_too_long", "Комментарий слишком длинный");
         }
 
-        return _repository.ReviewReportAsync(
+        var result = _repository.ReviewReportAsync(
             _currentUser.UserId,
             reportId,
             request,
             cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -309,7 +386,10 @@ public sealed class LaboratoryService : ILaboratoryService
         GetTeacherGradebookRequest request,
         CancellationToken cancellationToken)
     {
-        return _repository.GetTeacherGradebookAsync(NormalizePaging(request), cancellationToken);
+        var normalizedRequest = NormalizePaging(request);
+        var result = _repository.GetTeacherGradebookAsync(normalizedRequest, cancellationToken);
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -323,20 +403,27 @@ public sealed class LaboratoryService : ILaboratoryService
             throw new LaboratoryException("gradebook.attendance_out_of_range", "Посещаемость должна быть от 0 до 100");
         }
 
-        return _repository.UpdateGradebookAsync(
+        var result = _repository.UpdateGradebookAsync(
             _currentUser.UserId,
             studentId,
             request,
             cancellationToken);
+
+        return result;
     }
 
     private async Task<string?> GetExpectedFlagHashAsync(Guid laboratoryId, CancellationToken cancellationToken)
     {
         var laboratory = await _repository.GetTeacherLaboratoryDetailsAsync(laboratoryId, cancellationToken);
 
-        return laboratory?.HasExpectedFlag == true
-            ? await _repository.GetExpectedFlagHashAsync(laboratoryId, cancellationToken)
-            : null;
+        string? result = null;
+
+        if (laboratory?.HasExpectedFlag == true)
+        {
+            result = await _repository.GetExpectedFlagHashAsync(laboratoryId, cancellationToken);
+        }
+
+        return result;
     }
 
     private static void ValidateReportFile(UploadLaboratoryReportFileDto file)
@@ -437,37 +524,45 @@ public sealed class LaboratoryService : ILaboratoryService
 
     private static GetLaboratoryListRequest NormalizePaging(GetLaboratoryListRequest request)
     {
-        return request with
+        var result = request with
         {
             Page = Math.Max(1, request.Page),
             PageSize = Math.Clamp(request.PageSize, 1, 100)
         };
+
+        return result;
     }
 
     private static GetTeacherLaboratoryListRequest NormalizePaging(GetTeacherLaboratoryListRequest request)
     {
-        return request with
+        var result = request with
         {
             Page = Math.Max(1, request.Page),
             PageSize = Math.Clamp(request.PageSize, 1, 100)
         };
+
+        return result;
     }
 
     private static GetTeacherReportListRequest NormalizePaging(GetTeacherReportListRequest request)
     {
-        return request with
+        var result = request with
         {
             Page = Math.Max(1, request.Page),
             PageSize = Math.Clamp(request.PageSize, 1, 100)
         };
+
+        return result;
     }
 
     private static GetTeacherGradebookRequest NormalizePaging(GetTeacherGradebookRequest request)
     {
-        return request with
+        var result = request with
         {
             Page = Math.Max(1, request.Page),
             PageSize = Math.Clamp(request.PageSize, 1, 100)
         };
+
+        return result;
     }
 }

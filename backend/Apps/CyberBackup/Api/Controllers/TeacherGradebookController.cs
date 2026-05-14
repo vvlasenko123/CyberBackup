@@ -1,5 +1,4 @@
 using Api.Auth;
-using Application.Abstractions.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
 using Infrastructure.Core.Controllers.Public;
@@ -31,9 +30,10 @@ public sealed class TeacherGradebookController : PublicController
         [FromQuery] GetTeacherGradebookRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _laboratoryService.GetTeacherGradebookAsync(request, cancellationToken);
+        var response = await _laboratoryService.GetTeacherGradebookAsync(request, cancellationToken);
+        var result = Ok(response);
 
-        return Ok(result);
+        return result;
     }
 
     /// <summary>
@@ -45,28 +45,9 @@ public sealed class TeacherGradebookController : PublicController
         UpdateTeacherGradebookRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await _laboratoryService.UpdateGradebookAsync(studentId, request, cancellationToken);
+        var response = await _laboratoryService.UpdateGradebookAsync(studentId, request, cancellationToken);
+        var result = Ok(response);
 
-            return Ok(result);
-        }
-        catch (LaboratoryException exception)
-        {
-            return BadRequest(new { exception.Code, exception.Message });
-        }
-    }
-
-    /// <summary>
-    /// Экспорт ведомости
-    /// </summary>
-    [HttpGet("export")]
-    public IActionResult ExportGradebook()
-    {
-        return StatusCode(StatusCodes.Status501NotImplemented, new
-        {
-            Code = "gradebook_export.not_supported",
-            Message = "В проекте нет инфраструктуры экспорта Excel"
-        });
+        return result;
     }
 }

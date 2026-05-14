@@ -1,5 +1,4 @@
 using Api.Auth;
-using Application.Abstractions.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
 using Infrastructure.Core.Controllers.Public;
@@ -31,9 +30,10 @@ public sealed class TeacherLaboratoriesController : PublicController
         [FromQuery] GetTeacherLaboratoryListRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _laboratoryService.GetTeacherLaboratoriesAsync(request, cancellationToken);
+        var response = await _laboratoryService.GetTeacherLaboratoriesAsync(request, cancellationToken);
+        var result = Ok(response);
 
-        return Ok(result);
+        return result;
     }
 
     /// <summary>
@@ -44,7 +44,10 @@ public sealed class TeacherLaboratoriesController : PublicController
         Guid laboratoryId,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(() => _laboratoryService.GetTeacherLaboratoryDetailsAsync(laboratoryId, cancellationToken));
+        var response = await _laboratoryService.GetTeacherLaboratoryDetailsAsync(laboratoryId, cancellationToken);
+        var result = Ok(response);
+
+        return result;
     }
 
     /// <summary>
@@ -55,7 +58,10 @@ public sealed class TeacherLaboratoriesController : PublicController
         CreateLaboratoryRequest request,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(async () => new { Id = await _laboratoryService.CreateLaboratoryAsync(request, cancellationToken) });
+        var response = await _laboratoryService.CreateLaboratoryAsync(request, cancellationToken);
+        var result = Ok(response);
+
+        return result;
     }
 
     /// <summary>
@@ -67,12 +73,10 @@ public sealed class TeacherLaboratoriesController : PublicController
         UpdateLaboratoryRequest request,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(async () =>
-        {
-            await _laboratoryService.UpdateLaboratoryAsync(laboratoryId, request, cancellationToken);
+        await _laboratoryService.UpdateLaboratoryAsync(laboratoryId, request, cancellationToken);
+        var result = Ok();
 
-            return new { Success = true };
-        });
+        return result;
     }
 
     /// <summary>
@@ -83,23 +87,9 @@ public sealed class TeacherLaboratoriesController : PublicController
         Guid laboratoryId,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(async () =>
-        {
-            await _laboratoryService.DeleteLaboratoryAsync(laboratoryId, cancellationToken);
+        await _laboratoryService.DeleteLaboratoryAsync(laboratoryId, cancellationToken);
+        var result = Ok();
 
-            return new { Success = true };
-        });
-    }
-
-    private async Task<IActionResult> ExecuteAsync<T>(Func<Task<T>> action)
-    {
-        try
-        {
-            return Ok(await action());
-        }
-        catch (LaboratoryException exception)
-        {
-            return BadRequest(new { exception.Code, exception.Message });
-        }
+        return result;
     }
 }
