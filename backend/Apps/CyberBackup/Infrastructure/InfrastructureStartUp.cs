@@ -1,4 +1,6 @@
 ﻿using Application.Abstractions.Services.Auth.Contracts;
+using Application.Abstractions.Services.Calendar;
+using Application.Abstractions.Services.Calendar.Contracts;
 using Domain.Repositories;
 using Infrastructure.Auth.Options;
 using Infrastructure.Auth.Services;
@@ -7,6 +9,7 @@ using Infrastructure.Migrations;
 using Infrastructure.Options.Configuration.Public;
 using Infrastructure.Repositories;
 using Infrastructure.Seeds;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Security.Auth.Admin.Options;
 
@@ -35,11 +38,15 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, CreateUsers_202604301231>();
         services.AddTransient<IDatabaseMigration, CreateUserGroups_202604301231>();
         services.AddTransient<IDatabaseMigration, CreateRefreshTokens_202605030001>();
+        services.AddTransient<IDatabaseMigration, CreateCalendarEvents_202605150001>();
+        services.AddTransient<IDatabaseMigration, CreateNotifications_202605150002>();
         #endregion
 
         #region repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
         #endregion
 
         #region auth
@@ -52,6 +59,12 @@ public static class InfrastructureStartUp
 
         #region seeds
         services.AddHostedService<SuperAdminSeedHostedService>();
+        #endregion
+
+        #region notify
+        services.AddSignalR();
+        services.AddSingleton<IUserIdProvider, JwtSubUserIdProvider>();
+        services.AddScoped<INotificationPushService, SignalRNotificationPushService>();
         #endregion
     }
 }

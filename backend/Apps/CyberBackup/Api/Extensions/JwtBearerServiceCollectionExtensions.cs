@@ -72,6 +72,16 @@ public static class JwtBearerServiceCollectionExtensions
                 if (!string.IsNullOrWhiteSpace(accessToken))
                 {
                     context.Token = accessToken;
+                    return Task.CompletedTask;
+                }
+
+                var queryAccessToken = context.Request.Query[AuthCookieNames.AccessToken];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrWhiteSpace(queryAccessToken) &&
+                    path.StartsWithSegments("/notification-hub"))
+                {
+                    context.Token = queryAccessToken;
                 }
 
                 return Task.CompletedTask;

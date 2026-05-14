@@ -1,7 +1,11 @@
-﻿using Application.Abstractions.Services.User;
+﻿using Application.Abstractions.Services.Calendar;
+using Application.Abstractions.Services.Calendar.Contracts;
+using Application.Abstractions.Services.User;
 using Application.Abstractions.Services.User.Contracts;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.Abstractions.UseCases.Auth.Register;
+using Application.Abstractions.UseCases.Calendar;
+using Application.Abstractions.UseCases.Calendar.Contracts;
 using Application.Abstractions.UseCases.User;
 using Application.Abstractions.UseCases.User.Contracts;
 using Application.Features.Auth.Login;
@@ -29,6 +33,12 @@ public static class ApplicationStartUp
         services.AddScoped<IUpdateUserService, UpdateUserService>();
         services.AddScoped<IDeleteUserService, DeleteUserService>();
         services.AddScoped<IGetUserService, GetUserService>();
+
+        services.AddScoped<ICreateCalendarEventUseCaseManager, CreateCalendarEventUseCaseManager>();
+        services.AddScoped<IGetCalendarEventsUseCaseManager, GetCalendarEventsUseCaseManager>();
+
+        services.AddScoped<ICalendarEventService, CalendarEventService>();
+        services.AddHostedService<CalendarNotificationHostedService>();
 
         services.AddScoped<IRegisterUseCaseManager, RegisterUseCaseManager>();
         services.AddScoped<ILoginUseCaseManager, LoginUseCaseManager>();

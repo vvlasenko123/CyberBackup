@@ -9,6 +9,7 @@ using Infrastructure.Swagger;
 using Security.Host.Cors;
 using Api.Auth;
 using Api.Extensions;
+using Application.Abstractions.Services.Calendar.Hubs;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Api;
@@ -77,6 +78,7 @@ public class StartUp
         {
             endpoints.MapControllers();
             endpoints.MapHealthChecks("/health");
+            endpoints.MapHub<NotificationHub>("/notification-hub");
         });
     }
 }

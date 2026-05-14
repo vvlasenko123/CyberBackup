@@ -1,0 +1,159 @@
+using Domain.Calendar;
+using Domain.Calendar.Enums;
+using Domain.Repositories;
+using Infrastructure.Database.Connection.Contracts;
+
+namespace Infrastructure.Repositories;
+
+/// <summary>
+/// Репозиторий событий календаря
+/// </summary>
+public sealed class CalendarEventRepository : ICalendarEventRepository
+{
+    private readonly IAsyncDbConnection _connection;
+
+    public CalendarEventRepository(IAsyncDbConnection connection)
+    {
+        _connection = connection;
+    }
+
+    /// <inheritdoc />
+    public async Task CreateAsync(CalendarEventModel calendarEvent, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               INSERT INTO calendar_events (
+                                   id,
+                                   user_id,
+                                   title,
+                                   status,
+                                   starts_at_utc,
+                                   ends_at_utc,
+                                   notify_at_utc,
+                                   notified_at_utc,
+                                   created_at_utc,
+                                   updated_at_utc
+                               )
+                               VALUES (
+                                   @Id,
+                                   @UserId,
+                                   @Title,
+                                   @Status,
+                                   @StartsAtUtc,
+                                   @EndsAtUtc,
+                                   @NotifyAtUtc,
+                                   @NotifiedAtUtc,
+                                   @CreatedAtUtc,
+                                   @UpdatedAtUtc
+                               )
+                           """;
+
+        await _connection.ExecuteAsync(sql, new
+        {
+            calendarEvent.Id,
+            calendarEvent.UserId,
+            calendarEvent.Title,
+            Status = (int)calendarEvent.Status,
+            calendarEvent.StartsAtUtc,
+            calendarEvent.EndsAtUtc,
+            calendarEvent.NotifyAtUtc,
+            calendarEvent.NotifiedAtUtc,
+            calendarEvent.CreatedAtUtc,
+            calendarEvent.UpdatedAtUtc
+        }, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<CalendarEventModel>> GetByUserIdAsync(Guid userId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT
+                                   id AS Id,
+                                   user_id AS UserId,
+                                   title AS Title,
+                                   status AS Status,
+                                   starts_at_utc AS StartsAtUtc,
+                                   ends_at_utc AS EndsAtUtc,
+                                   notify_at_utc AS NotifyAtUtc,
+                                   notified_at_utc AS NotifiedAtUtc,
+                                   created_at_utc AS CreatedAtUtc,
+                                   updated_at_utc AS UpdatedAtUtc
+                               FROM calendar_events
+                               WHERE user_id = @UserId
+                               ORDER BY starts_at_utc;
+                           """;
+
+        var events = await _connection.QueryAsync<CalendarEventModel>(
+            sql,
+            new
+            {
+                UserId = userId
+            },
+            cancellationToken);
+
+        return events.ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<CalendarEventModel>> GetForNotificationAsync(
+        DateTimeOffset nowUtc,
+        int count,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT
+                                   id AS Id,
+                                   user_id AS UserId,
+                                   title AS Title,
+                                   status AS Status,
+                                   starts_at_utc AS StartsAtUtc,
+                                   ends_at_utc AS EndsAtUtc,
+                                   notify_at_utc AS NotifyAtUtc,
+                                   notified_at_utc AS NotifiedAtUtc,
+                                   created_at_utc AS CreatedAtUtc,
+                                   updated_at_utc AS UpdatedAtUtc
+                               FROM calendar_events
+                               WHERE notify_at_utc IS NOT NULL
+                                 AND notify_at_utc <= @NowUtc
+                                 AND notified_at_utc IS NULL
+                                 AND status = @Status
+                               ORDER BY notify_at_utc
+                               LIMIT @Count;
+                           """;
+
+        var calendarEventList = await _connection.QueryAsync<CalendarEventModel>(
+            sql,
+            new
+            {
+                NowUtc = nowUtc,
+                Status = (int)CalendarEventStatus.Active,
+                Count = count
+            },
+            cancellationToken);
+
+        return calendarEventList.ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task SetNotifiedAsync(
+        Guid id,
+        DateTimeOffset notifiedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               UPDATE calendar_events
+                               SET
+                                   notified_at_utc = @NotifiedAtUtc,
+                                   updated_at_utc = @UpdatedAtUtc
+                               WHERE id = @Id
+                                 AND notified_at_utc IS NULL
+                           """;
+
+        await _connection.ExecuteAsync(sql, new
+        {
+            Id = id,
+            NotifiedAtUtc = notifiedAtUtc,
+            UpdatedAtUtc = notifiedAtUtc
+        }, cancellationToken);
+    }
+}
