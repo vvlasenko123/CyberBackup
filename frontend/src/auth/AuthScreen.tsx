@@ -4,6 +4,7 @@ import { RegisterForm } from './RegisterForm';
 import type { LoginCredentials, RegisterData, User, UserRole } from '../types';
 import { PasswordChangeForm } from './PasswordChangeForm';
 import './auth.css';
+import { loginRequest, registerRequest } from './auth';
 
 interface AuthScreenProps {
   onLogin: (role: UserRole, user: User) => void;
@@ -11,35 +12,94 @@ interface AuthScreenProps {
 
 type AuthTab = 'login' | 'register';
 
+const mapRole = (role: number): UserRole => {
+  switch (role) {
+    case 1:
+      return 'teacher';
+    case 2:
+      return 'admin';
+    default:
+      return 'student';
+  }
+};
+
+const parseJwt = (token: string) => {
+  try {
+    const base64Payload = token.split('.')[1];
+    const payload = atob(base64Payload);
+    return JSON.parse(payload);
+  } catch {
+    return null;
+  }
+};
+
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [activeTab, setActiveTab] = useState<AuthTab>('login');
-  const [mustChangePassword, setMustChangePassword] = useState(false);
-  const [tempUser, setTempUser] = useState<{ email: string } | null>(null);
 
-  const handleLogin = (credentials: LoginCredentials) => {
-    if (credentials.password === '12345') {
-      setTempUser({ email: credentials.email });
-      setMustChangePassword(true);
-      return;
-    }
+  // врменно отключили, при необходимости добавим ручку
+  const [mustChangePassword] = useState(false);
+
+  const handleLogin = async (credentials: LoginCredentials) => {
+    const response = await loginRequest(
+      credentials.email,
+      credentials.password
+    );
+
+    localStorage.setItem(
+      'token',
+      response.accessToken
+    );
+
+    const jwtPayload = parseJwt(response.accessToken);
 
     let role: UserRole = 'student';
-    if (credentials.email.includes('admin')) role = 'admin';
-    else if (credentials.email.includes('teacher') || credentials.email.includes('prof')) role = 'teacher';
 
-    onLogin(role, { name: role === 'admin' ? 'Орлов И.П.' : role === 'teacher' ? 'Смирнов В.А.' : 'Иванов Алексей' });
+    if (jwtPayload?.role === 'teacher') {
+      role = 'teacher';
+    }
+
+    if (jwtPayload?.role === 'admin') {
+      role = 'admin';
+    }
+
+    onLogin(role, {
+      name: credentials.email,
+    });
   };
 
-  const handleRegister = (data: RegisterData) => {
-    onLogin('student', { name: data.fullName });
+  const handleRegister = async (
+    data: RegisterData
+  ) => {
+    const response = await registerRequest(
+      data.fullName,
+      data.email,
+      data.password
+    );
+
+    localStorage.setItem(
+      'token',
+      response.accessToken
+    );
+
+    const role = mapRole(response.role);
+
+    onLogin(role, {
+      name: data.fullName,
+    });
   };
 
-  const handlePasswordChange = (newPassword: string) => {
-    onLogin('student', { name: 'Иванов Алексей' });
+  const handlePasswordChange = (
+    newPassword: string
+  ) => {
+    console.log(newPassword);
   };
 
   if (mustChangePassword) {
-    return <PasswordChangeForm onSubmit={handlePasswordChange} />;
+    return (
+      <PasswordChangeForm
+        onSubmit={handlePasswordChange}
+      />
+    );
   }
 
   return (
@@ -70,11 +130,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         ) : (
           <RegisterForm onSubmit={handleRegister} />
         )}
-
-        {/* <div className="demo-info">
-          <strong>Demo:</strong> любой email → студент · «admin» в email → Admin · «teacher/prof» → Преподаватель · пароль{' '}
-          <code>12345</code> → смена пароля
-        </div> */}
       </div>
     </div>
   );
