@@ -38,13 +38,15 @@ public class StartUp
         services.AddCyberControllers();
 
         services.AddCyberCors();
-        
+
+        services.AddHealthChecks();
+
         if (Environment.IsDevelopment())
         {
-            services.AddHealthChecks();
             services.AddSwaggerDocumentation(apiName: "CyberBackup", version: "v1");
         }
 
+        services.AddPostgres();
         services.AddInfrastructure();
 
         services.AddSingleton<ICookieManager, ChunkingCookieManager>();
@@ -53,7 +55,6 @@ public class StartUp
         services.AddCyberJwtAuthentication();
 
         services.AddCyberMapper(assemblies: Assembly.GetExecutingAssembly());
-        services.AddPostgres();
         services.AddMinioStorage();
         services.AddCore();
         services.AddApplication();
