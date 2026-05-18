@@ -4,7 +4,7 @@ import { Input } from '../components/Input/Input';
 import { EyeIcon, EyeOffIcon } from '../components/Icons';
 
 interface RegisterFormProps {
-  onSubmit: (data: RegisterData) => void;
+  onSubmit: (data: RegisterData) => Promise<void>;
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
@@ -15,7 +15,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!fullName || !email || !password || !confirmPassword) {
       setError('Заполните все поля');
       return;
@@ -26,7 +26,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
       return;
     }
 
-    onSubmit({ fullName, email, password, confirmPassword });
+    try {
+      setError('');
+
+      await onSubmit({
+        fullName,
+        email,
+        password,
+        confirmPassword,
+      });
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message === 'Failed to fetch' ? 'Ошибка соединения' : e.message);
+      } else {
+        setError('Ошибка регистрации');
+      }
+    }
   };
 
   const getPasswordError = () => {

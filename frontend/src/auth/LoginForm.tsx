@@ -4,7 +4,7 @@ import { EyeIcon, EyeOffIcon } from '../components/Icons';
 import { Input } from '../components/Input/Input';
 
 interface LoginFormProps {
-  onSubmit: (credentials: LoginCredentials) => void;
+  onSubmit: (credentials: LoginCredentials) => Promise<void>;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
@@ -14,25 +14,26 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email || !password) {
       setError('Заполните все поля');
       return;
     }
 
-    setError('');
-    setLoading(true);
+    try {
+      setError('');
+      setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-
-      if (email === 'bad@bad.ru') {
-        setError('Неверный email или пароль');
-        return;
+      await onSubmit({ email, password });
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message === 'Failed to fetch' ? 'Ошибка соединения' : e.message);
+      } else {
+        setError('Ошибка входа');
       }
-
-      onSubmit({ email, password });
-    }, 600);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
