@@ -38,7 +38,12 @@ export const loginRequest = async (
         throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+    
+    localStorage.setItem('token', data.accessToken);
+    localStorage.setItem('expiresAt', data.expiresAt);
+    
+    return data;
 };
 
 export const registerRequest = async (
@@ -69,5 +74,10 @@ export const registerRequest = async (
         throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+    
+    localStorage.setItem('token', data.accessToken);
+    localStorage.setItem('expiresAt', data.expiresAtUtc); // Обратите внимание: expiresAtUtc
+    
+    return data;
 };

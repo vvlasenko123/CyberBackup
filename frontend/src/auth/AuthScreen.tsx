@@ -45,11 +45,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       credentials.password
     );
 
-    localStorage.setItem(
-      'token',
-      response.accessToken
-    );
-
     const jwtPayload = parseJwt(response.accessToken);
 
     let role: UserRole = 'student';
@@ -63,7 +58,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
 
     onLogin(role, {
-      name: credentials.email,
+      name: 'Степа Мокрушин',
     });
   };
 
@@ -74,11 +69,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       data.fullName,
       data.email,
       data.password
-    );
-
-    localStorage.setItem(
-      'token',
-      response.accessToken
     );
 
     const role = mapRole(response.role);
