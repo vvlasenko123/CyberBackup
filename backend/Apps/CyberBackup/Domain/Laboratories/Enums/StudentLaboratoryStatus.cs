@@ -26,7 +26,7 @@ public enum StudentLaboratoryStatus
     Accepted = 3,
 
     /// <summary>
-    /// Отклонена
+    /// Требует доработки
     /// </summary>
-    Rejected = 4
+    RevisionRequired = 4
 }

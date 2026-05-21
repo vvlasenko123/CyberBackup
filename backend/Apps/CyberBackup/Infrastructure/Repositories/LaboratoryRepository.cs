@@ -48,26 +48,27 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                    lw.max_points AS "MaxPoints",
                                    GREATEST(COALESCE(r.points, CASE WHEN COALESCE(f.is_correct, false) THEN lw.max_points - COALESCE(p.penalty_points, 0) ELSE 0 END), 0)::int AS "EarnedPoints",
                                    CASE
-                                       WHEN r.status = 2 OR COALESCE(f.is_correct, false) THEN 3
-                                       WHEN r.status = 1 THEN 2
+                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN 3
+                                       WHEN r.status IN (1, 2) THEN 2
                                        WHEN r.status = 3 THEN 4
-                                       WHEN r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 1
+                                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 1
                                        ELSE 0
                                    END AS "Status",
                                    CASE
-                                       WHEN r.status = 2 OR COALESCE(f.is_correct, false) THEN true
+                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN true
                                        ELSE false
                                    END AS "IsCompleted",
                                    CASE
-                                       WHEN r.status = 2 OR COALESCE(f.is_correct, false) THEN 100
-                                       WHEN r.status = 1 THEN 50
+                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN 100
+                                       WHEN r.status IN (1, 2) THEN 50
                                        WHEN r.status = 3 THEN 25
-                                       WHEN r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 10
+                                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 10
                                        ELSE 0
                                    END AS "ProgressPercent",
                                    lw.sort_order AS "SortOrder"
                                FROM laboratory_works lw
                                LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
+                               LEFT JOIN laboratory_progress lp ON lp.laboratory_work_id = lw.id AND lp.student_id = @StudentId
                                LEFT JOIN penalties p ON p.laboratory_work_id = lw.id
                                LEFT JOIN flags f ON f.laboratory_work_id = lw.id
                                WHERE lw.is_published = true
@@ -101,26 +102,27 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                    lw.max_points AS "MaxPoints",
                                    GREATEST(COALESCE(r.points, CASE WHEN COALESCE(f.is_correct, false) THEN lw.max_points - COALESCE(p.penalty_points, 0) ELSE 0 END), 0)::int AS "EarnedPoints",
                                    CASE
-                                       WHEN r.status = 2 OR COALESCE(f.is_correct, false) THEN 3
-                                       WHEN r.status = 1 THEN 2
+                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN 3
+                                       WHEN r.status IN (1, 2) THEN 2
                                        WHEN r.status = 3 THEN 4
-                                       WHEN r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 1
+                                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 1
                                        ELSE 0
                                    END AS "Status",
                                    CASE
-                                       WHEN r.status = 2 OR COALESCE(f.is_correct, false) THEN true
+                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN true
                                        ELSE false
                                    END AS "IsCompleted",
                                    CASE
-                                       WHEN r.status = 2 OR COALESCE(f.is_correct, false) THEN 100
-                                       WHEN r.status = 1 THEN 50
+                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN 100
+                                       WHEN r.status IN (1, 2) THEN 50
                                        WHEN r.status = 3 THEN 25
-                                       WHEN r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 10
+                                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 10
                                        ELSE 0
                                    END AS "ProgressPercent",
                                    lw.sort_order AS "SortOrder"
                                FROM laboratory_works lw
                                LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
+                               LEFT JOIN laboratory_progress lp ON lp.laboratory_work_id = lw.id AND lp.student_id = @StudentId
                                LEFT JOIN penalties p ON p.laboratory_work_id = lw.id
                                LEFT JOIN flags f ON f.laboratory_work_id = lw.id
                                WHERE lw.is_published = true
@@ -195,7 +197,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                          COALESCE(r.status, 0) AS "ReportStatus",
                                          CASE
                                              WHEN r.id IS NULL THEN true
-                                             WHEN r.status = 1 THEN false
+                                             WHEN r.status IN (1, 2, 4) THEN false
                                              WHEN r.allow_resubmit = true THEN true
                                              ELSE false
                                          END AS "AllowReportUpload",
@@ -219,6 +221,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         {
             return null;
         }
+
+        await EnsureProgressStartedAsync(connection, studentId, laboratoryId);
 
         var hints = await connection.QueryAsync<LaboratoryHintDto>(
             """
@@ -281,6 +285,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             return null;
         }
 
+        await EnsureProgressStartedAsync(connection, studentId, laboratoryId, transaction);
+
         await connection.ExecuteAsync(
             """
             INSERT INTO student_laboratory_hints (id, student_id, laboratory_work_id, laboratory_hint_id, open_date_utc)
@@ -334,6 +340,14 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         CancellationToken cancellationToken)
     {
         const string sql = """
+                           INSERT INTO laboratory_progress (
+                               id, laboratory_work_id, student_id, status, started_at_utc, completed_at_utc
+                           )
+                           VALUES (
+                               @ProgressId, @LaboratoryId, @StudentId, @InProgressStatus, @CreateDateUtc, NULL
+                           )
+                           ON CONFLICT (laboratory_work_id, student_id) DO NOTHING;
+
                            INSERT INTO laboratory_flag_attempts (
                                id, student_id, laboratory_work_id, submitted_flag_hash,
                                submitted_flag_masked, is_correct, create_date_utc
@@ -342,6 +356,13 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                @Id, @StudentId, @LaboratoryId, @SubmittedFlagHash,
                                @SubmittedFlagMasked, @IsCorrect, @CreateDateUtc
                            );
+
+                           UPDATE laboratory_progress
+                           SET status = @CompletedStatus,
+                               completed_at_utc = @CreateDateUtc
+                           WHERE laboratory_work_id = @LaboratoryId
+                             AND student_id = @StudentId
+                             AND @IsCorrect = true;
 
                            SELECT
                                GREATEST(lw.max_points - COALESCE(SUM(h.penalty_points), 0), 0)::int
@@ -355,6 +376,9 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
         using var grid = await connection.QueryMultipleAsync(sql, new
         {
+            ProgressId = UUIDNext.Uuid.NewSequential(),
+            InProgressStatus = (int)StudentLaboratoryStatus.InProgress,
+            CompletedStatus = (int)StudentLaboratoryStatus.Accepted,
             Id = UUIDNext.Uuid.NewSequential(),
             StudentId = studentId,
             LaboratoryId = laboratoryId,
@@ -400,6 +424,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
         }
 
+        await EnsureProgressStartedAsync(connection, studentId, laboratoryId, transaction);
+
         var report = await connection.QueryFirstOrDefaultAsync<ReportStateDbModel>(
             """
             SELECT
@@ -414,9 +440,14 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             new { StudentId = studentId, LaboratoryId = laboratoryId },
             transaction);
 
-        if (report?.Status == LaboratoryReportStatus.PendingReview)
+        if (report?.Status is LaboratoryReportStatus.Submitted or LaboratoryReportStatus.UnderReview)
         {
             throw new LaboratoryException("laboratory_report.pending_review", "Предыдущая версия отчета ожидает проверки");
+        }
+
+        if (report?.Status == LaboratoryReportStatus.Accepted)
+        {
+            throw new LaboratoryException("laboratory_report.accepted_final", "Принятый отчет нельзя отправить повторно");
         }
 
         if (report is not null && !report.AllowResubmit)
@@ -447,7 +478,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                     ReportId = reportId,
                     StudentId = studentId,
                     LaboratoryId = laboratoryId,
-                    Status = (int)LaboratoryReportStatus.PendingReview,
+                    Status = (int)LaboratoryReportStatus.Submitted,
                     VersionNumber = versionNumber,
                     NowUtc = nowUtc
                 },
@@ -469,7 +500,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 new
                 {
                     ReportId = reportId,
-                    Status = (int)LaboratoryReportStatus.PendingReview,
+                    Status = (int)LaboratoryReportStatus.Submitted,
                     VersionNumber = versionNumber,
                     NowUtc = nowUtc
                 },
@@ -499,7 +530,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 file.OriginalFileName,
                 file.ContentType,
                 file.FileSizeBytes,
-                Status = (int)LaboratoryReportStatus.PendingReview,
+                Status = (int)LaboratoryReportStatus.Submitted,
                 NowUtc = nowUtc
             },
             transaction);
@@ -511,7 +542,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             ReportId = reportId,
             VersionId = versionId,
             VersionNumber = versionNumber,
-            Status = LaboratoryReportStatus.PendingReview,
+            Status = LaboratoryReportStatus.Submitted,
             FileName = file.OriginalFileName,
             FileSizeBytes = file.FileSizeBytes,
             CreateDateUtc = nowUtc
@@ -550,7 +581,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         var completed = items.Count(x => x.Status == StudentLaboratoryStatus.Accepted);
         var pending = items.Count(x => x.Status == StudentLaboratoryStatus.PendingReview);
-        var rejected = items.Count(x => x.Status == StudentLaboratoryStatus.Rejected);
+        var rejected = items.Count(x => x.Status == StudentLaboratoryStatus.RevisionRequired);
         var totalPoints = items.Sum(x => x.MaxPoints);
         var earnedPoints = items.Sum(x => x.EarnedPoints);
 
@@ -560,6 +591,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             TotalLaboratories = laboratories.TotalCount,
             CompletedLaboratories = completed,
             PendingReviewLaboratories = pending,
+            RevisionRequiredLaboratories = rejected,
             RejectedLaboratories = rejected,
             TotalPoints = totalPoints,
             EarnedPoints = earnedPoints,
@@ -624,7 +656,9 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             AttendancePercent = record?.AttendancePercent ?? 0,
             IsExamAllowed = record?.IsExamAllowed ?? false,
             HasAutomaticGrade = record?.HasAutomaticGrade ?? false,
-            TotalPoints = laboratories.Sum(x => x.Points ?? 0),
+            TotalPoints = laboratories
+                .Where(x => x.Status == LaboratoryReportStatus.Accepted)
+                .Sum(x => x.Points ?? 0),
             Laboratories = laboratories
         };
     }
@@ -992,7 +1026,16 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            LEFT JOIN user_groups ug ON ug.user_id = u.id
                            LEFT JOIN groups g ON g.id = ug.group_id
                            WHERE (@Status IS NULL OR r.status = @Status)
-                             AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
+                             AND (
+                                 @IncludeAll = true
+                                 OR EXISTS (
+                                     SELECT 1
+                                     FROM teacher_groups tg
+                                     JOIN user_groups sug ON sug.group_id = tg.group_id
+                                     WHERE tg.teacher_id = @TeacherId
+                                       AND sug.user_id = r.student_id
+                                 )
+                             )
                              AND (@LaboratoryId IS NULL OR lw.id = @LaboratoryId)
                              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
                              AND (@GroupName IS NULL OR g.name = @GroupName);
@@ -1019,7 +1062,16 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            LEFT JOIN groups g ON g.id = ug.group_id
                            JOIN laboratory_report_versions rv ON rv.laboratory_report_id = r.id AND rv.version_number = r.current_version_number
                            WHERE (@Status IS NULL OR r.status = @Status)
-                             AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
+                              AND (
+                                  @IncludeAll = true
+                                  OR EXISTS (
+                                      SELECT 1
+                                      FROM teacher_groups tg
+                                      JOIN user_groups sug ON sug.group_id = tg.group_id
+                                      WHERE tg.teacher_id = @TeacherId
+                                        AND sug.user_id = r.student_id
+                                  )
+                              )
                              AND (@LaboratoryId IS NULL OR lw.id = @LaboratoryId)
                              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
                              AND (@GroupName IS NULL OR g.name = @GroupName)
@@ -1066,7 +1118,16 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             FROM laboratory_reports r
             JOIN laboratory_works lw ON lw.id = r.laboratory_work_id
             WHERE r.id = @ReportId
-              AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId);
+              AND (
+                  @IncludeAll = true
+                  OR EXISTS (
+                      SELECT 1
+                      FROM teacher_groups tg
+                      JOIN user_groups sug ON sug.group_id = tg.group_id
+                      WHERE tg.teacher_id = @TeacherId
+                        AND sug.user_id = r.student_id
+                  )
+              );
             """,
             new { ReportId = reportId, TeacherId = teacherId, IncludeAll = includeAll });
 
@@ -1116,7 +1177,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 rv.checked_by_teacher_id AS "CheckedByTeacherId",
                 t.full_name AS "CheckedByTeacherFullName",
                 rv.checked_date_utc AS "CheckedDateUtc",
-                '/public/teacher/reports/' || @ReportId || '/versions/' || rv.id || '/file' AS "FileDownloadUrl"
+                '/api/v1/teacher/reports/' || @ReportId || '/versions/' || rv.id || '/file' AS "FileDownloadUrl"
             FROM laboratory_report_versions rv
             LEFT JOIN users t ON t.id = rv.checked_by_teacher_id
             WHERE rv.laboratory_report_id = @ReportId
@@ -1151,7 +1212,16 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             JOIN laboratory_works lw ON lw.id = r.laboratory_work_id
             WHERE rv.id = @VersionId
               AND rv.laboratory_report_id = @ReportId
-              AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId);
+              AND (
+                  @IncludeAll = true
+                  OR EXISTS (
+                      SELECT 1
+                      FROM teacher_groups tg
+                      JOIN user_groups sug ON sug.group_id = tg.group_id
+                      WHERE tg.teacher_id = @TeacherId
+                        AND sug.user_id = r.student_id
+                  )
+              );
             """,
             new { ReportId = reportId, VersionId = versionId, TeacherId = teacherId, IncludeAll = includeAll },
             cancellationToken);
@@ -1172,13 +1242,24 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             """
             SELECT
                 r.id AS "ReportId",
+                r.student_id AS "StudentId",
+                r.laboratory_work_id AS "LaboratoryId",
                 r.current_version_number AS "CurrentVersionNumber",
                 r.status AS "Status",
                 lw.max_points AS "MaxPoints"
             FROM laboratory_reports r
             JOIN laboratory_works lw ON lw.id = r.laboratory_work_id
             WHERE r.id = @ReportId
-              AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
+              AND (
+                  @IncludeAll = true
+                  OR EXISTS (
+                      SELECT 1
+                      FROM teacher_groups tg
+                      JOIN user_groups sug ON sug.group_id = tg.group_id
+                      WHERE tg.teacher_id = @TeacherId
+                        AND sug.user_id = r.student_id
+                  )
+              )
             FOR UPDATE;
             """,
             new { ReportId = reportId, TeacherId = teacherId, IncludeAll = includeAll },
@@ -1194,7 +1275,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             throw new LaboratoryException("laboratory_review.points_out_of_range", "Баллы не могут быть больше максимального балла");
         }
 
-        if (report.Status != LaboratoryReportStatus.PendingReview)
+        if (report.Status is not LaboratoryReportStatus.Submitted and not LaboratoryReportStatus.UnderReview)
         {
             throw new LaboratoryException("laboratory_report.not_pending_review", "Проверить можно только отчет в статусе ожидания проверки");
         }
@@ -1215,7 +1296,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         }
 
         var nowUtc = DateTimeOffset.UtcNow;
-        var points = request.Status == LaboratoryReportStatus.Accepted ? request.Points : request.Points ?? 0;
+        var points = request.Status == LaboratoryReportStatus.UnderReview ? null : request.Points;
+        var allowResubmit = request.Status == LaboratoryReportStatus.Accepted ? false : request.AllowResubmit;
 
         await connection.ExecuteAsync(
             """
@@ -1245,7 +1327,32 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 Comment = request.Comment,
                 TeacherId = teacherId,
                 NowUtc = nowUtc,
-                request.AllowResubmit
+                AllowResubmit = allowResubmit
+            },
+            transaction);
+
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO laboratory_progress (
+                id, laboratory_work_id, student_id, status, started_at_utc, completed_at_utc
+            )
+            VALUES (
+                @Id, @LaboratoryId, @StudentId, @Status, @StartedAtUtc, @CompletedAtUtc
+            )
+            ON CONFLICT (laboratory_work_id, student_id) DO UPDATE
+            SET status = EXCLUDED.status,
+                completed_at_utc = EXCLUDED.completed_at_utc;
+            """,
+            new
+            {
+                Id = UUIDNext.Uuid.NewSequential(),
+                report.LaboratoryId,
+                report.StudentId,
+                Status = request.Status == LaboratoryReportStatus.Accepted
+                    ? (int)StudentLaboratoryStatus.Accepted
+                    : (int)StudentLaboratoryStatus.InProgress,
+                StartedAtUtc = nowUtc,
+                CompletedAtUtc = request.Status == LaboratoryReportStatus.Accepted ? nowUtc : (DateTimeOffset?)null
             },
             transaction);
 
@@ -1257,7 +1364,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             Status = request.Status,
             Points = points,
             TeacherComment = request.Comment,
-            AllowResubmit = request.AllowResubmit,
+            AllowResubmit = allowResubmit,
             CheckedDateUtc = nowUtc
         };
     }
@@ -1280,9 +1387,9 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                  @IncludeAll = true
                                  OR EXISTS (
                                      SELECT 1
-                                     FROM user_groups teacher_groups
-                                     WHERE teacher_groups.user_id = @TeacherId
-                                       AND teacher_groups.group_id = ug.group_id
+                                     FROM teacher_groups tg
+                                     WHERE tg.teacher_id = @TeacherId
+                                       AND tg.group_id = ug.group_id
                                  )
                              )
                              AND (@GroupName IS NULL OR g.name = @GroupName)
@@ -1296,8 +1403,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                COALESCE(sgr.attendance_percent, 0) AS "AttendancePercent",
                                COALESCE(sgr.is_exam_allowed, false) AS "IsExamAllowed",
                                COALESCE(sgr.has_automatic_grade, false) AS "HasAutomaticGrade",
-                               COALESCE(SUM(CASE WHEN r.status = 2 THEN r.points ELSE 0 END), 0)::int AS "TotalPoints",
-                               COUNT(CASE WHEN r.status = 2 THEN 1 END)::int AS "CompletedLaboratories",
+                               COALESCE(SUM(CASE WHEN r.status = 4 THEN r.points ELSE 0 END), 0)::int AS "TotalPoints",
+                               COUNT(CASE WHEN r.status = 4 THEN 1 END)::int AS "CompletedLaboratories",
                                (
                                    SELECT COUNT(*)::int
                                    FROM laboratory_works
@@ -1313,9 +1420,9 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                  @IncludeAll = true
                                  OR EXISTS (
                                      SELECT 1
-                                     FROM user_groups teacher_groups
-                                     WHERE teacher_groups.user_id = @TeacherId
-                                       AND teacher_groups.group_id = ug.group_id
+                                     FROM teacher_groups tg
+                                     WHERE tg.teacher_id = @TeacherId
+                                       AND tg.group_id = ug.group_id
                                  )
                              )
                              AND (@GroupName IS NULL OR g.name = @GroupName)
@@ -1367,9 +1474,9 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                       @IncludeAll = true
                       OR EXISTS (
                           SELECT 1
-                          FROM user_groups teacher_groups
-                          WHERE teacher_groups.user_id = @TeacherId
-                            AND teacher_groups.group_id = ug.group_id
+                          FROM teacher_groups tg
+                          WHERE tg.teacher_id = @TeacherId
+                            AND tg.group_id = ug.group_id
                       )
                   )
             );
@@ -1442,6 +1549,33 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         {
             await InsertHintAsync(connection, transaction, laboratoryId, hint, nowUtc);
         }
+    }
+
+    private static Task EnsureProgressStartedAsync(
+        Npgsql.NpgsqlConnection connection,
+        Guid studentId,
+        Guid laboratoryId,
+        System.Data.Common.DbTransaction? transaction = null)
+    {
+        return connection.ExecuteAsync(
+            """
+            INSERT INTO laboratory_progress (
+                id, laboratory_work_id, student_id, status, started_at_utc, completed_at_utc
+            )
+            VALUES (
+                @Id, @LaboratoryId, @StudentId, @Status, @StartedAtUtc, NULL
+            )
+            ON CONFLICT (laboratory_work_id, student_id) DO NOTHING;
+            """,
+            new
+            {
+                Id = UUIDNext.Uuid.NewSequential(),
+                LaboratoryId = laboratoryId,
+                StudentId = studentId,
+                Status = (int)StudentLaboratoryStatus.InProgress,
+                StartedAtUtc = DateTimeOffset.UtcNow
+            },
+            transaction);
     }
 
     private static Task InsertHintAsync(
@@ -1542,7 +1676,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             StudentLaboratoryStatus.InProgress => "В работе",
             StudentLaboratoryStatus.PendingReview => "Ожидает проверки",
             StudentLaboratoryStatus.Accepted => "Принята",
-            StudentLaboratoryStatus.Rejected => "Отклонена",
+            StudentLaboratoryStatus.RevisionRequired => "Нужна доработка",
             _ => status.ToString()
         };
     }
@@ -1558,6 +1692,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
     private sealed record ReviewReportDbModel
     {
         public Guid ReportId { get; init; }
+        public Guid StudentId { get; init; }
+        public Guid LaboratoryId { get; init; }
         public int CurrentVersionNumber { get; init; }
         public LaboratoryReportStatus Status { get; init; }
         public int MaxPoints { get; init; }

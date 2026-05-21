@@ -15,6 +15,7 @@ public sealed record GetMyProgressResponse
     public int TotalLaboratories { get; init; }
     public int CompletedLaboratories { get; init; }
     public int PendingReviewLaboratories { get; init; }
+    public int RevisionRequiredLaboratories { get; init; }
     public int RejectedLaboratories { get; init; }
     public int TotalPoints { get; init; }
     public int EarnedPoints { get; init; }

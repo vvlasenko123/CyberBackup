@@ -11,17 +11,22 @@ public enum LaboratoryReportStatus
     NotSubmitted = 0,
 
     /// <summary>
-    /// Ожидает проверки
+    /// Отправлен на проверку
     /// </summary>
-    PendingReview = 1,
+    Submitted = 1,
+
+    /// <summary>
+    /// Взят преподавателем на проверку
+    /// </summary>
+    UnderReview = 2,
+
+    /// <summary>
+    /// Требует доработки
+    /// </summary>
+    RevisionRequired = 3,
 
     /// <summary>
     /// Принят
     /// </summary>
-    Accepted = 2,
-
-    /// <summary>
-    /// Отклонен
-    /// </summary>
-    Rejected = 3
+    Accepted = 4
 }

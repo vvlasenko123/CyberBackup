@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.AutoMapper\Infrastructure.AutoMapper.csproj" />
     <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastructure.Database\Infrastructure.Database.csproj" />
+    <ProjectReference Include="..\..\..\Libs\Infrastructure\Infrastucture.S3\Infrastucture.S3.csproj" />
     <ProjectReference Include="..\..\..\Libs\Security\Security.Auth\Security.Auth.csproj" />
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />

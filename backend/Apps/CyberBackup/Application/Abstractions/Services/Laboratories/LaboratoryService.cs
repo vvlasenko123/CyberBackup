@@ -1,5 +1,6 @@
+using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.Laboratories.Contracts;
-using Application.Abstractions.UseCases.User;
+using Application.DTO.Auth;
 using Application.DTO.Laboratories;
 using Domain.Laboratories.Enums;
 using Domain.User.Enums;
@@ -26,18 +27,18 @@ public sealed class LaboratoryService : ILaboratoryService
     private readonly ILaboratoryRepository _repository;
     private readonly ILaboratoryReportFileStorage _fileStorage;
     private readonly ILaboratoryFlagHashService _flagHashService;
-    private readonly ICurrentUser _currentUser;
+    private readonly IJwtService _jwtService;
 
     public LaboratoryService(
         ILaboratoryRepository repository,
         ILaboratoryReportFileStorage fileStorage,
         ILaboratoryFlagHashService flagHashService,
-        ICurrentUser currentUser)
+        IJwtService jwtService)
     {
         _repository = repository;
         _fileStorage = fileStorage;
         _flagHashService = flagHashService;
-        _currentUser = currentUser;
+        _jwtService = jwtService;
     }
 
     /// <inheritdoc />
@@ -45,9 +46,10 @@ public sealed class LaboratoryService : ILaboratoryService
         GetLaboratoryListRequest request,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var normalizedRequest = NormalizePaging(request);
         var result = _repository.GetStudentLaboratoriesAsync(
-            _currentUser.UserId,
+            currentUser.UserId,
             normalizedRequest,
             cancellationToken);
 
@@ -59,8 +61,9 @@ public sealed class LaboratoryService : ILaboratoryService
         Guid laboratoryId,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var laboratory = await _repository.GetStudentLaboratoryDetailsAsync(
-            _currentUser.UserId,
+            currentUser.UserId,
             laboratoryId,
             cancellationToken);
 
@@ -82,8 +85,9 @@ public sealed class LaboratoryService : ILaboratoryService
         Guid hintId,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var hint = await _repository.OpenHintAsync(
-            _currentUser.UserId,
+            currentUser.UserId,
             laboratoryId,
             hintId,
             cancellationToken);
@@ -106,6 +110,8 @@ public sealed class LaboratoryService : ILaboratoryService
         SubmitLaboratoryFlagRequest request,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
+
         if (string.IsNullOrWhiteSpace(request.Flag))
         {
             throw new LaboratoryException("laboratory_flag.required", "Флаг обязателен");
@@ -117,7 +123,7 @@ public sealed class LaboratoryService : ILaboratoryService
         }
 
         var details = await _repository.GetStudentLaboratoryDetailsAsync(
-            _currentUser.UserId,
+            currentUser.UserId,
             laboratoryId,
             cancellationToken);
 
@@ -136,7 +142,7 @@ public sealed class LaboratoryService : ILaboratoryService
                         && _flagHashService.VerifyFlag(request.Flag, expectedHash);
 
         var result = await _repository.SubmitFlagAttemptAsync(
-            _currentUser.UserId,
+            currentUser.UserId,
             laboratoryId,
             _flagHashService.HashFlag(request.Flag),
             _flagHashService.MaskFlag(request.Flag),
@@ -152,6 +158,8 @@ public sealed class LaboratoryService : ILaboratoryService
         UploadLaboratoryReportFileDto file,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
+
         await using var content = file.Content;
 
         ValidateReportFile(file);
@@ -159,7 +167,7 @@ public sealed class LaboratoryService : ILaboratoryService
         var savedFile = await _fileStorage.SaveAsync(file, cancellationToken);
 
         var result = await _repository.UploadReportAsync(
-            _currentUser.UserId,
+            currentUser.UserId,
             laboratoryId,
             savedFile,
             cancellationToken);
@@ -172,8 +180,9 @@ public sealed class LaboratoryService : ILaboratoryService
         Guid laboratoryId,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var report = await _repository.GetMyReportAsync(
-            _currentUser.UserId,
+            currentUser.UserId,
             laboratoryId,
             cancellationToken);
 
@@ -192,7 +201,8 @@ public sealed class LaboratoryService : ILaboratoryService
     /// <inheritdoc />
     public Task<GetMyProgressResponse> GetMyProgressAsync(CancellationToken cancellationToken)
     {
-        var result = _repository.GetMyProgressAsync(_currentUser.UserId, cancellationToken);
+        var currentUser = GetCurrentUser();
+        var result = _repository.GetMyProgressAsync(currentUser.UserId, cancellationToken);
 
         return result;
     }
@@ -200,7 +210,8 @@ public sealed class LaboratoryService : ILaboratoryService
     /// <inheritdoc />
     public async Task<GetMyGradebookResponse> GetMyGradebookAsync(CancellationToken cancellationToken)
     {
-        var gradebook = await _repository.GetMyGradebookAsync(_currentUser.UserId, cancellationToken);
+        var currentUser = GetCurrentUser();
+        var gradebook = await _repository.GetMyGradebookAsync(currentUser.UserId, cancellationToken);
 
         if (gradebook is null)
         {
@@ -219,11 +230,12 @@ public sealed class LaboratoryService : ILaboratoryService
         GetTeacherLaboratoryListRequest request,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var normalizedRequest = NormalizePaging(request);
         var result = _repository.GetTeacherLaboratoriesAsync(
             normalizedRequest,
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             cancellationToken);
 
         return result;
@@ -234,10 +246,11 @@ public sealed class LaboratoryService : ILaboratoryService
         Guid laboratoryId,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var laboratory = await _repository.GetTeacherLaboratoryDetailsAsync(
             laboratoryId,
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             cancellationToken);
 
         if (laboratory is null)
@@ -257,12 +270,14 @@ public sealed class LaboratoryService : ILaboratoryService
         CreateLaboratoryRequest request,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
+
         ValidateLaboratory(request, expectedFlagRequired: request.HasFlag);
         var expectedFlagHash = request.HasFlag ? _flagHashService.HashFlag(request.ExpectedFlag!) : null;
         var id = await _repository.CreateLaboratoryAsync(
             request,
             expectedFlagHash,
-            _currentUser.UserId,
+            currentUser.UserId,
             cancellationToken);
         var result = new CreateLaboratoryResponse
         {
@@ -278,6 +293,8 @@ public sealed class LaboratoryService : ILaboratoryService
         UpdateLaboratoryRequest request,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
+
         ValidateLaboratory(request, expectedFlagRequired: false);
         var updateFlagHash = request.HasFlag && !string.IsNullOrWhiteSpace(request.ExpectedFlag);
         var expectedFlagHash = updateFlagHash ? _flagHashService.HashFlag(request.ExpectedFlag!) : null;
@@ -287,8 +304,8 @@ public sealed class LaboratoryService : ILaboratoryService
             request,
             expectedFlagHash,
             updateFlagHash,
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             cancellationToken);
 
         return result;
@@ -297,10 +314,11 @@ public sealed class LaboratoryService : ILaboratoryService
     /// <inheritdoc />
     public Task DeleteLaboratoryAsync(Guid laboratoryId, CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var result = _repository.DeleteLaboratoryAsync(
             laboratoryId,
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             cancellationToken);
 
         return result;
@@ -311,11 +329,12 @@ public sealed class LaboratoryService : ILaboratoryService
         GetTeacherReportListRequest request,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var normalizedRequest = NormalizePaging(request);
         var result = _repository.GetTeacherReportsAsync(
             normalizedRequest,
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             cancellationToken);
 
         return result;
@@ -326,10 +345,11 @@ public sealed class LaboratoryService : ILaboratoryService
         Guid reportId,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var report = await _repository.GetTeacherReportDetailsAsync(
             reportId,
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             cancellationToken);
 
         if (report is null)
@@ -350,11 +370,12 @@ public sealed class LaboratoryService : ILaboratoryService
         Guid versionId,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var file = await _repository.GetReportFileAsync(
             reportId,
             versionId,
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             cancellationToken);
 
         if (file is null)
@@ -375,7 +396,11 @@ public sealed class LaboratoryService : ILaboratoryService
         ReviewLaboratoryReportRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.Status is not LaboratoryReportStatus.Accepted and not LaboratoryReportStatus.Rejected)
+        var currentUser = GetCurrentUser();
+
+        if (request.Status is not LaboratoryReportStatus.Accepted
+            and not LaboratoryReportStatus.RevisionRequired
+            and not LaboratoryReportStatus.UnderReview)
         {
             throw new LaboratoryException("laboratory_review.invalid_status", "Некорректный статус проверки");
         }
@@ -390,7 +415,7 @@ public sealed class LaboratoryService : ILaboratoryService
             throw new LaboratoryException("laboratory_review.points_out_of_range", "Баллы не могут быть отрицательными");
         }
 
-        if (request.Status == LaboratoryReportStatus.Rejected && string.IsNullOrWhiteSpace(request.Comment))
+        if (request.Status == LaboratoryReportStatus.RevisionRequired && string.IsNullOrWhiteSpace(request.Comment))
         {
             throw new LaboratoryException("laboratory_review.comment_required", "Комментарий обязателен при отклонении отчета");
         }
@@ -401,8 +426,8 @@ public sealed class LaboratoryService : ILaboratoryService
         }
 
         var result = _repository.ReviewReportAsync(
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             reportId,
             request,
             cancellationToken);
@@ -415,11 +440,12 @@ public sealed class LaboratoryService : ILaboratoryService
         GetTeacherGradebookRequest request,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
         var normalizedRequest = NormalizePaging(request);
         var result = _repository.GetTeacherGradebookAsync(
             normalizedRequest,
-            _currentUser.UserId,
-            IsAdmin(),
+            currentUser.UserId,
+            IsAdmin(currentUser),
             cancellationToken);
 
         return result;
@@ -431,16 +457,18 @@ public sealed class LaboratoryService : ILaboratoryService
         UpdateTeacherGradebookRequest request,
         CancellationToken cancellationToken)
     {
+        var currentUser = GetCurrentUser();
+
         if (request.AttendancePercent is < 0 or > 100)
         {
             throw new LaboratoryException("gradebook.attendance_out_of_range", "Посещаемость должна быть от 0 до 100");
         }
 
         var result = _repository.UpdateGradebookAsync(
-            _currentUser.UserId,
+            currentUser.UserId,
             studentId,
             request,
-            IsAdmin(),
+            IsAdmin(currentUser),
             cancellationToken);
 
         return result;
@@ -450,7 +478,7 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         var laboratory = await _repository.GetTeacherLaboratoryDetailsAsync(
             laboratoryId,
-            _currentUser.UserId,
+            GetCurrentUser().UserId,
             true,
             cancellationToken);
 
@@ -571,9 +599,16 @@ public sealed class LaboratoryService : ILaboratoryService
         return result;
     }
 
-    private bool IsAdmin()
+    private CurrentTokenUserDto GetCurrentUser()
     {
-        var result = _currentUser.Role == UserRole.Admin;
+        var result = _jwtService.GetCurrentUser();
+
+        return result;
+    }
+
+    private static bool IsAdmin(CurrentTokenUserDto currentUser)
+    {
+        var result = currentUser.Role is UserRole.Admin or UserRole.SuperAdmin;
 
         return result;
     }

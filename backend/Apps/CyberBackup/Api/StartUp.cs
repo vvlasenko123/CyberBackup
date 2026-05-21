@@ -11,9 +11,7 @@ using Api.Auth;
 using Api.Extensions;
 using Application.Abstractions.Services.Calendar.Hubs;
 using Infrastucture.S3;
-using Api.Services.Auth;
 using Api.Services.Laboratories;
-using Application.Abstractions.UseCases.User;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Api;
@@ -62,7 +60,6 @@ public class StartUp
         services.AddCore();
         services.AddApplication();
         services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ILaboratoryReportUploadRequestFactory, LaboratoryReportUploadRequestFactory>();
     }
 

@@ -1,16 +1,19 @@
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
+using Infrastucture.S3.Storage;
 
 namespace Infrastructure.Repositories;
 
 /// <inheritdoc />
 public sealed class LaboratoryReportFileStorage : ILaboratoryReportFileStorage
 {
-    private readonly string _rootPath;
+    private const string ReportsPrefix = "laboratory-reports";
 
-    public LaboratoryReportFileStorage()
+    private readonly MinioObjectStorage _storage;
+
+    public LaboratoryReportFileStorage(MinioObjectStorage storage)
     {
-        _rootPath = Path.Combine(AppContext.BaseDirectory, "laboratory-report-files");
+        _storage = storage;
     }
 
     /// <inheritdoc />
@@ -18,17 +21,18 @@ public sealed class LaboratoryReportFileStorage : ILaboratoryReportFileStorage
         UploadLaboratoryReportFileDto file,
         CancellationToken cancellationToken)
     {
-        Directory.CreateDirectory(_rootPath);
-
         var extension = Path.GetExtension(file.FileName);
-        var storedFileName = $"{UUIDNext.Uuid.NewSequential():N}{extension}";
-        var path = Path.Combine(_rootPath, storedFileName);
+        var objectName = $"{ReportsPrefix}/{UUIDNext.Uuid.NewSequential():N}{extension}";
 
-        await using var destination = File.Create(path);
-        await file.Content.CopyToAsync(destination, cancellationToken);
+        await _storage.SaveAsync(
+            objectName,
+            file.Content,
+            file.Length,
+            file.ContentType,
+            cancellationToken);
 
         return new SavedLaboratoryReportFileDto(
-            StoragePath: path,
+            StoragePath: objectName,
             OriginalFileName: file.FileName,
             ContentType: file.ContentType,
             FileSizeBytes: file.Length);
@@ -37,8 +41,8 @@ public sealed class LaboratoryReportFileStorage : ILaboratoryReportFileStorage
     /// <inheritdoc />
     public Task<Stream> OpenReadAsync(string storagePath, CancellationToken cancellationToken)
     {
-        Stream stream = File.OpenRead(storagePath);
+        var result = _storage.OpenReadAsync(storagePath, cancellationToken);
 
-        return Task.FromResult(stream);
+        return result;
     }
 }
