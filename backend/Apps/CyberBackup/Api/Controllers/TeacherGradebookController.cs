@@ -1,9 +1,9 @@
-using Api.Auth;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
 using Infrastructure.Core.Controllers.Public;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Security.Auth.Admin.Constants;
 
 namespace Api.Controllers;
 
@@ -11,7 +11,7 @@ namespace Api.Controllers;
 /// Контроллер ведомости преподавателя
 /// </summary>
 [ApiController]
-[Authorize(Roles = AuthRoles.TeacherAdmin)]
+[Authorize(Roles = AuthRoleNames.Teacher + "," + AuthRoleNames.AdminOrSuperAdmin)]
 [Route("api/v1/teacher/gradebook")]
 public sealed class TeacherGradebookController : PublicController
 {

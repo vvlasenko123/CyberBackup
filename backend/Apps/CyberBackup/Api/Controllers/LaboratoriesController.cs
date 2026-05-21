@@ -1,4 +1,3 @@
-using Api.Auth;
 using Api.Controllers.Models.Request.Laboratories;
 using Api.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
@@ -6,6 +5,7 @@ using Application.DTO.Laboratories;
 using Infrastructure.Core.Controllers.Public;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Security.Auth.Admin.Constants;
 
 namespace Api.Controllers;
 
@@ -13,7 +13,7 @@ namespace Api.Controllers;
 /// Контроллер лабораторных работ для студента
 /// </summary>
 [ApiController]
-[Authorize(Roles = AuthRoles.StudentTeacherAdmin)]
+[Authorize(Roles = AuthRoleNames.Student + "," + AuthRoleNames.Teacher + "," + AuthRoleNames.AdminOrSuperAdmin)]
 [Route("api/v1/laboratories")]
 public sealed class LaboratoriesController : PublicController
 {
