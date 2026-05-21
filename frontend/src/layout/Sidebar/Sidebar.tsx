@@ -1,5 +1,6 @@
 import React from 'react';
-import './Sidebar.css'
+import { useNavigate, useLocation } from 'react-router-dom';
+import './Sidebar.css';
 import type { User, UserRole } from '../../types';
 import { navigationByRole } from './navigation';
 import { Icon } from '../../shared/Icon';
@@ -7,18 +8,12 @@ import { Icon } from '../../shared/Icon';
 type Props = {
     role: UserRole;
     user: User;
-    activePage: string;
-    onNavigate: (page: string) => void;
     onLogout: () => void;
 };
 
-export const Sidebar: React.FC<Props> = ({
-    role,
-    user,
-    activePage,
-    onNavigate,
-    onLogout,
-}) => {
+export const Sidebar: React.FC<Props> = ({ role, user, onLogout }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const nav = navigationByRole[role];
 
     return (
@@ -31,16 +26,14 @@ export const Sidebar: React.FC<Props> = ({
                 {nav.map((item) => (
                     <button
                         key={item.id}
-                        className={`sidebar__item ${activePage === item.id ? 'sidebar__item--active' : ''
-                            }`}
-                        onClick={() => onNavigate(item.id)}
+                        className={`sidebar__item ${location.pathname === item.path ? 'sidebar__item--active' : ''}`}
+                        onClick={() => navigate(item.path)}
                     >
                         <Icon
                             name={item.icon}
                             size={18}
-                            color={activePage === item.id ? '#ffffff' : '#8A94A6'}
+                            color={location.pathname === item.path ? '#ffffff' : '#8A94A6'}
                         />
-
                         <span>{item.label}</span>
                     </button>
                 ))}
@@ -49,24 +42,15 @@ export const Sidebar: React.FC<Props> = ({
             <div className="sidebar__footer">
                 <div className="sidebar__user">
                     <div className="sidebar__avatar">
-                        {user.name[0]}
+                        {user.name ? user.name[0].toUpperCase() : '?'}
                     </div>
-
                     <div>
-                        <div className="sidebar__name">
-                            {user.name}
-                        </div>
-
-                        <div className="sidebar__role">
-                            {role}
-                        </div>
+                        <div className="sidebar__name">{user.name || 'Пользователь'}</div>
+                        <div className="sidebar__role">{role}</div>
                     </div>
                 </div>
 
-                <button
-                    className="sidebar__logout"
-                    onClick={onLogout}
-                >
+                <button className="sidebar__logout" onClick={onLogout}>
                     <Icon name="logout" size={18} />
                 </button>
             </div>

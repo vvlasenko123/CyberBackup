@@ -1,94 +1,83 @@
-import React, { useEffect, useState } from 'react';
-import type { User, UserRole } from './types';
-import { AuthScreen } from './auth/AuthScreen';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+import ProtectedRoute from './components/ProtectedRoute';
 import { AppLayout } from './layout/AppLayout';
 
-const parseJwt = (token: string) => {
-  try {
-    const base64Payload = token.split('.')[1];
-    const payload = atob(base64Payload);
-    return JSON.parse(payload);
-  } catch {
-    return null;
-  }
-};
+import NotFound from './pages/NotFound';
+import Unauthorized from './pages/Unauthorized';
+import LogOut from './pages/LogOut';
 
-const App: React.FC = () => {
-  const [authed, setAuthed] = useState(false);
-  const [role, setRole] = useState<UserRole>('student');
-  const [user, setUser] = useState<User>({
-    name: '',
-  });
+import LoginPage from './pages/LoginPage/LoginPage';
+import DashboardPage from './pages/DashboardPage/DashboardPage';
+import LabsPage from './pages/LabsPage/LabsPage';
+import ProgressPage from './pages/ProgressPage/ProgressPage';
+import StatementPage from './pages/StatementPage/StatementPage';
+import QuestionsPage from './pages/QuestionsPage/QuestionsPage';
+import CalendarPage from './pages/CalendarPage/CalendarPage';
+import UsersPage from './pages/UsersPage/UsersPage';
+import ChangePasswordPage from './pages/ChangePasswordPage/ChangePasswordPage';
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const expiresAt =
-      localStorage.getItem('expiresAt');
+function App() {
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/logout" element={<LogOut />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
+                <Route path="*" element={<NotFound />} />
 
-    if (!token || !expiresAt) {
-      return;
-    }
+                {/* Все защищённые страницы внутри AppLayout */}
+                <Route
+                    element={
+                        <ProtectedRoute allowedRoles={['student', 'teacher', 'admin']}>
+                            <AppLayout />
+                        </ProtectedRoute>
+                    }
+                >
+                    <Route path="/dashboard" element={<DashboardPage />} />
 
-    const expirationDate = new Date(expiresAt);
+                    <Route path="/labs" element={
+                        <ProtectedRoute allowedRoles={['student', 'teacher']}>
+                            <LabsPage />
+                        </ProtectedRoute>
+                    } />
 
-    if (expirationDate < new Date()) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('expiresAt');
-      return;
-    }
+                    <Route path="/progress" element={
+                        <ProtectedRoute allowedRoles={['student']}>
+                            <ProgressPage />
+                        </ProtectedRoute>
+                    } />
 
-    const jwtPayload = parseJwt(token);
+                    <Route path="/statement" element={
+                        <ProtectedRoute allowedRoles={['student', 'teacher']}>
+                            <StatementPage />
+                        </ProtectedRoute>
+                    } />
 
-    if (!jwtPayload) {
-      return;
-    }
+                    <Route path="/questions" element={
+                        <ProtectedRoute allowedRoles={['student', 'teacher']}>
+                            <QuestionsPage />
+                        </ProtectedRoute>
+                    } />
 
-    let userRole: UserRole = 'student';
+                    <Route path="/calendar" element={
+                        <ProtectedRoute allowedRoles={['student', 'teacher', 'admin']}>
+                            <CalendarPage />
+                        </ProtectedRoute>
+                    } />
 
-    if (jwtPayload.role === 'teacher') {
-      userRole = 'teacher';
-    }
+                    <Route path="/users" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <UsersPage />
+                        </ProtectedRoute>
+                    } />
 
-    if (jwtPayload.role === 'admin') {
-      userRole = 'admin';
-    }
-
-    setRole(userRole);
-
-    setUser({
-      name: 'Степа Мокрушин',
-    });
-
-    setAuthed(true);
-  }, []);
-
-  const handleLogin = (r: UserRole, u: User) => {
-    setRole(r);
-    setUser(u);
-    setAuthed(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('expiresAt');
-
-    setAuthed(false);
-    setRole('student');
-    setUser({ name: '' });
-  };
-
-  return !authed ? (
-    <AuthScreen onLogin={handleLogin} />
-  ) : (
-    <AppLayout
-      role={role}
-      user={user}
-      onLogout={handleLogout}
-      onRoleChange={setRole}
-    />
-  );
-};
+                    <Route path="/change-password" element={<ChangePasswordPage />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
+}
 
 export default App;

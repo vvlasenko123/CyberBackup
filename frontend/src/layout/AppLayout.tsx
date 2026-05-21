@@ -1,79 +1,46 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import './AppLayout.css';
 import type { User, UserRole } from '../types';
-import { DashboardPage } from '../pages/DashboardPage';
-import { LabsPage } from '../pages/LabsPage';
-import { ProgressPage } from '../pages/ProgressPage';
-import { StatementPage } from '../pages/StatementPage';
-import { QuestionsPage } from '../pages/QuestionsPage';
-import { CalendarPage } from '../pages/CalendarPage';
-import { UsersPage } from '../pages/UsersPage';
 import { Sidebar } from './Sidebar/Sidebar';
 import { Header } from './Header/Header';
 
-type Props = {
-    role: UserRole;
-    user: User;
-    onLogout: () => void;
-    onRoleChange: (role: UserRole) => void;
-};
+export const AppLayout: React.FC = () => {
+    const navigate = useNavigate();
 
-export const AppLayout: React.FC<Props> = ({
-    role,
-    user,
-    onLogout,
-    onRoleChange,
-}) => {
-    const [activePage, setActivePage] = useState('dashboard');
+    const [role, setRole] = useState<UserRole>(
+        () => (localStorage.getItem('user_role') as UserRole) || 'student'
+    );
 
-    const renderPage = useMemo(() => {
-        switch (activePage) {
-            case 'dashboard':
-                return <DashboardPage />;
+    const user: User = {
+        name: localStorage.getItem('user_name') || '',
+    };
 
-            case 'labs':
-                return <LabsPage />;
+    const handleRoleChange = (newRole: UserRole) => {
+        localStorage.setItem('user_role', newRole);
+        setRole(newRole);
+    };
 
-            case 'progress':
-                return <ProgressPage />;
-
-            case 'statement':
-                return <StatementPage />;
-
-            case 'questions':
-                return <QuestionsPage />;
-
-            case 'calendar':
-                return <CalendarPage />;
-
-            case 'users':
-                return <UsersPage />;
-
-            default:
-                return <DashboardPage />;
-        }
-    }, [activePage]);
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('expiresAt');
+        localStorage.removeItem('refreshTokenExpiresAt');
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('user_role');
+        localStorage.removeItem('user_name');
+        navigate('/login');
+    };
 
     return (
         <div className="layout">
-            <Sidebar
-                role={role}
-                activePage={activePage}
-                onNavigate={setActivePage}
-                user={user}
-                onLogout={onLogout}
-            />
+            <Sidebar role={role} user={user} onLogout={handleLogout} />
 
             <div className="layout__content">
-                <Header
-                    role={role}
-                    user={user}
-                    onRoleChange={onRoleChange}
-                    activePage={activePage}
-                />
+                <Header role={role} onRoleChange={handleRoleChange} />
 
                 <main className="layout__page">
-                    {renderPage}
+                    <Outlet />
                 </main>
             </div>
         </div>

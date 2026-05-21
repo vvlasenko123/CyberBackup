@@ -1,33 +1,27 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import './Header.css';
-import type { User, UserRole } from '../../types';
+import type { UserRole } from '../../types';
 import { Icon } from '../../shared/Icon';
 import { navigationByRole } from '../Sidebar/navigation';
 
 type Props = {
     role: UserRole;
-    user: User;
     onRoleChange: (role: UserRole) => void;
-    activePage: string;
 };
 
-export const Header: React.FC<Props> = ({
-    role,
-    onRoleChange,
-    activePage
-}) => {
+export const Header: React.FC<Props> = ({ role, onRoleChange }) => {
+    const location = useLocation();
 
     const currentNavItem = navigationByRole[role].find(
-        (item) => item.id === activePage
+        (item) => item.path === location.pathname
     );
-
     const pageTitle = currentNavItem?.label || 'NeoLab space';
+
     return (
         <header className="header">
             <div>
-                <h1 className="header__title">
-                    {pageTitle}
-                </h1>
+                <h1 className="header__title">{pageTitle}</h1>
             </div>
 
             <div className="header__actions">
@@ -37,9 +31,7 @@ export const Header: React.FC<Props> = ({
 
                 <select
                     value={role}
-                    onChange={(e) =>
-                        onRoleChange(e.target.value as UserRole)
-                    }
+                    onChange={(e) => onRoleChange(e.target.value as UserRole)}
                     className="header__select"
                 >
                     <option value="student">Student</option>
