@@ -1,0 +1,319 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+.cal-page {
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* ── Header row ─────────────────────────────────────────── */
+.cal-page__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.cal-page__title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+.cal-page__add-btn {
+    background: #027ef2;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.cal-page__add-btn:hover {
+    background: #0267c4;
+}
+
+/* ── Legend ─────────────────────────────────────────────── */
+.cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.cal-legend__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.cal-legend__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ── Card ───────────────────────────────────────────────── */
+.cal-card {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* ── Month nav ──────────────────────────────────────────── */
+.cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.cal-nav__arrow {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 22px;
+    line-height: 1;
+    padding: 2px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cal-nav__arrow:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.cal-nav__label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* ── Grid ───────────────────────────────────────────────── */
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.cal-weekday {
+    padding: 9px 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.35);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-day {
+    min-height: 90px;
+    padding: 7px 6px 6px;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-sizing: border-box;
+}
+
+/* Remove right border from Sunday column (every 7th child after 7 weekday headers) */
+.cal-day:nth-child(7n) {
+    border-right: none;
+}
+
+.cal-day--out {
+    background: #1c2126;
+    opacity: 0.45;
+}
+
+.cal-day__num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 4px;
+    border-radius: 50%;
+    transition: background 0.15s;
+}
+
+.cal-day--today .cal-day__num {
+    background: rgba(2, 126, 242, 0.75);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* ── Events ─────────────────────────────────────────────── */
+.cal-day__events {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cal-event {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid #027ef2;
+    border-radius: 3px;
+    padding: 3px 5px;
+    overflow: hidden;
+}
+
+.cal-event__title {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cal-event__time {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 1px;
+}
+
+/* ── Loading ────────────────────────────────────────────── */
+.cal-loading {
+    grid-column: 1 / -1;
+    padding: 48px 0;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Modal ──────────────────────────────────────────────── */
+.cal-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.cal-modal {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 28px 28px 24px;
+    width: 400px;
+    max-width: calc(100vw - 32px);
+}
+
+.cal-modal__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 20px;
+}
+
+.cal-modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.cal-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.cal-modal__label {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.cal-modal__input {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 7px;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    padding: 9px 11px;
+    outline: none;
+    transition: border-color 0.18s;
+    color-scheme: dark;
+}
+
+.cal-modal__input:focus {
+    border-color: #027ef2;
+}
+
+.cal-modal__select {
+    appearance: none;
+    cursor: pointer;
+}
+
+.cal-modal__select option {
+    background: #20252b;
+}
+
+.cal-modal__error {
+    font-size: 12px;
+    color: #ef4444;
+    margin: 0;
+}
+
+.cal-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.cal-modal__cancel {
+    background: rgba(255, 255, 255, 0.07);
+    border: none;
+    border-radius: 7px;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.cal-modal__cancel:hover {
+    background: rgba(255, 255, 255, 0.11);
+}
+
+.cal-modal__submit {
+    background: #027ef2;
+    border: none;
+    border-radius: 7px;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.cal-modal__submit:hover:not(:disabled) {
+    background: #0267c4;
+}
+
+.cal-modal__submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
