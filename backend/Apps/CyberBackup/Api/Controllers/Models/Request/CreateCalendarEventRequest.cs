@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Domain.Calendar.Enums;
 
 namespace Api.Controllers.Models.Request;
 
@@ -12,6 +13,11 @@ public sealed record CreateCalendarEventRequest
     /// </summary>
     [Required(ErrorMessage = "Название события не должно быть пустым")]
     public string Title { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Тип события
+    /// </summary>
+    public CalendarEventType EventType { get; init; }
 
     /// <summary>
     /// Дата и время начала события

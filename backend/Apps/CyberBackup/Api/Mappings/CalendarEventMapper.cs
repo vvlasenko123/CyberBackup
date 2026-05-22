@@ -15,6 +15,7 @@ public sealed class CalendarEventMapper : Profile
     {
         CreateMap<CreateCalendarEventRequest, CalendarEventDto>()
             .ForMember(x => x.Title, y => y.MapFrom(z => z.Title))
+            .ForMember(x => x.EventType, y => y.MapFrom(z => z.EventType))
             .ForMember(x => x.StartsAtUtc, y => y.MapFrom(z => z.StartsAtUtc))
             .ForMember(x => x.EndsAtUtc, y => y.MapFrom(z => z.EndsAtUtc))
             .ForMember(x => x.NotifyAtUtc, y => y.MapFrom(z => z.NotifyAtUtc));
@@ -23,6 +24,7 @@ public sealed class CalendarEventMapper : Profile
             .ForMember(x => x.Id, y => y.MapFrom(z => z.Id))
             .ForMember(x => x.UserId, y => y.MapFrom(z => z.UserId))
             .ForMember(x => x.Title, y => y.MapFrom(z => z.Title))
+            .ForMember(x => x.EventType, y => y.MapFrom(z => z.EventType))
             .ForMember(x => x.Status, y => y.MapFrom(z => z.Status))
             .ForMember(x => x.StartsAtUtc, y => y.MapFrom(z => z.StartsAtUtc))
             .ForMember(x => x.EndsAtUtc, y => y.MapFrom(z => z.EndsAtUtc))

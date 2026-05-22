@@ -16,6 +16,11 @@ public interface ICalendarEventRepository
     /// Получить события пользователя
     /// </summary>
     Task<IReadOnlyCollection<CalendarEventModel>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить все события календаря
+    /// </summary>
+    Task<IReadOnlyCollection<CalendarEventModel>> GetAllAsync(CancellationToken cancellationToken);
     
     /// <summary>
     /// Получить события для уведомления

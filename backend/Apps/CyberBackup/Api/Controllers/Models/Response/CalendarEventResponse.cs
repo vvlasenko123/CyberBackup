@@ -9,6 +9,7 @@ public sealed record CalendarEventResponse(
     Guid Id,
     Guid UserId,
     string Title,
+    CalendarEventType EventType,
     CalendarEventStatus Status,
     DateTimeOffset StartsAtUtc,
     DateTimeOffset EndsAtUtc,

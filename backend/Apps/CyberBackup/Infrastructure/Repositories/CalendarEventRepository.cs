@@ -25,6 +25,7 @@ public sealed class CalendarEventRepository : ICalendarEventRepository
                                    id,
                                    user_id,
                                    title,
+                                   event_type,
                                    status,
                                    starts_at_utc,
                                    ends_at_utc,
@@ -37,6 +38,7 @@ public sealed class CalendarEventRepository : ICalendarEventRepository
                                    @Id,
                                    @UserId,
                                    @Title,
+                                   @EventType,
                                    @Status,
                                    @StartsAtUtc,
                                    @EndsAtUtc,
@@ -52,6 +54,7 @@ public sealed class CalendarEventRepository : ICalendarEventRepository
             calendarEvent.Id,
             calendarEvent.UserId,
             calendarEvent.Title,
+            EventType = (int)calendarEvent.EventType,
             Status = (int)calendarEvent.Status,
             calendarEvent.StartsAtUtc,
             calendarEvent.EndsAtUtc,
@@ -71,6 +74,7 @@ public sealed class CalendarEventRepository : ICalendarEventRepository
                                    id AS Id,
                                    user_id AS UserId,
                                    title AS Title,
+                                   event_type AS EventType,
                                    status AS Status,
                                    starts_at_utc AS StartsAtUtc,
                                    ends_at_utc AS EndsAtUtc,
@@ -95,6 +99,30 @@ public sealed class CalendarEventRepository : ICalendarEventRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyCollection<CalendarEventModel>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT
+                                   id AS Id,
+                                   user_id AS UserId,
+                                   title AS Title,
+                                   event_type AS EventType,
+                                   status AS Status,
+                                   starts_at_utc AS StartsAtUtc,
+                                   ends_at_utc AS EndsAtUtc,
+                                   notify_at_utc AS NotifyAtUtc,
+                                   notified_at_utc AS NotifiedAtUtc,
+                                   created_at_utc AS CreatedAtUtc,
+                                   updated_at_utc AS UpdatedAtUtc
+                               FROM calendar_events
+                               ORDER BY starts_at_utc;
+                           """;
+
+        var events = await _connection.QueryAsync<CalendarEventModel>(sql, null, cancellationToken);
+        return events.ToList();
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyCollection<CalendarEventModel>> GetForNotificationAsync(
         DateTimeOffset nowUtc,
         int count,
@@ -105,6 +133,7 @@ public sealed class CalendarEventRepository : ICalendarEventRepository
                                    id AS Id,
                                    user_id AS UserId,
                                    title AS Title,
+                                   event_type AS EventType,
                                    status AS Status,
                                    starts_at_utc AS StartsAtUtc,
                                    ends_at_utc AS EndsAtUtc,

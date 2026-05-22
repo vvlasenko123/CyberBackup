@@ -19,6 +19,11 @@ public sealed class CalendarEventModel : AggregateRoot<Guid>
     public string Title { get; init; } = string.Empty;
 
     /// <summary>
+    /// Тип события
+    /// </summary>
+    public CalendarEventType EventType { get; init; }
+
+    /// <summary>
     /// Статус события
     /// </summary>
     public CalendarEventStatus Status { get; init; }
@@ -61,6 +66,7 @@ public sealed class CalendarEventModel : AggregateRoot<Guid>
         Guid id,
         Guid userId,
         string title,
+        CalendarEventType eventType,
         CalendarEventStatus status,
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc,
@@ -72,6 +78,7 @@ public sealed class CalendarEventModel : AggregateRoot<Guid>
         Id = id;
         UserId = userId;
         Title = title;
+        EventType = eventType;
         Status = status;
         StartsAtUtc = startsAtUtc;
         EndsAtUtc = endsAtUtc;

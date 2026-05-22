@@ -1,3 +1,5 @@
+using Domain.Calendar.Enums;
+
 namespace Application.DTO.Calendar;
 
 /// <summary>
@@ -9,6 +11,11 @@ public sealed record CalendarEventDto
     /// Название события
     /// </summary>
     public string Title { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Тип события
+    /// </summary>
+    public CalendarEventType EventType { get; init; }
 
     /// <summary>
     /// Дата и время начала события

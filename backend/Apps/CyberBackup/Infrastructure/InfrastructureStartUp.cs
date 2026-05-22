@@ -40,6 +40,7 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, CreateRefreshTokens_202605030001>();
         services.AddTransient<IDatabaseMigration, CreateCalendarEvents_202605150001>();
         services.AddTransient<IDatabaseMigration, CreateNotifications_202605150002>();
+        services.AddTransient<IDatabaseMigration, AddEventTypeToCalendarEvents_202605210001>();
         #endregion
 
         #region repositories

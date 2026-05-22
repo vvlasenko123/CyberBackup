@@ -16,7 +16,6 @@ namespace Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("user")]
-[Authorize(Roles = AuthRoleNames.AdminOrSuperAdmin)]
 public class UserController : PublicController
 {
     private readonly IMapper _mapper;
@@ -42,6 +41,7 @@ public class UserController : PublicController
     /// <summary>
     /// Создать пользователя
     /// </summary>
+    [Authorize(Roles = AuthRoleNames.AdminOrSuperAdmin)]
     [HttpPost("create")]
     public async Task<IActionResult> CreateUser(
         CreateUserRequest request,
@@ -57,6 +57,7 @@ public class UserController : PublicController
     /// <summary>
     /// Изменить пользователя
     /// </summary>
+    [Authorize(Roles = AuthRoleNames.AdminOrSuperAdmin)]
     [HttpPut("update/{id:guid}")]
     public async Task<IActionResult> UpdateUser(Guid id, UpdateUserRequest request, CancellationToken token)
     {
@@ -73,6 +74,7 @@ public class UserController : PublicController
     /// <summary>
     /// Удалить пользователя
     /// </summary>
+    [Authorize(Roles = AuthRoleNames.AdminOrSuperAdmin)]
     [HttpDelete("delete/{id:guid}")]
     public async Task<IActionResult> DeleteUser(Guid id, CancellationToken token)
     {
@@ -84,6 +86,7 @@ public class UserController : PublicController
     /// <summary>
     /// Получить пользователя
     /// </summary>
+    [Authorize]
     [HttpGet("get/{id:guid}")]
     public async Task<IActionResult> GetUser(Guid id, CancellationToken token)
     {
@@ -105,6 +108,7 @@ public class UserController : PublicController
     /// <summary>
     /// Получить всех пользователей
     /// </summary>
+    [Authorize(Roles = AuthRoleNames.AdminOrSuperAdmin)]
     [HttpGet("get-all")]
     public async Task<IActionResult> GetAllUsers(CancellationToken token)
     {

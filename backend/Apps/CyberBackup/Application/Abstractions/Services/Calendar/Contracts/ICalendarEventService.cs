@@ -17,4 +17,9 @@ public interface ICalendarEventService
     /// Получить события пользователя
     /// </summary>
     Task<IReadOnlyCollection<CalendarEventModel>> GetByUserId(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить все события календаря
+    /// </summary>
+    Task<IReadOnlyCollection<CalendarEventModel>> GetAll(CancellationToken cancellationToken);
 }

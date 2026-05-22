@@ -27,6 +27,7 @@ public sealed class CalendarEventService : ICalendarEventService
             id: UUIDNext.Uuid.NewSequential(),
             userId: userId,
             title: request.Title.Trim(),
+            eventType: request.EventType,
             status: CalendarEventStatus.Active,
             startsAtUtc: request.StartsAtUtc.ToUniversalTime(),
             endsAtUtc: request.EndsAtUtc.ToUniversalTime(),
@@ -44,6 +45,12 @@ public sealed class CalendarEventService : ICalendarEventService
     public async Task<IReadOnlyCollection<CalendarEventModel>> GetByUserId(Guid userId, CancellationToken cancellationToken)
     {
         return await _calendarEventRepository.GetByUserIdAsync(userId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<CalendarEventModel>> GetAll(CancellationToken cancellationToken)
+    {
+        return await _calendarEventRepository.GetAllAsync(cancellationToken);
     }
 
     /// <summary>
