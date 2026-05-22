@@ -90,7 +90,6 @@ public sealed class MigrationRepository : IMigrationRepository
 
         var migrations = _serviceProvider
             .GetServices<IDatabaseMigration>()
-            .OrderBy(x => x.Id)
             .ToList();
 
         foreach (var migration in migrations)

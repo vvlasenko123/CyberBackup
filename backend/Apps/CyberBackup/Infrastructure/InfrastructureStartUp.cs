@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.Calendar;
 using Application.Abstractions.Services.Calendar.Contracts;
+using Application.Abstractions.Services.Laboratories.Contracts;
 using Domain.Repositories;
 using Infrastructure.Auth.Options;
 using Infrastructure.Auth.Services;
@@ -38,6 +39,9 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, CreateUsers_202604301231>();
         services.AddTransient<IDatabaseMigration, CreateUserGroups_202604301231>();
         services.AddTransient<IDatabaseMigration, CreateRefreshTokens_202605030001>();
+        services.AddTransient<IDatabaseMigration, CreateZLaboratories_202605130001>();
+        services.AddTransient<IDatabaseMigration, AddLaboratoryOwners_202605140001>();
+        services.AddTransient<IDatabaseMigration, CreateTeacherGroupsAndLaboratoryProgress_202605210001>();
         services.AddTransient<IDatabaseMigration, CreateCalendarEvents_202605150001>();
         services.AddTransient<IDatabaseMigration, CreateNotifications_202605150002>();
         services.AddTransient<IDatabaseMigration, AddEventTypeToCalendarEvents_202605210001>();
@@ -48,6 +52,8 @@ public static class InfrastructureStartUp
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<ILaboratoryRepository, LaboratoryRepository>();
+        services.AddScoped<ILaboratoryReportFileStorage, LaboratoryReportFileStorage>();
         #endregion
 
         #region auth

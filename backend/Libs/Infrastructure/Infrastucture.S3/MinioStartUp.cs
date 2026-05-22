@@ -36,6 +36,6 @@ public static class MinioStartUp
             return client.Build();
         });
 
-        services.AddSingleton<MinioImageStorage>();
+        services.AddSingleton<MinioObjectStorage>();
     }
 }
