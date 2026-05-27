@@ -10,12 +10,20 @@ import LogOut from './pages/LogOut';
 import LoginPage from './pages/LoginPage/LoginPage';
 import DashboardPage from './pages/DashboardPage/DashboardPage';
 import LabsPage from './pages/LabsPage/LabsPage';
+import LabDetailPage from './pages/LabDetailPage/LabDetailPage';
+import LabReportPage from './pages/LabReportPage/LabReportPage';
+import LabCreatePage from './pages/LabCreatePage/LabCreatePage';
 import ProgressPage from './pages/ProgressPage/ProgressPage';
 import StatementPage from './pages/StatementPage/StatementPage';
 import QuestionsPage from './pages/QuestionsPage/QuestionsPage';
+import QuestionCreatePage from './pages/QuestionCreatePage/QuestionCreatePage';
+import QuestionDetailPage from './pages/QuestionDetailPage/QuestionDetailPage';
 import CalendarPage from './pages/CalendarPage/CalendarPage';
 import UsersPage from './pages/UsersPage/UsersPage';
 import ChangePasswordPage from './pages/ChangePasswordPage/ChangePasswordPage';
+import TeacherReportDetailPage from './pages/TeacherReportDetailPage/TeacherReportDetailPage';
+import GroupsPage from './pages/GroupsPage/GroupsPage';
+import GroupDetailPage from './pages/GroupDetailPage/GroupDetailPage';
 
 function App() {
     return (
@@ -43,6 +51,30 @@ function App() {
                         </ProtectedRoute>
                     } />
 
+                    <Route path="/labs/create" element={
+                        <ProtectedRoute allowedRoles={['teacher']}>
+                            <LabCreatePage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/labs/:labId" element={
+                        <ProtectedRoute allowedRoles={['student', 'teacher']}>
+                            <LabDetailPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/labs/:labId/report" element={
+                        <ProtectedRoute allowedRoles={['student']}>
+                            <LabReportPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/teacher/reports/:reportId" element={
+                        <ProtectedRoute allowedRoles={['teacher', 'admin']}>
+                            <TeacherReportDetailPage />
+                        </ProtectedRoute>
+                    } />
+
                     <Route path="/progress" element={
                         <ProtectedRoute allowedRoles={['student']}>
                             <ProgressPage />
@@ -61,6 +93,18 @@ function App() {
                         </ProtectedRoute>
                     } />
 
+                    <Route path="/questions/new" element={
+                        <ProtectedRoute allowedRoles={['student']}>
+                            <QuestionCreatePage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/questions/:questionId" element={
+                        <ProtectedRoute allowedRoles={['student', 'teacher', 'admin']}>
+                            <QuestionDetailPage />
+                        </ProtectedRoute>
+                    } />
+
                     <Route path="/calendar" element={
                         <ProtectedRoute allowedRoles={['student', 'teacher', 'admin']}>
                             <CalendarPage />
@@ -70,6 +114,18 @@ function App() {
                     <Route path="/users" element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <UsersPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/groups" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <GroupsPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/groups/:groupId" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <GroupDetailPage />
                         </ProtectedRoute>
                     } />
 

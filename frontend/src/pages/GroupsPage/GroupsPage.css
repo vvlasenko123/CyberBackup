@@ -1,0 +1,135 @@
+.groups-loading,
+.groups-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #8A94A6;
+    font-size: 15px;
+}
+
+.groups-empty {
+    border: 1px dashed #334155;
+    border-radius: 16px;
+}
+
+.groups-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.groups-create-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.groups-create-input {
+    flex: 1;
+    background: #111827;
+    border: 1px solid #1F2937;
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.groups-create-input::placeholder { color: #4B5563; }
+.groups-create-input:focus { border-color: #1D9BF0; }
+
+.groups-create-btn {
+    padding: 10px 20px;
+    background: #1D9BF0;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.groups-create-btn:hover:not(:disabled) { background: #1a8cd8; }
+.groups-create-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.groups-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #EF4444;
+}
+
+.groups-table-wrap {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #1F2937;
+}
+
+.groups-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #111827;
+}
+
+.groups-table thead tr {
+    border-bottom: 1px solid #1F2937;
+}
+
+.groups-table th {
+    padding: 12px 20px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8A94A6;
+    letter-spacing: 0.05em;
+}
+
+.groups-table td {
+    padding: 16px 20px;
+    font-size: 14px;
+    color: #E2E8F0;
+    border-bottom: 1px solid #1A2232;
+}
+
+.groups-row {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.groups-row:hover { background: #162030; }
+.groups-row:last-child td { border-bottom: none; }
+
+.groups-cell--name {
+    font-weight: 500;
+    color: #fff;
+}
+
+.groups-cell--count {
+    color: #8A94A6;
+    text-align: center;
+}
+
+.groups-delete-btn {
+    background: none;
+    border: 1px solid #374151;
+    border-radius: 7px;
+    padding: 5px 12px;
+    color: #EF4444;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.groups-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.4);
+}

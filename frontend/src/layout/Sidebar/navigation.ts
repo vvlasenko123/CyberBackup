@@ -29,6 +29,7 @@ export const navigationByRole: Record<UserRole, NavItem[]> = {
     admin: [
         { id: 'dashboard', label: 'Главная', icon: 'home', path: '/dashboard' },
         { id: 'users', label: 'Пользователи', icon: 'users', path: '/users' },
+        { id: 'groups', label: 'Группы', icon: 'users', path: '/groups' },
         { id: 'calendar', label: 'Календарь', icon: 'calendar', path: '/calendar' },
     ],
 };

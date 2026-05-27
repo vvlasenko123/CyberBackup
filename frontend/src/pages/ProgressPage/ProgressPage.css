@@ -1,0 +1,292 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+.prog-page {
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.prog-header {
+    margin-bottom: 20px;
+}
+
+.prog-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+/* ── Stat cards ─────────────────────────────────────────── */
+.prog-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.prog-stat-card {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+}
+
+.prog-stat-card__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 10px;
+}
+
+.prog-stat-card__value {
+    font-size: 32px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+.prog-stat-card__value--blue   { color: #027ef2; }
+.prog-stat-card__value--orange { color: #f97316; }
+
+/* ── Overall progress card ──────────────────────────────── */
+.prog-overall-card {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+.prog-overall-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.prog-overall-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+}
+
+.prog-overall-card__percent {
+    font-size: 13px;
+    font-weight: 600;
+    color: #027ef2;
+}
+
+.prog-bar-track {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.prog-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #027ef2;
+    transition: width 0.4s ease;
+}
+
+.prog-bar-fill--green  { background: #22c55e; }
+.prog-bar-fill--orange { background: #f97316; }
+.prog-bar-fill--red    { background: #ef4444; }
+.prog-bar-fill--gray   { background: rgba(255, 255, 255, 0.15); }
+
+.prog-overall-card__subtitle {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Two-column layout ──────────────────────────────────── */
+.prog-columns {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 14px;
+    align-items: start;
+}
+
+/* ── Labs panel ─────────────────────────────────────────── */
+.prog-labs-card {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+}
+
+.prog-labs-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 18px;
+}
+
+.prog-lab-item {
+    margin-bottom: 16px;
+}
+
+.prog-lab-item:last-child {
+    margin-bottom: 0;
+}
+
+.prog-lab-item__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+    gap: 8px;
+}
+
+.prog-lab-item__name {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.75);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.prog-lab-item__points {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.prog-lab-item__points--earned {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.prog-lab-bar-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+/* ── Leaderboard panel ──────────────────────────────────── */
+.prog-leaderboard-card {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+}
+
+.prog-leaderboard-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 16px;
+}
+
+.prog-leader-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: background 0.15s;
+}
+
+.prog-leader-item:last-child {
+    margin-bottom: 0;
+}
+
+.prog-leader-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.prog-leader-item--me {
+    background: rgba(2, 126, 242, 0.12);
+    border: 1px solid rgba(2, 126, 242, 0.25);
+}
+
+.prog-leader-item--me:hover {
+    background: rgba(2, 126, 242, 0.16);
+}
+
+.prog-leader-item__rank {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.35);
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.prog-leader-item__rank--top3 {
+    color: #f97316;
+}
+
+.prog-leader-item__rank--me {
+    color: #027ef2;
+}
+
+.prog-leader-item__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.75);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.prog-leader-item__name--me {
+    color: #027ef2;
+    font-weight: 600;
+}
+
+.prog-leader-item__points {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    flex-shrink: 0;
+}
+
+.prog-leader-item__points--me {
+    color: #027ef2;
+}
+
+/* ── Loading / empty / error ────────────────────────────── */
+.prog-loading,
+.prog-empty {
+    padding: 48px 0;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.prog-error {
+    padding: 16px 20px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.prog-leaderboard-empty {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+    padding: 20px 0 4px;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .prog-columns {
+        grid-template-columns: 1fr;
+    }
+}

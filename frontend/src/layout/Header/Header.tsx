@@ -2,19 +2,19 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import './Header.css';
 import type { UserRole } from '../../types';
-import { Icon } from '../../shared/Icon';
 import { navigationByRole } from '../Sidebar/navigation';
 
 type Props = {
     role: UserRole;
     onRoleChange: (role: UserRole) => void;
+    notificationBell?: React.ReactNode;
 };
 
-export const Header: React.FC<Props> = ({ role, onRoleChange }) => {
+export const Header: React.FC<Props> = ({ role, onRoleChange, notificationBell }) => {
     const location = useLocation();
 
     const currentNavItem = navigationByRole[role].find(
-        (item) => item.path === location.pathname
+        (item) => location.pathname === item.path || location.pathname.startsWith(item.path + '/')
     );
     const pageTitle = currentNavItem?.label || 'NeoLab space';
 
@@ -25,9 +25,7 @@ export const Header: React.FC<Props> = ({ role, onRoleChange }) => {
             </div>
 
             <div className="header__actions">
-                <button className="header__icon">
-                    <Icon name="bell" size={18} />
-                </button>
+                {notificationBell}
 
                 <select
                     value={role}
