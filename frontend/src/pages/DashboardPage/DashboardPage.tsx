@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './DashboardPage.css';
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum PostCategory {
     Event       = 0,
@@ -10,7 +9,6 @@ enum PostCategory {
     Information = 2,
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PostItemDto {
     id: string;
@@ -59,7 +57,6 @@ interface TeacherGradebookPagedResult {
     totalCount: number;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const CATEGORY_TABS = [
     { label: 'Все',         value: null },
@@ -81,7 +78,6 @@ const formatDate = (iso: string): string => {
     return `Опубликовано: ${d.getDate()} ${months[d.getMonth()]}`;
 };
 
-// ─── Student sidebar ──────────────────────────────────────────────────────────
 
 const StudentSidebar: React.FC = () => {
     const [progress, setProgress]       = useState<GetMyProgressResponse | null>(null);
@@ -175,7 +171,6 @@ const StudentSidebar: React.FC = () => {
     );
 };
 
-// ─── Teacher sidebar ──────────────────────────────────────────────────────────
 
 const TeacherSidebar: React.FC = () => {
     const [ranked, setRanked] = useState<TeacherGradebookItemDto[]>([]);
@@ -230,13 +225,27 @@ const TeacherSidebar: React.FC = () => {
     );
 };
 
-// ─── News Feed ────────────────────────────────────────────────────────────────
 
-const NewsFeed: React.FC = () => {
+interface NewsFeedProps { isTeacher: boolean; }
+
+const CATEGORY_OPTIONS = [
+    { label: 'Событие',       value: PostCategory.Event },
+    { label: 'Лабораторная',  value: PostCategory.Laboratory },
+    { label: 'Информация',    value: PostCategory.Information },
+] as const;
+
+const NewsFeed: React.FC<NewsFeedProps> = ({ isTeacher }) => {
     const [activeCategory, setActiveCategory] = useState<PostCategory | null>(null);
     const [posts, setPosts]   = useState<PostItemDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError]   = useState<string | null>(null);
+
+    const [formOpen,    setFormOpen]    = useState(false);
+    const [formTitle,   setFormTitle]   = useState('');
+    const [formContent, setFormContent] = useState('');
+    const [formCategory, setFormCategory] = useState<PostCategory>(PostCategory.Information);
+    const [formSubmitting, setFormSubmitting] = useState(false);
+    const [formError,   setFormError]   = useState<string | null>(null);
 
     const fetchPosts = (category: PostCategory | null) => {
         setLoading(true);
@@ -257,9 +266,80 @@ const NewsFeed: React.FC = () => {
         fetchPosts(val);
     };
 
+    const handleCreatePost = async () => {
+        if (!formTitle.trim() || !formContent.trim()) return;
+        setFormSubmitting(true);
+        setFormError(null);
+        try {
+            await axiosInstance.post('/public/api/v1/posts', {
+                title: formTitle.trim(),
+                content: formContent.trim(),
+                category: formCategory,
+            });
+            setFormOpen(false);
+            setFormTitle('');
+            setFormContent('');
+            setFormCategory(PostCategory.Information);
+            fetchPosts(activeCategory);
+        } catch (err: unknown) {
+            const axiosErr = err as { response?: { data?: { message?: string } } };
+            setFormError(axiosErr.response?.data?.message ?? 'Не удалось создать пост');
+        } finally {
+            setFormSubmitting(false);
+        }
+    };
+
     return (
         <div className="dash-feed">
-            <h2 className="dash-title">Новости и объявления</h2>
+            <div className="dash-feed-header">
+                <h2 className="dash-title">Новости и объявления</h2>
+                {isTeacher && (
+                    <button
+                        className="dash-create-post-btn"
+                        onClick={() => setFormOpen(v => !v)}
+                    >
+                        {formOpen ? 'Отмена' : '+ Объявление'}
+                    </button>
+                )}
+            </div>
+
+            {/* Teacher create-post form */}
+            {isTeacher && formOpen && (
+                <div className="dash-create-post-form">
+                    <div className="dash-create-post-row">
+                        <input
+                            className="dash-create-post-input"
+                            placeholder="Заголовок"
+                            value={formTitle}
+                            onChange={e => setFormTitle(e.target.value)}
+                        />
+                        <select
+                            className="dash-create-post-select"
+                            value={formCategory}
+                            onChange={e => setFormCategory(Number(e.target.value) as PostCategory)}
+                        >
+                            {CATEGORY_OPTIONS.map(o => (
+                                <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <textarea
+                        className="dash-create-post-textarea"
+                        placeholder="Текст объявления..."
+                        rows={3}
+                        value={formContent}
+                        onChange={e => setFormContent(e.target.value)}
+                    />
+                    {formError && <div className="dash-create-post-error">{formError}</div>}
+                    <button
+                        className="dash-create-post-submit"
+                        onClick={handleCreatePost}
+                        disabled={formSubmitting || !formTitle.trim() || !formContent.trim()}
+                    >
+                        {formSubmitting ? 'Публикация...' : 'Опубликовать'}
+                    </button>
+                </div>
+            )}
 
             {/* Filter tabs */}
             <div className="dash-tabs">
@@ -308,7 +388,6 @@ const NewsFeed: React.FC = () => {
     );
 };
 
-// ─── Dashboard Page ───────────────────────────────────────────────────────────
 
 const DashboardPage: React.FC = () => {
     const role = localStorage.getItem('user_role') || 'student';
@@ -316,7 +395,7 @@ const DashboardPage: React.FC = () => {
 
     return (
         <div className="dash-page">
-            <NewsFeed />
+            <NewsFeed isTeacher={isTeacher} />
             {isTeacher ? <TeacherSidebar /> : <StudentSidebar />}
         </div>
     );

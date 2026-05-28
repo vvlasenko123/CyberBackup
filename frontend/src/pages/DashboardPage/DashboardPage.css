@@ -8,12 +8,10 @@
     align-items: start;
 }
 
-/* ── Left column ─────────────────────────────────────────── */
 .dash-feed {
     min-width: 0;
 }
 
-/* ── Page title ──────────────────────────────────────────── */
 .dash-title {
     font-size: 18px;
     font-weight: 600;
@@ -21,7 +19,133 @@
     margin: 0 0 16px;
 }
 
-/* ── Filter tabs ─────────────────────────────────────────── */
+.dash-feed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.dash-feed-header .dash-title {
+    margin-bottom: 0;
+}
+
+.dash-create-post-btn {
+    padding: 7px 16px;
+    background: #027ef2;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.dash-create-post-btn:hover {
+    background: #0267c4;
+}
+
+.dash-create-post-form {
+    background: #20252b;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dash-create-post-row {
+    display: flex;
+    gap: 10px;
+}
+
+.dash-create-post-input {
+    flex: 1;
+    background: #0e1621;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #fff;
+    font-size: 13px;
+    font-family: 'Montserrat', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.dash-create-post-input:focus {
+    border-color: #027ef2;
+}
+
+.dash-create-post-input::placeholder {
+    color: rgba(255,255,255,0.25);
+}
+
+.dash-create-post-select {
+    background: #0e1621;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #fff;
+    font-size: 13px;
+    font-family: 'Montserrat', sans-serif;
+    outline: none;
+    cursor: pointer;
+}
+
+.dash-create-post-textarea {
+    background: #0e1621;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #fff;
+    font-size: 13px;
+    font-family: 'Montserrat', sans-serif;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s;
+}
+
+.dash-create-post-textarea:focus {
+    border-color: #027ef2;
+}
+
+.dash-create-post-textarea::placeholder {
+    color: rgba(255,255,255,0.25);
+}
+
+.dash-create-post-error {
+    font-size: 12px;
+    color: #ef4444;
+}
+
+.dash-create-post-submit {
+    align-self: flex-start;
+    padding: 8px 20px;
+    background: #027ef2;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+
+.dash-create-post-submit:hover:not(:disabled) {
+    background: #0267c4;
+}
+
+.dash-create-post-submit:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .dash-tabs {
     display: flex;
     gap: 8px;
@@ -58,7 +182,6 @@
     border-color: #0267c4;
 }
 
-/* ── Post cards ──────────────────────────────────────────── */
 .dash-post-list {
     display: flex;
     flex-direction: column;
@@ -134,14 +257,12 @@
     color: rgba(255, 255, 255, 0.3);
 }
 
-/* ── Right sidebar ───────────────────────────────────────── */
 .dash-sidebar {
     display: flex;
     flex-direction: column;
     gap: 14px;
 }
 
-/* ── Mini progress widget (student) ─────────────────────── */
 .dash-progress-card {
     background: #20252b;
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -216,7 +337,6 @@
     color: #027ef2;
 }
 
-/* ── Leaderboard widget ──────────────────────────────────── */
 .dash-leaderboard-card {
     background: #20252b;
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -285,7 +405,6 @@
 
 .dash-leader-row__pts--me { color: #027ef2; }
 
-/* ── Loading / empty / error ─────────────────────────────── */
 .dash-loading,
 .dash-empty {
     padding: 40px 0;
@@ -311,7 +430,6 @@
     padding: 12px 0 4px;
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 860px) {
     .dash-page {
         grid-template-columns: 1fr;
