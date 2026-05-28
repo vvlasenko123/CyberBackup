@@ -1,0 +1,346 @@
+.lab-report-page {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.lab-report-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #8A94A6;
+}
+
+.lab-report-breadcrumb-link {
+    color: #1D9BF0;
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.lab-report-breadcrumb-link:hover {
+    text-decoration: underline;
+}
+
+.lab-report-breadcrumb-sep {
+    color: #4B5563;
+}
+
+.lab-report-breadcrumb-current {
+    color: #8A94A6;
+}
+
+.lab-report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.lab-report-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lab-report-tabs {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.lab-report-tab {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.lab-report-tab--active {
+    background: #1D9BF0;
+    color: #fff;
+    border-color: #1D9BF0;
+}
+
+.lab-report-tab--inactive {
+    background: transparent;
+    color: #8A94A6;
+    border-color: #334155;
+}
+
+.lab-report-tab--inactive:hover {
+    border-color: #4B5563;
+    color: #D1D5DB;
+}
+
+/* Upload view */
+.lab-report-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 640px;
+}
+
+.lab-report-revision-card {
+    border-radius: 12px;
+    background: #292001;
+    border: 1px solid #78350F;
+    overflow: hidden;
+}
+
+.lab-report-revision-header {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #FDE68A;
+    border-bottom: 1px solid #78350F;
+}
+
+.lab-report-revision-body {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    align-items: flex-start;
+}
+
+.lab-report-revision-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #7C3AED;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.lab-report-revision-comment-label {
+    font-size: 12px;
+    color: #8A94A6;
+    margin-bottom: 4px;
+}
+
+.lab-report-revision-comment-text {
+    font-size: 14px;
+    color: #E5E7EB;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Drop zone */
+.lab-report-dropzone-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #E5E7EB;
+    margin: 0;
+}
+
+.lab-report-dropzone {
+    border: 2px dashed #334155;
+    border-radius: 12px;
+    background: #111827;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px 24px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-align: center;
+    position: relative;
+}
+
+.lab-report-dropzone:hover,
+.lab-report-dropzone--over {
+    border-color: #1D9BF0;
+    background: rgba(29, 155, 240, 0.05);
+}
+
+.lab-report-dropzone--has-file {
+    border-color: #22C55E;
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.lab-report-dropzone-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.lab-report-dropzone-icon {
+    color: #8A94A6;
+}
+
+.lab-report-dropzone-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: #D1D5DB;
+    margin: 0;
+}
+
+.lab-report-dropzone-hint {
+    font-size: 13px;
+    color: #8A94A6;
+    margin: 0;
+}
+
+.lab-report-dropzone-filename {
+    font-size: 14px;
+    color: #22C55E;
+    font-weight: 500;
+    margin: 0;
+}
+
+.lab-report-submit {
+    width: 100%;
+    padding: 13px;
+    background: #1D9BF0;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.lab-report-submit:hover:not(:disabled) {
+    background: #1a8cd8;
+}
+
+.lab-report-submit:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* History view */
+.lab-report-history {
+    background: #111827;
+    border: 1px solid #1F2937;
+    border-radius: 14px;
+    overflow: hidden;
+    max-width: 700px;
+}
+
+.lab-report-history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lab-report-history-table th {
+    text-align: left;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #8A94A6;
+    border-bottom: 1px solid #1F2937;
+}
+
+.lab-report-history-table td {
+    padding: 14px 20px;
+    font-size: 14px;
+    color: #E5E7EB;
+    border-bottom: 1px solid #1F2937;
+}
+
+.lab-report-history-table tr:last-child td {
+    border-bottom: none;
+}
+
+.lab-report-history-version {
+    font-weight: 500;
+    color: #fff;
+}
+
+.lab-report-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.lab-report-status-badge--submitted,
+.lab-report-status-badge--underreview {
+    background: rgba(29, 155, 240, 0.15);
+    color: #60A5FA;
+}
+
+.lab-report-status-badge--revision {
+    background: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+}
+
+.lab-report-status-badge--accepted {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22C55E;
+}
+
+.lab-report-status-badge--not-submitted {
+    background: rgba(107, 114, 128, 0.15);
+    color: #9CA3AF;
+}
+
+.lab-report-download-btn {
+    padding: 5px 12px;
+    background: transparent;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #D1D5DB;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.lab-report-download-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #4B5563;
+}
+
+.lab-report-history-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #8A94A6;
+    font-size: 14px;
+}
+
+/* Loading / error */
+.lab-report-loading,
+.lab-report-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    font-size: 16px;
+}
+
+.lab-report-loading {
+    color: #8A94A6;
+}
+
+.lab-report-error {
+    color: #F87171;
+}
