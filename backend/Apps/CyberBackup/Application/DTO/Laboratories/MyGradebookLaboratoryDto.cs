@@ -9,6 +9,9 @@ public sealed record MyGradebookLaboratoryDto
 {
     public Guid LaboratoryId { get; init; }
     public string Title { get; init; } = string.Empty;
+    /// <summary>Статус выполнения лабораторной (учитывает флаги и отчёты)</summary>
+    public StudentLaboratoryStatus LaboratoryStatus { get; init; }
+    /// <summary>Статус отчёта</summary>
     public LaboratoryReportStatus Status { get; init; }
     public int? Points { get; init; }
     public int MaxPoints { get; init; }

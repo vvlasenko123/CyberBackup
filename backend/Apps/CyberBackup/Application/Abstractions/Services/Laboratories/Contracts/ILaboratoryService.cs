@@ -58,6 +58,11 @@ public interface ILaboratoryService
     Task<GetMyProgressResponse> GetMyProgressAsync(CancellationToken cancellationToken);
 
     /// <summary>
+    /// Получить рейтинг группы текущего студента
+    /// </summary>
+    Task<GetGroupLeaderboardResponse> GetGroupLeaderboardAsync(CancellationToken cancellationToken);
+
+    /// <summary>
     /// Получить ведомость текущего студента
     /// </summary>
     Task<GetMyGradebookResponse> GetMyGradebookAsync(CancellationToken cancellationToken);
@@ -108,6 +113,14 @@ public interface ILaboratoryService
     /// </summary>
     Task<GetTeacherReportDetailsResponse> GetTeacherReportDetailsAsync(
         Guid reportId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить файл версии отчета (для студента — своего)
+    /// </summary>
+    Task<LaboratoryReportFileDto> GetStudentReportFileAsync(
+        Guid laboratoryId,
+        Guid versionId,
         CancellationToken cancellationToken);
 
     /// <summary>

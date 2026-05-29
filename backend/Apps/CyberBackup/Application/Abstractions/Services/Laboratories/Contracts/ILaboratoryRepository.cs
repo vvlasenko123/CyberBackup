@@ -75,6 +75,13 @@ public interface ILaboratoryRepository
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Получить рейтинг группы студента
+    /// </summary>
+    Task<GetGroupLeaderboardResponse> GetGroupLeaderboardAsync(
+        Guid studentId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Получить список лабораторных работ для преподавателя
     /// </summary>
     Task<PagedResultDto<TeacherLaboratoryListItemDto>> GetTeacherLaboratoriesAsync(
@@ -144,6 +151,15 @@ public interface ILaboratoryRepository
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Получить файл версии отчёта для студента (только свои)
+    /// </summary>
+    Task<LaboratoryReportFileDto?> GetStudentReportFileAsync(
+        Guid studentId,
+        Guid laboratoryId,
+        Guid versionId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Получить файл версии отчета
     /// </summary>
     Task<LaboratoryReportFileDto?> GetReportFileAsync(
@@ -181,4 +197,9 @@ public interface ILaboratoryRepository
         UpdateTeacherGradebookRequest request,
         bool includeAll,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить идентификаторы студентов в группах преподавателя
+    /// </summary>
+    Task<IReadOnlyCollection<Guid>> GetStudentIdsForTeacherAsync(Guid teacherId, CancellationToken cancellationToken);
 }

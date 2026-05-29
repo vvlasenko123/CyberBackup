@@ -1,8 +1,15 @@
 using Application.Abstractions.Services.Auth.Contracts;
+using Application.Abstractions.Services.Calendar.Contracts;
 using Application.Abstractions.Services.Laboratories.Contracts;
+using Application.Abstractions.Services.Posts.Contracts;
 using Application.DTO.Auth;
+using Application.DTO.Calendar;
 using Application.DTO.Laboratories;
+using Application.DTO.Posts;
+using Domain.Calendar;
 using Domain.Laboratories.Enums;
+using Domain.Posts.Enums;
+using Domain.Repositories;
 using Domain.User.Enums;
 
 namespace Application.Abstractions.Services.Laboratories;
@@ -28,17 +35,26 @@ public sealed class LaboratoryService : ILaboratoryService
     private readonly ILaboratoryReportFileStorage _fileStorage;
     private readonly ILaboratoryFlagHashService _flagHashService;
     private readonly IJwtService _jwtService;
+    private readonly INotificationPushService _notificationPush;
+    private readonly INotificationRepository _notificationRepository;
+    private readonly IPostRepository _postRepository;
 
     public LaboratoryService(
         ILaboratoryRepository repository,
         ILaboratoryReportFileStorage fileStorage,
         ILaboratoryFlagHashService flagHashService,
-        IJwtService jwtService)
+        IJwtService jwtService,
+        INotificationPushService notificationPush,
+        INotificationRepository notificationRepository,
+        IPostRepository postRepository)
     {
         _repository = repository;
         _fileStorage = fileStorage;
         _flagHashService = flagHashService;
         _jwtService = jwtService;
+        _notificationPush = notificationPush;
+        _notificationRepository = notificationRepository;
+        _postRepository = postRepository;
     }
 
     /// <inheritdoc />
@@ -208,6 +224,13 @@ public sealed class LaboratoryService : ILaboratoryService
     }
 
     /// <inheritdoc />
+    public Task<GetGroupLeaderboardResponse> GetGroupLeaderboardAsync(CancellationToken cancellationToken)
+    {
+        var currentUser = GetCurrentUser();
+        return _repository.GetGroupLeaderboardAsync(currentUser.UserId, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<GetMyGradebookResponse> GetMyGradebookAsync(CancellationToken cancellationToken)
     {
         var currentUser = GetCurrentUser();
@@ -279,6 +302,50 @@ public sealed class LaboratoryService : ILaboratoryService
             expectedFlagHash,
             currentUser.UserId,
             cancellationToken);
+
+        // При публикации: создаём пост в ленте новостей и рассылаем уведомления студентам
+        if (request.IsPublished)
+        {
+            // Пост в ленте "Новости и объявления" (категория Лабораторные)
+            var postContent = string.IsNullOrWhiteSpace(request.ShortDescription)
+                ? $"Опубликована новая лабораторная работа «{request.Title}»."
+                : request.ShortDescription;
+
+            await _postRepository.CreatePostAsync(
+                currentUser.UserId,
+                new CreatePostRequest
+                {
+                    Title = request.Title,
+                    Content = postContent,
+                    Category = PostCategory.Laboratory,
+                },
+                cancellationToken);
+
+            // Push-уведомления студентам
+            var studentIds = await _repository.GetStudentIdsForTeacherAsync(currentUser.UserId, cancellationToken);
+            var nowUtc = DateTimeOffset.UtcNow;
+            var notifTitle = "Новое задание";
+            var notifMessage = $"Добавлена новая лабораторная работа: «{request.Title}»";
+
+            foreach (var studentId in studentIds)
+            {
+                var notification = new NotificationModel(
+                    id: UUIDNext.Uuid.NewSequential(),
+                    userId: studentId,
+                    calendarEventId: null,
+                    title: notifTitle,
+                    message: notifMessage,
+                    isRead: false,
+                    createdAtUtc: nowUtc);
+
+                await _notificationRepository.CreateAsync(notification, cancellationToken);
+                await _notificationPush.SendToUserAsync(
+                    studentId,
+                    new NotificationMessageDto(notification.Id, notifTitle, notifMessage, nowUtc),
+                    cancellationToken);
+            }
+        }
+
         var result = new CreateLaboratoryResponse
         {
             Id = id
@@ -365,6 +432,29 @@ public sealed class LaboratoryService : ILaboratoryService
     }
 
     /// <inheritdoc />
+    public async Task<LaboratoryReportFileDto> GetStudentReportFileAsync(
+        Guid laboratoryId,
+        Guid versionId,
+        CancellationToken cancellationToken)
+    {
+        var currentUser = GetCurrentUser();
+        var file = await _repository.GetStudentReportFileAsync(
+            currentUser.UserId,
+            laboratoryId,
+            versionId,
+            cancellationToken);
+
+        if (file is null)
+        {
+            throw new LaboratoryException(
+                "laboratory_report_version.not_found",
+                "Версия отчета не найдена");
+        }
+
+        return file;
+    }
+
+    /// <inheritdoc />
     public async Task<LaboratoryReportFileDto> GetReportFileAsync(
         Guid reportId,
         Guid versionId,
@@ -391,7 +481,7 @@ public sealed class LaboratoryService : ILaboratoryService
     }
 
     /// <inheritdoc />
-    public Task<ReviewLaboratoryReportResponse> ReviewReportAsync(
+    public async Task<ReviewLaboratoryReportResponse> ReviewReportAsync(
         Guid reportId,
         ReviewLaboratoryReportRequest request,
         CancellationToken cancellationToken)
@@ -425,12 +515,51 @@ public sealed class LaboratoryService : ILaboratoryService
             throw new LaboratoryException("laboratory_review.comment_too_long", "Комментарий слишком длинный");
         }
 
-        var result = _repository.ReviewReportAsync(
+        var result = await _repository.ReviewReportAsync(
             currentUser.UserId,
             IsAdmin(currentUser),
             reportId,
             request,
             cancellationToken);
+
+        // Уведомляем студента о результате проверки
+        if (result.StudentId != Guid.Empty)
+        {
+            var nowUtc = DateTimeOffset.UtcNow;
+            string notifTitle;
+            string notifMessage;
+
+            if (request.Status == LaboratoryReportStatus.Accepted)
+            {
+                notifTitle = "Отчёт принят";
+                notifMessage = $"Ваш отчёт принят! Получено {result.Points} баллов.";
+            }
+            else if (request.Status == LaboratoryReportStatus.RevisionRequired)
+            {
+                notifTitle = "Нужны правки";
+                notifMessage = "Преподаватель вернул отчёт на доработку.";
+            }
+            else
+            {
+                notifTitle = "Отчёт на проверке";
+                notifMessage = "Ваш отчёт взят на проверку.";
+            }
+
+            var notification = new NotificationModel(
+                id: UUIDNext.Uuid.NewSequential(),
+                userId: result.StudentId,
+                calendarEventId: null,
+                title: notifTitle,
+                message: notifMessage,
+                isRead: false,
+                createdAtUtc: nowUtc);
+
+            await _notificationRepository.CreateAsync(notification, cancellationToken);
+            await _notificationPush.SendToUserAsync(
+                result.StudentId,
+                new NotificationMessageDto(notification.Id, notifTitle, notifMessage, nowUtc),
+                cancellationToken);
+        }
 
         return result;
     }

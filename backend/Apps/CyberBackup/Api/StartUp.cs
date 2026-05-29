@@ -13,6 +13,7 @@ using Application.Abstractions.Services.Calendar.Hubs;
 using Infrastucture.S3;
 using Api.Services.Laboratories;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace Api;
 
@@ -68,12 +69,34 @@ public class StartUp
     /// </summary>
     public void Configure(IApplicationBuilder app)
     {
+        // Глобальный JSON-обработчик ошибок — должен быть ПЕРВЫМ в пайплайне
+        app.UseExceptionHandler(errorApp => errorApp.Run(async ctx =>
+        {
+            var feature = ctx.Features.Get<IExceptionHandlerFeature>();
+            var ex = feature?.Error;
+
+            ctx.Response.ContentType = "application/json; charset=utf-8";
+
+            ctx.Response.StatusCode = ex switch
+            {
+                InvalidOperationException => 400,
+                UnauthorizedAccessException => 403,
+                KeyNotFoundException       => 404,
+                _                          => 500
+            };
+
+            var message = ctx.Response.StatusCode == 500
+                ? "Внутренняя ошибка сервера"
+                : ex?.Message ?? "Ошибка запроса";
+
+            await ctx.Response.WriteAsJsonAsync(new { message });
+        }));
+
         app.UseRouting();
         app.UseCyberCors();
 
         if (Environment.IsDevelopment())
         {
-            app.UseDeveloperExceptionPage();
             app.UseSwaggerDocumentation("CyberBackupApi");
         }
         

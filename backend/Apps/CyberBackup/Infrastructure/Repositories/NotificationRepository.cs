@@ -51,4 +51,40 @@ public sealed class NotificationRepository : INotificationRepository
             notification.CreatedAtUtc
         }, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyCollection<NotificationModel>> GetForUserAsync(
+        Guid userId,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT
+                                   id             AS "Id",
+                                   user_id        AS "UserId",
+                                   calendar_event_id AS "CalendarEventId",
+                                   title          AS "Title",
+                                   message        AS "Message",
+                                   is_read        AS "IsRead",
+                                   created_at_utc AS "CreatedAtUtc"
+                               FROM notifications
+                               WHERE user_id = @UserId
+                               ORDER BY created_at_utc DESC
+                               LIMIT @Limit
+                           """;
+
+        return _connection.QueryAsync<NotificationModel>(sql, new { UserId = userId, Limit = limit }, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task MarkAllReadAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               UPDATE notifications
+                               SET is_read = TRUE
+                               WHERE user_id = @UserId AND is_read = FALSE
+                           """;
+
+        return _connection.ExecuteAsync(sql, new { UserId = userId }, cancellationToken);
+    }
 }

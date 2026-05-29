@@ -1,9 +1,15 @@
 ﻿using Application.Abstractions.Services.Calendar;
 using Application.Abstractions.Services.Calendar.Contracts;
+using Application.Abstractions.Services.Groups;
+using Application.Abstractions.Services.Groups.Contracts;
 using Application.Abstractions.Services.User;
 using Application.Abstractions.Services.User.Contracts;
 using Application.Abstractions.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
+using Application.Abstractions.Services.Posts;
+using Application.Abstractions.Services.Posts.Contracts;
+using Application.Abstractions.Services.Questions;
+using Application.Abstractions.Services.Questions.Contracts;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.Abstractions.UseCases.Auth.Register;
 using Application.Abstractions.UseCases.Calendar;
@@ -46,5 +52,8 @@ public static class ApplicationStartUp
         services.AddScoped<ILoginUseCaseManager, LoginUseCaseManager>();
         services.AddScoped<ILaboratoryService, LaboratoryService>();
         services.AddScoped<ILaboratoryFlagHashService, LaboratoryFlagHashService>();
+        services.AddScoped<IGroupService, GroupService>();
+        services.AddScoped<IPostService, PostService>();
+        services.AddScoped<IQuestionService, QuestionService>();
     }
 }

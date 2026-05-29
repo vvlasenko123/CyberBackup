@@ -1,7 +1,10 @@
 ﻿using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.Calendar;
 using Application.Abstractions.Services.Calendar.Contracts;
+using Application.Abstractions.Services.Groups.Contracts;
 using Application.Abstractions.Services.Laboratories.Contracts;
+using Application.Abstractions.Services.Posts.Contracts;
+using Application.Abstractions.Services.Questions.Contracts;
 using Domain.Repositories;
 using Infrastructure.Auth.Options;
 using Infrastructure.Auth.Services;
@@ -45,6 +48,9 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, CreateCalendarEvents_202605150001>();
         services.AddTransient<IDatabaseMigration, CreateNotifications_202605150002>();
         services.AddTransient<IDatabaseMigration, AddEventTypeToCalendarEvents_202605210001>();
+        services.AddTransient<IDatabaseMigration, CreatePosts_202605270001>();
+        services.AddTransient<IDatabaseMigration, CreateQuestions_202605270002>();
+        services.AddTransient<IDatabaseMigration, UpdateQuestionRepliesForChat_202605280001>();
         #endregion
 
         #region repositories
@@ -54,6 +60,9 @@ public static class InfrastructureStartUp
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<ILaboratoryRepository, LaboratoryRepository>();
         services.AddScoped<ILaboratoryReportFileStorage, LaboratoryReportFileStorage>();
+        services.AddScoped<IGroupRepository, GroupRepository>();
+        services.AddScoped<IPostRepository, PostRepository>();
+        services.AddScoped<IQuestionRepository, QuestionRepository>();
         #endregion
 
         #region auth

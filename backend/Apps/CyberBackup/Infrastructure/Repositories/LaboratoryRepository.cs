@@ -639,12 +639,19 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             SELECT
                 lw.id AS "LaboratoryId",
                 lw.title AS "Title",
+                CASE
+                    WHEN r.status = 4 THEN 3
+                    WHEN lp.status = 3 THEN 3
+                    WHEN r.id IS NOT NULL OR lp.id IS NOT NULL THEN 1
+                    ELSE 0
+                END AS "LaboratoryStatus",
                 COALESCE(r.status, 0) AS "Status",
                 r.points AS "Points",
                 lw.max_points AS "MaxPoints",
                 r.teacher_comment AS "TeacherComment"
             FROM laboratory_works lw
             LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
+            LEFT JOIN laboratory_progress lp ON lp.laboratory_work_id = lw.id AND lp.student_id = @StudentId
             WHERE lw.is_published = true AND lw.delete_date_utc IS NULL
             ORDER BY lw.sort_order, lw.title;
             """,
@@ -660,6 +667,91 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 .Where(x => x.Status == LaboratoryReportStatus.Accepted)
                 .Sum(x => x.Points ?? 0),
             Laboratories = laboratories
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<GetGroupLeaderboardResponse> GetGroupLeaderboardAsync(
+        Guid studentId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           WITH group_id_cte AS (
+                               SELECT ug.group_id
+                               FROM user_groups ug
+                               WHERE ug.user_id = @StudentId
+                               LIMIT 1
+                           ),
+                           group_students AS (
+                               SELECT u.id, u.full_name
+                               FROM users u
+                               JOIN user_groups ug ON ug.user_id = u.id
+                               JOIN group_id_cte g ON g.group_id = ug.group_id
+                               WHERE u.role = 0
+                           ),
+                           penalties AS (
+                               SELECT sh.student_id, sh.laboratory_work_id,
+                                      COALESCE(SUM(h.penalty_points), 0)::int AS penalty_pts
+                               FROM student_laboratory_hints sh
+                               JOIN laboratory_hints h ON h.id = sh.laboratory_hint_id
+                               WHERE sh.student_id IN (SELECT id FROM group_students)
+                               GROUP BY sh.student_id, sh.laboratory_work_id
+                           ),
+                           flags AS (
+                               SELECT fa.student_id, fa.laboratory_work_id,
+                                      BOOL_OR(fa.is_correct) AS is_correct
+                               FROM laboratory_flag_attempts fa
+                               WHERE fa.student_id IN (SELECT id FROM group_students)
+                               GROUP BY fa.student_id, fa.laboratory_work_id
+                           ),
+                           student_points AS (
+                               SELECT
+                                   gs.id AS student_id,
+                                   gs.full_name,
+                                   COALESCE(SUM(
+                                       GREATEST(
+                                           COALESCE(
+                                               CASE WHEN r.status = 4 THEN r.points ELSE NULL END,
+                                               CASE WHEN COALESCE(f.is_correct, false)
+                                                    THEN lw.max_points - COALESCE(p.penalty_pts, 0)
+                                                    ELSE 0 END
+                                           ), 0
+                                       )
+                                   ), 0)::int AS earned_points
+                               FROM group_students gs
+                               CROSS JOIN laboratory_works lw
+                               LEFT JOIN laboratory_reports r
+                                   ON r.laboratory_work_id = lw.id AND r.student_id = gs.id
+                               LEFT JOIN penalties p
+                                   ON p.student_id = gs.id AND p.laboratory_work_id = lw.id
+                               LEFT JOIN flags f
+                                   ON f.student_id = gs.id AND f.laboratory_work_id = lw.id
+                               WHERE lw.is_published = true AND lw.delete_date_utc IS NULL
+                               GROUP BY gs.id, gs.full_name
+                           ),
+                           ranked AS (
+                               SELECT
+                                   student_id AS "StudentId",
+                                   full_name AS "FullName",
+                                   earned_points AS "EarnedPoints",
+                                   RANK() OVER (ORDER BY earned_points DESC) AS "Rank",
+                                   (student_id = @StudentId) AS "IsCurrentUser"
+                               FROM student_points
+                           )
+                           SELECT *
+                           FROM ranked
+                           ORDER BY "Rank", "FullName";
+                           """;
+
+        await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
+        var items = (await connection.QueryAsync<LeaderboardItemDto>(sql, new { StudentId = studentId })).ToList();
+
+        var currentRank = items.FirstOrDefault(x => x.IsCurrentUser)?.Rank ?? 0;
+
+        return new GetGroupLeaderboardResponse
+        {
+            CurrentUserRank = currentRank,
+            Items = items
         };
     }
 
@@ -1177,7 +1269,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 rv.checked_by_teacher_id AS "CheckedByTeacherId",
                 t.full_name AS "CheckedByTeacherFullName",
                 rv.checked_date_utc AS "CheckedDateUtc",
-                '/api/v1/teacher/reports/' || @ReportId || '/versions/' || rv.id || '/file' AS "FileDownloadUrl"
+                '/public/api/v1/teacher/reports/' || @ReportId || '/versions/' || rv.id || '/file' AS "FileDownloadUrl"
             FROM laboratory_report_versions rv
             LEFT JOIN users t ON t.id = rv.checked_by_teacher_id
             WHERE rv.laboratory_report_id = @ReportId
@@ -1224,6 +1316,29 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
               );
             """,
             new { ReportId = reportId, VersionId = versionId, TeacherId = teacherId, IncludeAll = includeAll },
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<LaboratoryReportFileDto?> GetStudentReportFileAsync(
+        Guid studentId,
+        Guid laboratoryId,
+        Guid versionId,
+        CancellationToken cancellationToken)
+    {
+        return _connection.QueryFirstOrDefaultAsync<LaboratoryReportFileDto>(
+            """
+            SELECT
+                rv.storage_path AS "StoragePath",
+                rv.original_file_name AS "OriginalFileName",
+                rv.content_type AS "ContentType"
+            FROM laboratory_report_versions rv
+            JOIN laboratory_reports r ON r.id = rv.laboratory_report_id
+            WHERE rv.id = @VersionId
+              AND r.student_id = @StudentId
+              AND r.laboratory_work_id = @LaboratoryId;
+            """,
+            new { VersionId = versionId, StudentId = studentId, LaboratoryId = laboratoryId },
             cancellationToken);
     }
 
@@ -1361,6 +1476,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         return new ReviewLaboratoryReportResponse
         {
             ReportId = reportId,
+            StudentId = report.StudentId,
             Status = request.Status,
             Points = points,
             TeacherComment = request.Comment,
@@ -1647,12 +1763,12 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 checked_by_teacher_id AS "CheckedByTeacherId",
                 NULL AS "CheckedByTeacherFullName",
                 checked_date_utc AS "CheckedDateUtc",
-                NULL AS "FileDownloadUrl"
+                '/public/api/v1/laboratories/' || @LaboratoryId || '/reports/my/versions/' || id || '/file' AS "FileDownloadUrl"
             FROM laboratory_report_versions
             WHERE laboratory_report_id = @ReportId
             ORDER BY version_number DESC;
             """,
-            new { report.ReportId })).ToList();
+            new { report.ReportId, LaboratoryId = laboratoryId })).ToList();
 
         return report with { Versions = versions };
     }
@@ -1697,6 +1813,22 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         public int CurrentVersionNumber { get; init; }
         public LaboratoryReportStatus Status { get; init; }
         public int MaxPoints { get; init; }
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyCollection<Guid>> GetStudentIdsForTeacherAsync(
+        Guid teacherId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT DISTINCT ug.user_id
+                               FROM teacher_groups tg
+                               JOIN user_groups ug ON ug.group_id = tg.group_id
+                               JOIN users u ON u.id = ug.user_id AND u.role = @StudentRole
+                               WHERE tg.teacher_id = @TeacherId
+                           """;
+
+        return _connection.QueryAsync<Guid>(sql, new { TeacherId = teacherId, StudentRole = (int)UserRole.Student }, cancellationToken);
     }
 
     private sealed record GradebookRecordDbModel

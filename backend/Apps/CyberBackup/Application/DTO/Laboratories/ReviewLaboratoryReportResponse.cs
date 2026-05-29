@@ -8,6 +8,7 @@ namespace Application.DTO.Laboratories;
 public sealed record ReviewLaboratoryReportResponse
 {
     public Guid ReportId { get; init; }
+    public Guid StudentId { get; init; }
     public LaboratoryReportStatus Status { get; init; }
     public int? Points { get; init; }
     public string? TeacherComment { get; init; }

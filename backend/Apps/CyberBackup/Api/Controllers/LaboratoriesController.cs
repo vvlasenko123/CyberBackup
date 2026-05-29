@@ -19,13 +19,16 @@ public sealed class LaboratoriesController : PublicController
 {
     private readonly ILaboratoryService _laboratoryService;
     private readonly ILaboratoryReportUploadRequestFactory _uploadRequestFactory;
+    private readonly ILaboratoryReportFileStorage _fileStorage;
 
     public LaboratoriesController(
         ILaboratoryService laboratoryService,
-        ILaboratoryReportUploadRequestFactory uploadRequestFactory)
+        ILaboratoryReportUploadRequestFactory uploadRequestFactory,
+        ILaboratoryReportFileStorage fileStorage)
     {
         _laboratoryService = laboratoryService;
         _uploadRequestFactory = uploadRequestFactory;
+        _fileStorage = fileStorage;
     }
 
     /// <summary>
@@ -118,12 +121,40 @@ public sealed class LaboratoriesController : PublicController
     }
 
     /// <summary>
+    /// Скачать файл версии своего отчета
+    /// </summary>
+    [HttpGet("{laboratoryId:guid}/reports/my/versions/{versionId:guid}/file")]
+    public async Task<IActionResult> DownloadMyReportFile(
+        Guid laboratoryId,
+        Guid versionId,
+        CancellationToken cancellationToken)
+    {
+        var file = await _laboratoryService.GetStudentReportFileAsync(laboratoryId, versionId, cancellationToken);
+        var stream = await _fileStorage.OpenReadAsync(file.StoragePath, cancellationToken);
+        var result = File(stream, file.ContentType, file.OriginalFileName);
+
+        return result;
+    }
+
+    /// <summary>
     /// Получить прогресс текущего студента
     /// </summary>
     [HttpGet("progress/my")]
     public async Task<IActionResult> GetMyProgress(CancellationToken cancellationToken)
     {
         var response = await _laboratoryService.GetMyProgressAsync(cancellationToken);
+        var result = Ok(response);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Получить рейтинг группы текущего студента
+    /// </summary>
+    [HttpGet("progress/leaderboard")]
+    public async Task<IActionResult> GetGroupLeaderboard(CancellationToken cancellationToken)
+    {
+        var response = await _laboratoryService.GetGroupLeaderboardAsync(cancellationToken);
         var result = Ok(response);
 
         return result;
