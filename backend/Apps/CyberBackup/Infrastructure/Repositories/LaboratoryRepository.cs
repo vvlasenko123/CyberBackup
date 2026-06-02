@@ -201,7 +201,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                              WHEN r.allow_resubmit = true THEN true
                                              ELSE false
                                          END AS "AllowReportUpload",
-                                         COALESCE(r.allow_resubmit, false) AS "CanResubmitReport"
+                                         COALESCE(r.allow_resubmit, false) AS "CanResubmitReport",
+                                         lw.deadline_at_utc AS "DeadlineAtUtc"
                                      FROM laboratory_works lw
                                      LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
                                      LEFT JOIN penalties p ON true
@@ -841,6 +842,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 CASE WHEN expected_flag_hash IS NULL THEN false ELSE true END AS "HasExpectedFlag",
                 is_published AS "IsPublished",
                 sort_order AS "SortOrder",
+                deadline_at_utc AS "DeadlineAtUtc",
                 create_date_utc AS "CreateDateUtc",
                 update_date_utc AS "UpdateDateUtc",
                 delete_date_utc AS "DeleteDateUtc"
@@ -905,13 +907,13 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 id, title, short_description, description, narrative, goal,
                 environment_url, credentials, difficulty, block, max_points,
                 has_flag, expected_flag_hash, created_by_teacher_id, is_published, sort_order,
-                create_date_utc, update_date_utc, delete_date_utc
+                deadline_at_utc, create_date_utc, update_date_utc, delete_date_utc
             )
             VALUES (
                 @Id, @Title, @ShortDescription, @Description, @Narrative, @Goal,
                 @EnvironmentUrl, @Credentials, @Difficulty, @Block, @MaxPoints,
                 @HasFlag, @ExpectedFlagHash, @TeacherId, @IsPublished, @SortOrder,
-                @NowUtc, NULL, NULL
+                @DeadlineAtUtc, @NowUtc, NULL, NULL
             );
             """,
             new
@@ -932,6 +934,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 TeacherId = teacherId,
                 request.IsPublished,
                 request.SortOrder,
+                DeadlineAtUtc = request.DeadlineAtUtc?.ToUniversalTime(),
                 NowUtc = nowUtc
             },
             transaction);
@@ -997,6 +1000,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 END,
                 is_published = @IsPublished,
                 sort_order = @SortOrder,
+                deadline_at_utc = @DeadlineAtUtc,
                 update_date_utc = @NowUtc
             WHERE id = @LaboratoryId;
             """,
@@ -1018,6 +1022,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 UpdateFlagHash = updateFlagHash,
                 request.IsPublished,
                 request.SortOrder,
+                DeadlineAtUtc = request.DeadlineAtUtc?.ToUniversalTime(),
                 NowUtc = nowUtc
             },
             transaction);
@@ -1361,7 +1366,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 r.laboratory_work_id AS "LaboratoryId",
                 r.current_version_number AS "CurrentVersionNumber",
                 r.status AS "Status",
-                lw.max_points AS "MaxPoints"
+                lw.max_points AS "MaxPoints",
+                lw.title AS "LaboratoryWorkTitle"
             FROM laboratory_reports r
             JOIN laboratory_works lw ON lw.id = r.laboratory_work_id
             WHERE r.id = @ReportId
@@ -1481,7 +1487,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             Points = points,
             TeacherComment = request.Comment,
             AllowResubmit = allowResubmit,
-            CheckedDateUtc = nowUtc
+            CheckedDateUtc = nowUtc,
+            LaboratoryTitle = report.LaboratoryWorkTitle
         };
     }
 
@@ -1813,6 +1820,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         public int CurrentVersionNumber { get; init; }
         public LaboratoryReportStatus Status { get; init; }
         public int MaxPoints { get; init; }
+        public string LaboratoryWorkTitle { get; init; } = string.Empty;
     }
 
     /// <inheritdoc />
@@ -1829,6 +1837,91 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            """;
 
         return _connection.QueryAsync<Guid>(sql, new { TeacherId = teacherId, StudentRole = (int)UserRole.Student }, cancellationToken);
+    }
+
+    public Task<IReadOnlyCollection<Guid>> GetTeacherIdsForStudentAsync(
+        Guid studentId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT DISTINCT tg.teacher_id
+            FROM user_groups ug
+            JOIN teacher_groups tg ON tg.group_id = ug.group_id
+            WHERE ug.user_id = @StudentId
+            """;
+
+        return _connection.QueryAsync<Guid>(sql, new { StudentId = studentId }, cancellationToken);
+    }
+
+    public async Task<string?> GetLaboratoryTitleAsync(
+        Guid laboratoryId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT lw.title
+            FROM laboratory_works lw
+            WHERE lw.id = @LaboratoryId AND lw.delete_date_utc IS NULL
+            """;
+
+        return await _connection.QueryFirstOrDefaultAsync<string>(
+            sql, new { LaboratoryId = laboratoryId }, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<GradebookExportRowDto>> GetTeacherGradebookForExportAsync(
+        Guid teacherId,
+        bool includeAll,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT
+                u.full_name AS "FullName",
+                COALESCE(g.name, '') AS "GroupName",
+                COALESCE(SUM(CASE WHEN r.status = 4 THEN r.points ELSE 0 END), 0)::int AS "TotalPoints"
+            FROM users u
+            LEFT JOIN user_groups ug ON ug.user_id = u.id
+            LEFT JOIN groups g ON g.id = ug.group_id
+            LEFT JOIN student_gradebook_records sgr ON sgr.student_id = u.id
+            LEFT JOIN laboratory_reports r ON r.student_id = u.id
+            WHERE u.role = @StudentRole
+              AND (
+                  @IncludeAll = true
+                  OR EXISTS (
+                      SELECT 1
+                      FROM teacher_groups tg
+                      WHERE tg.teacher_id = @TeacherId
+                        AND tg.group_id = ug.group_id
+                  )
+              )
+            GROUP BY u.id, u.full_name, g.name
+            ORDER BY g.name, u.full_name
+            """;
+
+        var result = await _connection.QueryAsync<GradebookExportRowDto>(
+            sql,
+            new { TeacherId = teacherId, IncludeAll = includeAll, StudentRole = (int)UserRole.Student },
+            cancellationToken);
+
+        return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<string>> GetDistinctBlocksAsync(Guid teacherId, bool includeAll, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT DISTINCT block
+            FROM laboratory_works
+            WHERE delete_date_utc IS NULL
+              AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
+            ORDER BY block
+            """;
+
+        var result = await _connection.QueryAsync<string>(
+            sql,
+            new { TeacherId = teacherId, IncludeAll = includeAll },
+            cancellationToken);
+
+        return result.ToList();
     }
 
     private sealed record GradebookRecordDbModel

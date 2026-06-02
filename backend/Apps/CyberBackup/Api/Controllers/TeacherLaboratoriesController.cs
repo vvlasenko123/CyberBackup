@@ -80,6 +80,16 @@ public sealed class TeacherLaboratoriesController : PublicController
     }
 
     /// <summary>
+    /// Получить список уникальных блоков
+    /// </summary>
+    [HttpGet("blocks")]
+    public async Task<IActionResult> GetBlocks(CancellationToken cancellationToken)
+    {
+        var blocks = await _laboratoryService.GetDistinctBlocksAsync(cancellationToken);
+        return Ok(blocks);
+    }
+
+    /// <summary>
     /// Удалить лабораторную работу
     /// </summary>
     [HttpDelete("{laboratoryId:guid}")]

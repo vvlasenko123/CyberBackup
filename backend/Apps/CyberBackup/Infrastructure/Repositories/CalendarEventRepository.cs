@@ -164,6 +164,28 @@ public sealed class CalendarEventRepository : ICalendarEventRepository
     }
 
     /// <inheritdoc />
+    public Task DeleteAsync(Guid id, Guid userId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            DELETE FROM calendar_events
+            WHERE id = @Id AND user_id = @UserId
+            """;
+
+        return _connection.ExecuteAsync(sql, new { Id = id, UserId = userId }, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task DeleteByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            DELETE FROM calendar_events
+            WHERE id = @Id
+            """;
+
+        return _connection.ExecuteAsync(sql, new { Id = id }, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task SetNotifiedAsync(
         Guid id,
         DateTimeOffset notifiedAtUtc,

@@ -24,7 +24,7 @@ public class CreateUserService : ICreateUserService
     }
 
     /// <inheritdoc />
-    public async Task Create(UserDto request, Guid currentUserId, CancellationToken token)
+    public async Task<Guid> Create(UserDto request, Guid currentUserId, CancellationToken token)
     {
         var email = new Email(request.Email);
 
@@ -50,5 +50,6 @@ public class CreateUserService : ICreateUserService
             updatedAt: DateTimeOffset.UtcNow);
 
         await _userRepository.CreateUserAsync(user, token);
+        return user.Id;
     }
 }

@@ -50,4 +50,17 @@ public sealed class PostsController : PublicController
         var response = await _postService.CreatePostAsync(request, cancellationToken);
         return Ok(response);
     }
+
+    /// <summary>
+    /// Удалить пост (преподаватель / администратор)
+    /// </summary>
+    [HttpDelete("{postId:guid}")]
+    [Authorize(Roles = AuthRoleNames.Teacher + "," + AuthRoleNames.AdminOrSuperAdmin)]
+    public async Task<IActionResult> DeletePost(
+        Guid postId,
+        CancellationToken cancellationToken)
+    {
+        await _postService.DeletePostAsync(postId, cancellationToken);
+        return NoContent();
+    }
 }

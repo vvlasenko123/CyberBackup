@@ -6,6 +6,7 @@ using Application.DTO.Auth;
 using Application.DTO.Calendar;
 using Application.DTO.Laboratories;
 using Application.DTO.Posts;
+using ClosedXML.Excel;
 using Domain.Calendar;
 using Domain.Laboratories.Enums;
 using Domain.Posts.Enums;
@@ -176,6 +177,14 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         var currentUser = GetCurrentUser();
 
+        var labDetails = await _repository.GetStudentLaboratoryDetailsAsync(currentUser.UserId, laboratoryId, cancellationToken);
+        if (labDetails?.DeadlineAtUtc.HasValue == true && DateTimeOffset.UtcNow > labDetails.DeadlineAtUtc.Value)
+        {
+            throw new LaboratoryException(
+                "laboratory_report.deadline_expired",
+                "Срок сдачи отчёта по этой лабораторной истёк.");
+        }
+
         await using var content = file.Content;
 
         ValidateReportFile(file);
@@ -187,6 +196,32 @@ public sealed class LaboratoryService : ILaboratoryService
             laboratoryId,
             savedFile,
             cancellationToken);
+
+        var labTitle = await _repository.GetLaboratoryTitleAsync(laboratoryId, cancellationToken);
+        var teacherIds = await _repository.GetTeacherIdsForStudentAsync(currentUser.UserId, cancellationToken);
+        var nowUtc = DateTimeOffset.UtcNow;
+        var notifTitle = "Загружен отчёт";
+        var notifMessage = labTitle is not null
+            ? $"Студент загрузил(а) отчёт по лабораторной «{labTitle}»"
+            : "Студент загрузил(а) отчёт";
+
+        foreach (var teacherId in teacherIds)
+        {
+            var notification = new NotificationModel(
+                id: UUIDNext.Uuid.NewSequential(),
+                userId: teacherId,
+                calendarEventId: null,
+                title: notifTitle,
+                message: notifMessage,
+                isRead: false,
+                createdAtUtc: nowUtc);
+
+            await _notificationRepository.CreateAsync(notification, cancellationToken);
+            await _notificationPush.SendToUserAsync(
+                teacherId,
+                new NotificationMessageDto(notification.Id, notifTitle, notifMessage, nowUtc),
+                cancellationToken);
+        }
 
         return result;
     }
@@ -532,17 +567,17 @@ public sealed class LaboratoryService : ILaboratoryService
             if (request.Status == LaboratoryReportStatus.Accepted)
             {
                 notifTitle = "Отчёт принят";
-                notifMessage = $"Ваш отчёт принят! Получено {result.Points} баллов.";
+                notifMessage = $"Ваш отчёт по лабораторной «{result.LaboratoryTitle}» принят! Получено {result.Points} баллов.";
             }
             else if (request.Status == LaboratoryReportStatus.RevisionRequired)
             {
                 notifTitle = "Нужны правки";
-                notifMessage = "Преподаватель вернул отчёт на доработку.";
+                notifMessage = $"Преподаватель вернул отчёт по лабораторной «{result.LaboratoryTitle}» на доработку.";
             }
             else
             {
                 notifTitle = "Отчёт на проверке";
-                notifMessage = "Ваш отчёт взят на проверку.";
+                notifMessage = $"Ваш отчёт по лабораторной «{result.LaboratoryTitle}» взят на проверку.";
             }
 
             var notification = new NotificationModel(
@@ -581,7 +616,7 @@ public sealed class LaboratoryService : ILaboratoryService
     }
 
     /// <inheritdoc />
-    public Task<TeacherGradebookItemDto> UpdateGradebookAsync(
+    public async Task<TeacherGradebookItemDto> UpdateGradebookAsync(
         Guid studentId,
         UpdateTeacherGradebookRequest request,
         CancellationToken cancellationToken)
@@ -593,14 +628,43 @@ public sealed class LaboratoryService : ILaboratoryService
             throw new LaboratoryException("gradebook.attendance_out_of_range", "Посещаемость должна быть от 0 до 100");
         }
 
-        var result = _repository.UpdateGradebookAsync(
+        var result = await _repository.UpdateGradebookAsync(
             currentUser.UserId,
             studentId,
             request,
             IsAdmin(currentUser),
             cancellationToken);
 
+        if (request.IsExamAllowed)
+        {
+            var nowUtc = DateTimeOffset.UtcNow;
+            const string notifTitle = "Допуск к зачёту";
+            const string notifMessage = "Поздравляем! Вы допущены к зачёту.";
+
+            var notification = new NotificationModel(
+                id: UUIDNext.Uuid.NewSequential(),
+                userId: studentId,
+                calendarEventId: null,
+                title: notifTitle,
+                message: notifMessage,
+                isRead: false,
+                createdAtUtc: nowUtc);
+
+            await _notificationRepository.CreateAsync(notification, cancellationToken);
+            await _notificationPush.SendToUserAsync(
+                studentId,
+                new NotificationMessageDto(notification.Id, notifTitle, notifMessage, nowUtc),
+                cancellationToken);
+        }
+
         return result;
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyCollection<string>> GetDistinctBlocksAsync(CancellationToken cancellationToken)
+    {
+        var currentUser = GetCurrentUser();
+        return _repository.GetDistinctBlocksAsync(currentUser.UserId, IsAdmin(currentUser), cancellationToken);
     }
 
     private async Task<string?> GetExpectedFlagHashAsync(Guid laboratoryId, CancellationToken cancellationToken)
@@ -773,5 +837,39 @@ public sealed class LaboratoryService : ILaboratoryService
         };
 
         return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<byte[]> ExportGradebookAsync(CancellationToken cancellationToken)
+    {
+        var currentUser = GetCurrentUser();
+        var rows = await _repository.GetTeacherGradebookForExportAsync(
+            currentUser.UserId, IsAdmin(currentUser), cancellationToken);
+
+        using var workbook = new XLWorkbook();
+        var ws = workbook.Worksheets.Add("Ведомость");
+
+        ws.Cell(1, 1).Value = "ФИО";
+        ws.Cell(1, 2).Value = "Группа";
+        ws.Cell(1, 3).Value = "Баллы";
+
+        var headerRow = ws.Row(1);
+        headerRow.Style.Font.Bold = true;
+        headerRow.Style.Fill.BackgroundColor = XLColor.LightBlue;
+
+        int row = 2;
+        foreach (var r in rows)
+        {
+            ws.Cell(row, 1).Value = r.FullName;
+            ws.Cell(row, 2).Value = r.GroupName;
+            ws.Cell(row, 3).Value = r.TotalPoints;
+            row++;
+        }
+
+        ws.Columns().AdjustToContents();
+
+        using var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+        return ms.ToArray();
     }
 }

@@ -50,4 +50,17 @@ public sealed class TeacherGradebookController : PublicController
 
         return result;
     }
+
+    /// <summary>
+    /// Экспортировать ведомость в Excel
+    /// </summary>
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportGradebook(CancellationToken cancellationToken)
+    {
+        var bytes = await _laboratoryService.ExportGradebookAsync(cancellationToken);
+        var fileName = $"Ведомость_{DateTime.UtcNow:yyyy-MM-dd}.xlsx";
+        return File(bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            fileName);
+    }
 }

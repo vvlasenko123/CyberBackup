@@ -1,10 +1,13 @@
 using Api.Controllers.Models.Request;
 using Api.Controllers.Models.Response;
+using Application.Abstractions.Services.Groups.Contracts;
 using Application.Abstractions.UseCases.User.Contracts;
 using Application.DTO;
 using Application.DTO.User;
 using AutoMapper;
+using Domain.User.Enums;
 using Infrastructure.Core.Controllers.Public;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Security.Auth.Admin.Constants;
@@ -15,7 +18,7 @@ namespace Api.Controllers;
 /// Контроллер с пользователями.
 /// </summary>
 [ApiController]
-[Route("user")]
+[Route("api/v1/user")]
 public class UserController : PublicController
 {
     private readonly IMapper _mapper;
@@ -23,19 +26,22 @@ public class UserController : PublicController
     private readonly IUpdateUserUseCaseManager _updateUserUseCaseManager;
     private readonly IDeleteUserUseCaseManager _deleteUserUseCaseManager;
     private readonly IGetUserUseCaseManager _getUserUseCaseManager;
+    private readonly IGroupService _groupService;
 
     public UserController(
         IMapper mapper,
         ICreateUserUseCaseManager createUserUseCaseManager,
         IUpdateUserUseCaseManager updateUserUseCaseManager,
         IDeleteUserUseCaseManager deleteUserUseCaseManager,
-        IGetUserUseCaseManager getUserUseCaseManager)
+        IGetUserUseCaseManager getUserUseCaseManager,
+        IGroupService groupService)
     {
         _mapper = mapper;
         _createUserUseCaseManager = createUserUseCaseManager;
         _updateUserUseCaseManager = updateUserUseCaseManager;
         _deleteUserUseCaseManager = deleteUserUseCaseManager;
         _getUserUseCaseManager = getUserUseCaseManager;
+        _groupService = groupService;
     }
 
     /// <summary>
@@ -50,7 +56,6 @@ public class UserController : PublicController
         var dto = _mapper.Map<UserDto>(request);
 
         await _createUserUseCaseManager.Execute(dto, token);
-
         return Created();
     }
 
@@ -116,5 +121,57 @@ public class UserController : PublicController
         var response = _mapper.Map<IReadOnlyCollection<UserResponse>>(users);
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Массовый импорт студентов из RTF-файла
+    /// </summary>
+    [Authorize(Roles = AuthRoleNames.AdminOrSuperAdmin)]
+    [HttpPost("bulk-import")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> BulkImportStudents(
+        IFormFile file,
+        [FromForm] Guid? groupId,
+        CancellationToken token)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { Message = "Файл не выбран" });
+
+        var students = RtfStudentParser.Parse(file.OpenReadStream());
+
+        if (students.Count == 0)
+            return BadRequest(new { Message = "Не удалось распознать студентов в файле" });
+
+        var results = new List<object>();
+
+        foreach (var (personalNumber, fullName) in students)
+        {
+            var email = $"{personalNumber}@student.local";
+            var password = personalNumber;
+
+            try
+            {
+                var dto = new UserDto
+                {
+                    Email = email,
+                    FullName = fullName,
+                    Password = password,
+                    Role = UserRole.Student,
+                };
+
+                var userId = await _createUserUseCaseManager.Execute(dto, token);
+
+                if (groupId.HasValue)
+                    await _groupService.AddStudentToGroupAsync(groupId.Value, userId, token);
+
+                results.Add(new { FullName = fullName, Email = email, Password = password, Success = true });
+            }
+            catch (Exception ex)
+            {
+                results.Add(new { FullName = fullName, Email = email, Success = false, Error = ex.Message });
+            }
+        }
+
+        return Ok(new { Imported = results });
     }
 }

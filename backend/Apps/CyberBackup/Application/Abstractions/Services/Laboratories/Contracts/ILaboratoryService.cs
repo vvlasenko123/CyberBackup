@@ -153,4 +153,14 @@ public interface ILaboratoryService
         Guid studentId,
         UpdateTeacherGradebookRequest request,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Экспортировать ведомость в Excel
+    /// </summary>
+    Task<byte[]> ExportGradebookAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить список уникальных блоков лабораторных работ текущего преподавателя
+    /// </summary>
+    Task<IReadOnlyCollection<string>> GetDistinctBlocksAsync(CancellationToken cancellationToken);
 }

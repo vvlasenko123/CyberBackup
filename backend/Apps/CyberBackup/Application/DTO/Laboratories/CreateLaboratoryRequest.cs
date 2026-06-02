@@ -22,5 +22,6 @@ public record CreateLaboratoryRequest
     public bool IsPublished { get; init; }
     public int SortOrder { get; init; }
     public IReadOnlyCollection<LaboratoryHintInputDto> Hints { get; init; } = [];
+    public DateTimeOffset? DeadlineAtUtc { get; init; }
 }
 

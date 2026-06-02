@@ -80,4 +80,11 @@ public sealed class PostRepository : IPostRepository
 
         return id;
     }
+
+    /// <inheritdoc />
+    public Task DeletePostAsync(Guid postId, CancellationToken cancellationToken)
+    {
+        const string sql = "DELETE FROM posts WHERE id = @PostId";
+        return _connection.ExecuteAsync(sql, new { PostId = postId }, cancellationToken);
+    }
 }

@@ -53,6 +53,17 @@ public sealed class CalendarEventService : ICalendarEventService
         return await _calendarEventRepository.GetAllAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
+    public Task DeleteAsync(Guid id, Guid userId, bool isAdmin, CancellationToken cancellationToken)
+    {
+        if (isAdmin)
+        {
+            return _calendarEventRepository.DeleteByIdAsync(id, cancellationToken);
+        }
+
+        return _calendarEventRepository.DeleteAsync(id, userId, cancellationToken);
+    }
+
     /// <summary>
     /// Проверить событие календаря
     /// </summary>

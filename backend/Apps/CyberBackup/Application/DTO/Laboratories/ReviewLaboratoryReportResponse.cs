@@ -14,5 +14,6 @@ public sealed record ReviewLaboratoryReportResponse
     public string? TeacherComment { get; init; }
     public bool AllowResubmit { get; init; }
     public DateTimeOffset CheckedDateUtc { get; init; }
+    public string LaboratoryTitle { get; init; } = string.Empty;
 }
 

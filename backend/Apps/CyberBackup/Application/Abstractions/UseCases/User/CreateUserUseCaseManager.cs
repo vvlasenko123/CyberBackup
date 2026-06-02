@@ -21,12 +21,12 @@ public sealed class CreateUserUseCaseManager : ICreateUserUseCaseManager
     }
 
     /// <inheritdoc />
-    public async Task Execute(UserDto request, CancellationToken cancellationToken)
+    public async Task<Guid> Execute(UserDto request, CancellationToken cancellationToken)
     {
         var currentUser = _jwtService.GetCurrentUser();
 
         UserRolePermissionValidator.ValidateCreate(currentUserRole: currentUser.Role, newUserRole: request.Role);
 
-        await _createUserService.Create(request, currentUser.UserId, cancellationToken);
+        return await _createUserService.Create(request, currentUser.UserId, cancellationToken);
     }
 }

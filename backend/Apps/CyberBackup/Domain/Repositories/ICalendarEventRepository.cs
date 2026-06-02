@@ -31,4 +31,14 @@ public interface ICalendarEventRepository
     /// Отметить событие как уведомленное
     /// </summary>
     Task SetNotifiedAsync(Guid id, DateTimeOffset notifiedAtUtc, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Удалить событие календаря (только своё)
+    /// </summary>
+    Task DeleteAsync(Guid id, Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Удалить любое событие календаря (для администратора)
+    /// </summary>
+    Task DeleteByIdAsync(Guid id, CancellationToken cancellationToken);
 }

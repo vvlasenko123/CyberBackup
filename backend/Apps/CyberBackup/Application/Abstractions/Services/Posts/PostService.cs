@@ -37,4 +37,10 @@ public sealed class PostService : IPostService
 
         return new CreatePostResponse { Id = id };
     }
+
+    /// <inheritdoc />
+    public Task DeletePostAsync(Guid postId, CancellationToken cancellationToken)
+    {
+        return _repository.DeletePostAsync(postId, cancellationToken);
+    }
 }

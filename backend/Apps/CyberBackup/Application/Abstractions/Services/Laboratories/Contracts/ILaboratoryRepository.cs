@@ -202,4 +202,27 @@ public interface ILaboratoryRepository
     /// Получить идентификаторы студентов в группах преподавателя
     /// </summary>
     Task<IReadOnlyCollection<Guid>> GetStudentIdsForTeacherAsync(Guid teacherId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить идентификаторы преподавателей, привязанных к группам студента
+    /// </summary>
+    Task<IReadOnlyCollection<Guid>> GetTeacherIdsForStudentAsync(Guid studentId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить название лабораторной работы
+    /// </summary>
+    Task<string?> GetLaboratoryTitleAsync(Guid laboratoryId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить данные ведомости для экспорта
+    /// </summary>
+    Task<IReadOnlyCollection<GradebookExportRowDto>> GetTeacherGradebookForExportAsync(
+        Guid teacherId,
+        bool includeAll,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить список уникальных блоков лабораторных работ преподавателя
+    /// </summary>
+    Task<IReadOnlyCollection<string>> GetDistinctBlocksAsync(Guid teacherId, bool includeAll, CancellationToken cancellationToken);
 }

@@ -25,6 +25,7 @@ public sealed record GetTeacherLaboratoryDetailsResponse
     public DateTimeOffset CreateDateUtc { get; init; }
     public DateTimeOffset? UpdateDateUtc { get; init; }
     public DateTimeOffset? DeleteDateUtc { get; init; }
+    public DateTimeOffset? DeadlineAtUtc { get; init; }
     public IReadOnlyCollection<LaboratoryHintInputDto> Hints { get; init; } = [];
 }
 

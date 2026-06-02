@@ -17,4 +17,9 @@ public interface IPostRepository
     /// Создать пост
     /// </summary>
     Task<Guid> CreatePostAsync(Guid authorId, CreatePostRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Удалить пост
+    /// </summary>
+    Task DeletePostAsync(Guid postId, CancellationToken cancellationToken);
 }

@@ -22,4 +22,9 @@ public interface ICalendarEventService
     /// Получить все события календаря
     /// </summary>
     Task<IReadOnlyCollection<CalendarEventModel>> GetAll(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Удалить событие календаря. Если isAdmin = true — удаляет без проверки владельца.
+    /// </summary>
+    Task DeleteAsync(Guid id, Guid userId, bool isAdmin, CancellationToken cancellationToken);
 }

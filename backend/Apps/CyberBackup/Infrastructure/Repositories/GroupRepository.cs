@@ -23,11 +23,13 @@ public sealed class GroupRepository : IGroupRepository
                                g.id          AS "Id",
                                g.name        AS "Name",
                                g.created_at  AS "CreatedAt",
-                               COUNT(DISTINCT ug.user_id)      AS "StudentCount",
-                               COUNT(DISTINCT tg.teacher_id)   AS "TeacherCount"
+                               COUNT(DISTINCT u_s.id)          AS "StudentCount",
+                               COUNT(DISTINCT u_t.id)          AS "TeacherCount"
                            FROM groups g
                            LEFT JOIN user_groups    ug ON ug.group_id = g.id
+                               LEFT JOIN users u_s ON u_s.id = ug.user_id
                            LEFT JOIN teacher_groups tg ON tg.group_id = g.id
+                               LEFT JOIN users u_t ON u_t.id = tg.teacher_id
                            GROUP BY g.id, g.name, g.created_at
                            ORDER BY g.name;
                            """;

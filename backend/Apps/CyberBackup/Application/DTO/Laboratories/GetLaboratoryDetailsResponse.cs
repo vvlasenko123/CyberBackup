@@ -25,6 +25,7 @@ public sealed record GetLaboratoryDetailsResponse
     public LaboratoryReportStatus ReportStatus { get; init; }
     public bool AllowReportUpload { get; init; }
     public bool CanResubmitReport { get; init; }
+    public DateTimeOffset? DeadlineAtUtc { get; init; }
     public IReadOnlyCollection<LaboratoryHintDto> Hints { get; init; } = [];
     public GetMyLaboratoryReportResponse? Report { get; init; }
 }

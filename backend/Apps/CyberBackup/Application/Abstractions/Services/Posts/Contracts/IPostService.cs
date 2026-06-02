@@ -17,4 +17,9 @@ public interface IPostService
     /// Создать пост (только для учителя/администратора)
     /// </summary>
     Task<CreatePostResponse> CreatePostAsync(CreatePostRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Удалить пост
+    /// </summary>
+    Task DeletePostAsync(Guid postId, CancellationToken cancellationToken);
 }
