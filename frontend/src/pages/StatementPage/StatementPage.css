@@ -1,0 +1,375 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+.stmt-page {
+    font-family: 'Montserrat', sans-serif;
+}
+
+.stmt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.stmt-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+.stmt-export-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+}
+
+.stmt-export-btn:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.11);
+    color: #ffffff;
+}
+
+.stmt-export-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.stmt-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.stmt-stat-card {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+}
+
+.stmt-stat-card__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 10px;
+}
+
+.stmt-stat-card__value {
+    font-size: 32px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+.stmt-stat-card__value--green  { color: #22c55e; }
+.stmt-stat-card__value--red    { color: #ef4444; }
+.stmt-stat-card__value--blue   { color: #027ef2; }
+.stmt-stat-card__value--dim    { color: rgba(255, 255, 255, 0.35); }
+
+.stmt-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.stmt-filter-select,
+.stmt-filter-input {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 14px;
+    outline: none;
+    transition: border-color 0.18s;
+    color-scheme: dark;
+}
+
+.stmt-filter-select {
+    appearance: none;
+    cursor: pointer;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.stmt-filter-select option {
+    background: #20252b;
+}
+
+.stmt-filter-input {
+    flex: 1;
+    max-width: 280px;
+}
+
+.stmt-filter-select:focus,
+.stmt-filter-input:focus {
+    border-color: #027ef2;
+}
+
+.stmt-filter-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.stmt-table-card {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.stmt-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stmt-table thead tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.stmt-table th {
+    padding: 13px 20px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.stmt-table td {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stmt-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.stmt-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.stmt-dash {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.stmt-autograde {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.stmt-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.stmt-badge--green {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.stmt-badge--blue {
+    background: rgba(2, 126, 242, 0.15);
+    color: #027ef2;
+}
+
+.stmt-badge--orange {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+.stmt-badge--red {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.stmt-badge--gray {
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.stmt-edit-btn {
+    background: #027ef2;
+    border: none;
+    border-radius: 7px;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: background 0.18s;
+    white-space: nowrap;
+}
+
+.stmt-edit-btn:hover {
+    background: #0267c4;
+}
+
+.stmt-loading,
+.stmt-empty {
+    padding: 48px 0;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.stmt-error {
+    padding: 16px 20px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.stmt-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.stmt-modal {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 28px 28px 24px;
+    width: 420px;
+    max-width: calc(100vw - 32px);
+}
+
+.stmt-modal__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 22px;
+}
+
+.stmt-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.stmt-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.stmt-modal__field--toggle {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stmt-modal__label {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.stmt-modal__input {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 7px;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    padding: 9px 11px;
+    outline: none;
+    transition: border-color 0.18s;
+    color-scheme: dark;
+}
+
+.stmt-modal__input:focus {
+    border-color: #027ef2;
+}
+
+.stmt-modal__checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #027ef2;
+    cursor: pointer;
+}
+
+.stmt-modal__error {
+    font-size: 12px;
+    color: #ef4444;
+    margin: 0 0 14px;
+}
+
+.stmt-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.stmt-modal__cancel {
+    background: rgba(255, 255, 255, 0.07);
+    border: none;
+    border-radius: 7px;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.stmt-modal__cancel:hover {
+    background: rgba(255, 255, 255, 0.11);
+}
+
+.stmt-modal__submit {
+    background: #027ef2;
+    border: none;
+    border-radius: 7px;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.stmt-modal__submit:hover:not(:disabled) {
+    background: #0267c4;
+}
+
+.stmt-modal__submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
