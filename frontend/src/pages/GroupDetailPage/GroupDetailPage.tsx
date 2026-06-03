@@ -168,7 +168,7 @@ const GroupDetailPage = () => {
                         {group.students.length === 0 ? (
                             <p className="gdp-members-empty">Студентов нет</p>
                         ) : (
-                            group.students.map(s => (
+                            [...group.students].sort((a, b) => a.fullName.localeCompare(b.fullName, 'ru')).map(s => (
                                 <div key={s.userId} className="gdp-member-row">
                                     <div className="gdp-member-avatar">{s.fullName[0]?.toUpperCase()}</div>
                                     <div className="gdp-member-info">
@@ -187,12 +187,13 @@ const GroupDetailPage = () => {
                         )}
                     </div>
 
-                    {/* Поиск для добавления */}
+                    {/* Добавление студентов в группу */}
                     <div className="gdp-add-section">
+                        <p className="gdp-add-label">Добавить студента в группу</p>
                         <input
                             className="gdp-search"
                             type="text"
-                            placeholder="Найти студента по имени или email..."
+                            placeholder="Введите имя или email для поиска и добавления..."
                             value={studentSearch}
                             onChange={e => setStudentSearch(e.target.value)}
                         />
@@ -230,7 +231,7 @@ const GroupDetailPage = () => {
                         {group.teachers.length === 0 ? (
                             <p className="gdp-members-empty">Преподавателей нет</p>
                         ) : (
-                            group.teachers.map(t => (
+                            [...group.teachers].sort((a, b) => a.fullName.localeCompare(b.fullName, 'ru')).map(t => (
                                 <div key={t.userId} className="gdp-member-row">
                                     <div className="gdp-member-avatar gdp-member-avatar--teacher">{t.fullName[0]?.toUpperCase()}</div>
                                     <div className="gdp-member-info">
@@ -250,10 +251,11 @@ const GroupDetailPage = () => {
                     </div>
 
                     <div className="gdp-add-section">
+                        <p className="gdp-add-label">Добавить преподавателя в группу</p>
                         <input
                             className="gdp-search"
                             type="text"
-                            placeholder="Найти преподавателя по имени или email..."
+                            placeholder="Введите имя или email для поиска и добавления..."
                             value={teacherSearch}
                             onChange={e => setTeacherSearch(e.target.value)}
                         />

@@ -24,6 +24,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage/ChangePasswordPage';
 import TeacherReportDetailPage from './pages/TeacherReportDetailPage/TeacherReportDetailPage';
 import GroupsPage from './pages/GroupsPage/GroupsPage';
 import GroupDetailPage from './pages/GroupDetailPage/GroupDetailPage';
+import LabEditPage from './pages/LabEditPage/LabEditPage';
 
 function App() {
     return (
@@ -60,6 +61,12 @@ function App() {
                     <Route path="/labs/:labId" element={
                         <ProtectedRoute allowedRoles={['student', 'teacher']}>
                             <LabDetailPage />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/labs/:labId/edit" element={
+                        <ProtectedRoute allowedRoles={['teacher']}>
+                            <LabEditPage />
                         </ProtectedRoute>
                     } />
 

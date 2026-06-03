@@ -111,7 +111,7 @@ const StudentSidebar: React.FC = () => {
                     <>
                         <div className="dash-progress-card__pts">
                             {progress.earnedPoints}
-                            <span>pts</span>
+                            <span>баллов</span>
                         </div>
                         <div className="dash-progress-card__sub">
                             {progress.completedLaboratories} из {progress.totalLaboratories} лаб выполнено
@@ -266,6 +266,16 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ isTeacher }) => {
         fetchPosts(val);
     };
 
+    const handleDeletePost = async (postId: string) => {
+        if (!confirm('Удалить это объявление?')) return;
+        try {
+            await axiosInstance.delete(`/public/api/v1/posts/${postId}`);
+            setPosts(prev => prev.filter(p => p.id !== postId));
+        } catch {
+            // ignore
+        }
+    };
+
     const handleCreatePost = async () => {
         if (!formTitle.trim() || !formContent.trim()) return;
         setFormSubmitting(true);
@@ -371,9 +381,18 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ isTeacher }) => {
                             >
                                 <div className="dash-post__header">
                                     <h3 className="dash-post__title">{post.title}</h3>
-                                    <span className={`dash-post__badge dash-post__badge--${meta.cls}`}>
-                                        {meta.badge}
-                                    </span>
+                                    <div className="dash-post__header-actions">
+                                        <span className={`dash-post__badge dash-post__badge--${meta.cls}`}>
+                                            {meta.badge}
+                                        </span>
+                                        {isTeacher && (
+                                            <button
+                                                onClick={() => handleDeletePost(post.id)}
+                                                className="dash-post__delete-btn"
+                                                title="Удалить"
+                                            >×</button>
+                                        )}
+                                    </div>
                                 </div>
                                 <p className="dash-post__content">{post.content}</p>
                                 <div className="dash-post__meta">
@@ -392,11 +411,12 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ isTeacher }) => {
 const DashboardPage: React.FC = () => {
     const role = localStorage.getItem('user_role') || 'student';
     const isTeacher = role === 'teacher' || role === 'admin';
+    const isAdmin = role === 'admin' || role === 'superadmin';
 
     return (
         <div className="dash-page">
             <NewsFeed isTeacher={isTeacher} />
-            {isTeacher ? <TeacherSidebar /> : <StudentSidebar />}
+            {!isAdmin && (role === 'teacher' ? <TeacherSidebar /> : <StudentSidebar />)}
         </div>
     );
 };

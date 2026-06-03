@@ -204,17 +204,39 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
     margin-bottom: 6px;
 }
 
 .dash-post__title {
+    flex: 1;
+    min-width: 0;
     font-size: 14px;
     font-weight: 600;
     color: #ffffff;
     margin: 0;
     line-height: 1.4;
 }
+
+.dash-post__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.dash-post__delete-btn {
+    background: none;
+    border: none;
+    color: #9CA3AF;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+}
+
+.dash-post__delete-btn:hover { color: #EF4444; }
 
 .dash-post__badge {
     display: inline-flex;

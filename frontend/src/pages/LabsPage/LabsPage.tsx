@@ -284,10 +284,10 @@ const LabsPage = () => {
                                                         </span>
                                                         {lab.isCompleted ? (
                                                             <span className="labs-item-points labs-item-points--earned">
-                                                                {lab.earnedPoints} <span className="labs-item-points-max">/ {lab.maxPoints} pts</span>
+                                                                {lab.earnedPoints} <span className="labs-item-points-max">/ {lab.maxPoints} баллов</span>
                                                             </span>
                                                         ) : (
-                                                            <span className="labs-item-points">{lab.maxPoints} pts</span>
+                                                            <span className="labs-item-points">{lab.maxPoints} баллов</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -348,7 +348,7 @@ const LabsPage = () => {
                                                         {DIFFICULTY_LABEL[lab.difficulty]}
                                                     </span>
                                                     <span className="labs-teacher-lab-block">{lab.block}</span>
-                                                    <span className="labs-item-points">{lab.maxPoints} pts</span>
+                                                    <span className="labs-item-points">{lab.maxPoints} баллов</span>
                                                     {lab.hasFlag && <span className="labs-teacher-lab-flag">🚩 Флаг</span>}
                                                 </div>
                                             </button>

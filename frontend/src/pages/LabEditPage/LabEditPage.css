@@ -1,0 +1,220 @@
+.lab-edit-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #8A94A6;
+    font-size: 15px;
+}
+
+.lab-edit-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 900px;
+}
+
+.lab-edit-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #8A94A6;
+}
+
+.lab-edit-breadcrumb-link {
+    background: none;
+    border: none;
+    color: #60A5FA;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 0;
+}
+
+.lab-edit-breadcrumb-link:hover { text-decoration: underline; }
+.lab-edit-breadcrumb-sep { color: #374151; }
+.lab-edit-breadcrumb-current { color: #8A94A6; }
+
+.lab-edit-section {
+    background: #111827;
+    border: 1px solid #1F2937;
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.lab-edit-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+}
+
+.lab-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.lab-edit-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.lab-edit-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8A94A6;
+}
+
+.lab-edit-label--required::after {
+    content: ' *';
+    color: #EF4444;
+}
+
+.lab-edit-input, .lab-edit-select, .lab-edit-textarea {
+    background: #0D1117;
+    border: 1px solid #1F2937;
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #E2E8F0;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.lab-edit-input:focus, .lab-edit-select:focus, .lab-edit-textarea:focus {
+    border-color: #1D9BF0;
+}
+
+.lab-edit-textarea { resize: vertical; }
+
+.lab-edit-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.lab-edit-checkbox { width: 16px; height: 16px; cursor: pointer; }
+
+.lab-edit-checkbox-label {
+    font-size: 14px;
+    color: #E2E8F0;
+}
+
+.lab-edit-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lab-edit-hint-card {
+    background: #0D1117;
+    border: 1px solid #1F2937;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lab-edit-hint-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.lab-edit-hint-num {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8A94A6;
+}
+
+.lab-edit-hint-remove {
+    background: none;
+    border: none;
+    color: #EF4444;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.lab-edit-add-hint-btn {
+    background: none;
+    border: 1px dashed #374151;
+    border-radius: 8px;
+    color: #8A94A6;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.lab-edit-add-hint-btn:hover {
+    border-color: #1D9BF0;
+    color: #1D9BF0;
+}
+
+.lab-edit-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #EF4444;
+}
+
+.lab-edit-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.lab-edit-btn-primary {
+    padding: 11px 24px;
+    background: #1D9BF0;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.lab-edit-btn-primary:hover:not(:disabled) { background: #1a8cd8; }
+.lab-edit-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.lab-edit-btn-outline {
+    padding: 11px 24px;
+    background: transparent;
+    color: #8A94A6;
+    border: 1px solid #374151;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.lab-edit-btn-outline:hover:not(:disabled) {
+    border-color: #9CA3AF;
+    color: #E2E8F0;
+}
+
+.lab-edit-btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }

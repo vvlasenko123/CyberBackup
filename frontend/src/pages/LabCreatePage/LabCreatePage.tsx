@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
+import BlockAutocomplete from '../../components/BlockAutocomplete/BlockAutocomplete';
 import './LabCreatePage.css';
 
 type Difficulty = 1 | 2 | 3;
@@ -28,6 +29,7 @@ type FormState = {
     expectedFlag: string;
     isPublished: boolean;
     sortOrder: number | '';
+    deadlineAtUtc: string;
 };
 
 type CreateLabResponse = {
@@ -50,6 +52,7 @@ const INITIAL_FORM: FormState = {
     expectedFlag: '',
     isPublished: false,
     sortOrder: '',
+    deadlineAtUtc: '',
 };
 
 let hintCounter = 0;
@@ -61,6 +64,13 @@ const LabCreatePage = () => {
     const [hints, setHints] = useState<HintInput[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [existingBlocks, setExistingBlocks] = useState<string[]>([]);
+
+    useEffect(() => {
+        axiosInstance.get<string[]>('/public/api/v1/teacher/laboratories/blocks')
+            .then(res => setExistingBlocks(res.data))
+            .catch(() => {});
+    }, []);
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
         setForm(prev => ({ ...prev, [key]: value }));
@@ -105,6 +115,7 @@ const LabCreatePage = () => {
                 expectedFlag: form.hasFlag && form.expectedFlag.trim() ? form.expectedFlag.trim() : null,
                 isPublished: publish,
                 sortOrder: form.sortOrder === '' ? 0 : Number(form.sortOrder),
+                deadlineAtUtc: form.deadlineAtUtc ? new Date(form.deadlineAtUtc).toISOString() : null,
                 hints: hints.map(h => ({
                     orderNumber: h.orderNumber,
                     title: h.title.trim() || null,
@@ -162,11 +173,12 @@ const LabCreatePage = () => {
                 <div className="lab-create-row">
                     <div className="lab-create-field">
                         <label className="lab-create-label lab-create-label--required">Блок</label>
-                        <input
-                            className="lab-create-input"
-                            placeholder="Блок 1: Веб-безопасность"
+                        <BlockAutocomplete
                             value={form.block}
-                            onChange={e => set('block', e.target.value)}
+                            onChange={v => set('block', v)}
+                            suggestions={existingBlocks}
+                            placeholder="Блок 1: Веб-безопасность"
+                            inputClassName="lab-create-input"
                         />
                     </div>
                     <div className="lab-create-field">
@@ -201,6 +213,15 @@ const LabCreatePage = () => {
                             placeholder="0"
                             value={form.sortOrder}
                             onChange={e => set('sortOrder', e.target.value === '' ? '' : Number(e.target.value))}
+                        />
+                    </div>
+                    <div className="lab-create-field">
+                        <label className="lab-create-label">Дедлайн сдачи</label>
+                        <input
+                            className="lab-create-input"
+                            type="datetime-local"
+                            value={form.deadlineAtUtc}
+                            onChange={e => set('deadlineAtUtc', e.target.value)}
                         />
                     </div>
                 </div>

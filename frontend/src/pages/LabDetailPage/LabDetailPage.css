@@ -284,8 +284,15 @@
     transition: background 0.15s;
 }
 
-.lab-detail-btn-primary:hover {
+.lab-detail-btn-primary:hover:not(:disabled) {
     background: #1a8cd8;
+}
+
+.lab-detail-btn-primary:disabled {
+    background: #1F2937;
+    color: #4B5563;
+    cursor: not-allowed;
+    opacity: 1;
 }
 
 .lab-detail-btn-outline {

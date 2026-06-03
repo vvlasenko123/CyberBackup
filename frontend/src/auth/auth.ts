@@ -17,7 +17,7 @@ const parseJwt = (token: string) => {
 const fetchFullName = async (userId: string, token: string): Promise<string | null> => {
     if (!userId) return null;
     try {
-        const response = await fetch(`${API_BASE}/public/user/get/${userId}`, {
+        const response = await fetch(`${API_BASE}/public/api/v1/user/get/${userId}`, {
             headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) return null;
@@ -52,7 +52,7 @@ export const loginRequest = async (
     const jwtPayload = parseJwt(data.accessToken);
     let userRole = 'student';
     if (jwtPayload?.role === 'teacher') userRole = 'teacher';
-    if (jwtPayload?.role === 'admin') userRole = 'admin';
+    if (jwtPayload?.role === 'admin' || jwtPayload?.role === 'superadmin') userRole = 'admin';
 
     const userId = jwtPayload?.sub || '';
 

@@ -177,9 +177,18 @@
 .gdp-remove-btn:hover { color: #EF4444; background: rgba(239, 68, 68, 0.1); }
 .gdp-remove-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Add section */
 .gdp-add-section {
     position: relative;
+    margin-top: 16px;
+}
+
+.gdp-add-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 8px 0;
 }
 
 .gdp-search {

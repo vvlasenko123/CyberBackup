@@ -208,6 +208,7 @@ const TeacherGradebook: React.FC = () => {
     const [editForm, setEditForm]     = useState<EditForm | null>(null);
     const [saving, setSaving]         = useState(false);
     const [saveError, setSaveError]   = useState<string | null>(null);
+    const [exporting, setExporting]   = useState(false);
 
     const fetchData = useCallback(async (group?: string, q?: string) => {
         setLoading(true);
@@ -247,6 +248,27 @@ const TeacherGradebook: React.FC = () => {
         }
     };
 
+    const handleExport = async () => {
+        setExporting(true);
+        try {
+            const res = await axiosInstance.get('/public/api/v1/teacher/gradebook/export', {
+                responseType: 'blob',
+            });
+            const url = URL.createObjectURL(new Blob([res.data]));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Ведомость_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch {
+            // ignore
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const openEdit = (item: TeacherGradebookItemDto) => {
         setEditForm({
             studentId:        item.studentId,
@@ -283,10 +305,10 @@ const TeacherGradebook: React.FC = () => {
                 <h2 className="stmt-title">Ведомость</h2>
                 <button
                     className="stmt-export-btn"
-                    disabled
-                    title="Экспорт не реализован на бэкенде"
+                    onClick={handleExport}
+                    disabled={exporting}
                 >
-                    ⬇ Экспорт Excel
+                    {exporting ? 'Экспорт...' : '⬇ Экспорт Excel'}
                 </button>
             </div>
 
