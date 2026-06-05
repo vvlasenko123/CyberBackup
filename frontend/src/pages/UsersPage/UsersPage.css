@@ -13,6 +13,10 @@
     flex-wrap: wrap;
 }
 
+.users-header--end {
+    justify-content: flex-end;
+}
+
 .users-title {
     font-size: 22px;
     font-weight: 600;
@@ -266,9 +270,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 0;
+    padding: 8px 0;
     border-bottom: 1px solid #374151;
-    font-size: 13px;
+    font-size: 15px;
     color: #D1D5DB;
 }
 
@@ -314,23 +318,58 @@
 }
 
 /* ── Import group selector ── */
+.users-import-group-wrapper {
+    margin-bottom: 16px;
+}
+
+.users-import-group-subtitle {
+    font-size: 13px;
+    font-weight: 500;
+    color: #8A94A6;
+    margin: 0 0 8px;
+}
+
 .users-import-group-row {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 12px;
 }
 
 .users-import-group-select {
-    padding: 7px 12px;
+    background: #0F1720;
+    border: 1px solid #334155;
     border-radius: 8px;
-    border: 1px solid #374151;
-    background: #111827;
-    color: #F9FAFB;
+    color: #fff;
     font-size: 14px;
+    font-family: inherit;
+    padding: 9px 12px;
+    padding-right: 32px;
+    outline: none;
+    transition: border-color 0.15s;
     min-width: 200px;
-    max-width: 300px;
+    max-width: 280px;
+    box-sizing: border-box;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A94A6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    color-scheme: dark;
+}
+
+.users-import-group-select:focus {
+    border-color: #1D9BF0;
+}
+
+.users-import-group-select option,
+.users-import-group-select optgroup {
+    background: #0F1720;
+    color: #fff;
+}
+
+.users-import-csel {
+    max-width: 280px;
 }
 
 .users-import-group-input {
@@ -347,30 +386,31 @@
 .users-import-password {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    margin-left: 6px;
+    gap: 6px;
+    margin-left: 8px;
     color: #9CA3AF;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .users-import-password__code {
     background: #111827;
     border: 1px solid #374151;
-    border-radius: 4px;
-    padding: 1px 6px;
+    border-radius: 6px;
+    padding: 3px 10px;
     font-family: monospace;
-    font-size: 12px;
-    color: #D1D5DB;
+    font-size: 14px;
+    color: #E2E8F0;
     user-select: text;
+    letter-spacing: 0.04em;
 }
 
 .users-copy-btn {
     background: transparent;
     border: 1px solid #374151;
-    border-radius: 4px;
+    border-radius: 6px;
     color: #9CA3AF;
-    padding: 1px 6px;
-    font-size: 12px;
+    padding: 3px 10px;
+    font-size: 14px;
     cursor: pointer;
     line-height: 1.4;
     transition: background 0.1s, color 0.1s;
@@ -380,3 +420,55 @@
     background: #374151;
     color: #F9FAFB;
 }
+
+/* ── Pagination arrows ── */
+.users-pagination-btn--arrow {
+    padding: 4px 12px;
+    font-size: 22px;
+    line-height: 1;
+    border-radius: 8px;
+    min-width: 36px;
+}
+
+/* ── RTF import file button ── */
+.users-import-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #1D2D44;
+    color: #60A5FA;
+    border: 1px solid #2563EB;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    margin-bottom: 8px;
+}
+
+.users-import-file-btn:hover:not(:disabled) {
+    background: #1e3a5f;
+    border-color: #3b82f6;
+}
+
+.users-import-file-btn--loading {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+.users-import-spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(96, 165, 250, 0.3);
+    border-top-color: #60A5FA;
+    animation: users-spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes users-spin {
+    to { transform: rotate(360deg); }
+}
+

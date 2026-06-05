@@ -10,7 +10,7 @@ type Props = {
     notificationBell?: React.ReactNode;
 };
 
-export const Header: React.FC<Props> = ({ role, onRoleChange, notificationBell }) => {
+export const Header: React.FC<Props> = ({ role, notificationBell }) => {
     const location = useLocation();
 
     const currentNavItem = navigationByRole[role].find(
@@ -26,16 +26,6 @@ export const Header: React.FC<Props> = ({ role, onRoleChange, notificationBell }
 
             <div className="header__actions">
                 {notificationBell}
-
-                <select
-                    value={role}
-                    onChange={(e) => onRoleChange(e.target.value as UserRole)}
-                    className="header__select"
-                >
-                    <option value="student">Student</option>
-                    <option value="teacher">Teacher</option>
-                    <option value="admin">Admin</option>
-                </select>
             </div>
         </header>
     );

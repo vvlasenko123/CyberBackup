@@ -6,14 +6,6 @@ import './LabEditPage.css';
 
 type Difficulty = 1 | 2 | 3;
 
-type HintInput = {
-    localId: number;
-    id?: string;
-    orderNumber: number;
-    title: string;
-    text: string;
-    penaltyPoints: number;
-};
 
 type FormState = {
     title: string;
@@ -33,14 +25,6 @@ type FormState = {
     deadlineAtUtc: string;
 };
 
-type LaboratoryHintInputDto = {
-    id: string;
-    orderNumber: number;
-    title: string | null;
-    penaltyPoints: number;
-    text: string;
-};
-
 type TeacherLabDetail = {
     id: string;
     title: string;
@@ -58,7 +42,6 @@ type TeacherLabDetail = {
     isPublished: boolean;
     sortOrder: number;
     deadlineAtUtc: string | null;
-    hints: LaboratoryHintInputDto[];
 };
 
 const toLocalDatetime = (iso: string | null): string => {
@@ -68,14 +51,11 @@ const toLocalDatetime = (iso: string | null): string => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-let hintCounter = 1000;
-
 const LabEditPage = () => {
     const { labId } = useParams<{ labId: string }>();
     const navigate = useNavigate();
 
     const [form, setForm] = useState<FormState | null>(null);
-    const [hints, setHints] = useState<HintInput[]>([]);
     const [existingBlocks, setExistingBlocks] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -106,14 +86,6 @@ const LabEditPage = () => {
                     sortOrder: lab.sortOrder,
                     deadlineAtUtc: toLocalDatetime(lab.deadlineAtUtc),
                 });
-                setHints(lab.hints.map(h => ({
-                    localId: ++hintCounter,
-                    id: h.id,
-                    orderNumber: h.orderNumber,
-                    title: h.title ?? '',
-                    text: h.text,
-                    penaltyPoints: h.penaltyPoints,
-                })));
                 setExistingBlocks(blocksRes.data);
             } catch {
                 setError('Не удалось загрузить лабораторную работу');
@@ -126,22 +98,6 @@ const LabEditPage = () => {
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
         setForm(prev => prev ? { ...prev, [key]: value } : prev);
-
-    const addHint = () => {
-        hintCounter += 1;
-        setHints(prev => [
-            ...prev,
-            { localId: hintCounter, orderNumber: prev.length + 1, title: '', text: '', penaltyPoints: 0 },
-        ]);
-    };
-
-    const updateHint = (localId: number, field: keyof Omit<HintInput, 'localId' | 'id'>, value: string | number) =>
-        setHints(prev => prev.map(h => h.localId === localId ? { ...h, [field]: value } : h));
-
-    const removeHint = (localId: number) =>
-        setHints(prev =>
-            prev.filter(h => h.localId !== localId).map((h, i) => ({ ...h, orderNumber: i + 1 }))
-        );
 
     const handleSubmit = async (publish: boolean) => {
         if (!form) return;
@@ -163,16 +119,11 @@ const LabEditPage = () => {
                 block: form.block.trim(),
                 maxPoints: Number(form.maxPoints),
                 hasFlag: form.hasFlag,
-                expectedFlag: form.hasFlag && form.expectedFlag.trim() ? form.expectedFlag.trim() : null,
+                expectedFlag: null,
                 isPublished: publish,
                 sortOrder: form.sortOrder === '' ? 0 : Number(form.sortOrder),
                 deadlineAtUtc: form.deadlineAtUtc ? new Date(form.deadlineAtUtc).toISOString() : null,
-                hints: hints.map(h => ({
-                    orderNumber: h.orderNumber,
-                    title: h.title.trim() || null,
-                    text: h.text.trim(),
-                    penaltyPoints: Number(h.penaltyPoints),
-                })),
+                hints: [],
             };
 
             await axiosInstance.put(`/public/api/v1/teacher/laboratories/${labId}`, payload);
@@ -255,16 +206,6 @@ const LabEditPage = () => {
                         />
                     </div>
                     <div className="lab-edit-field">
-                        <label className="lab-edit-label">Порядок</label>
-                        <input
-                            className="lab-edit-input"
-                            type="number"
-                            min={0}
-                            value={form.sortOrder}
-                            onChange={e => set('sortOrder', e.target.value === '' ? '' : Number(e.target.value))}
-                        />
-                    </div>
-                    <div className="lab-edit-field">
                         <label className="lab-edit-label">Дедлайн сдачи</label>
                         <input
                             className="lab-edit-input"
@@ -278,26 +219,6 @@ const LabEditPage = () => {
 
             <div className="lab-edit-section">
                 <p className="lab-edit-section-title">Содержание</p>
-
-                <div className="lab-edit-field">
-                    <label className="lab-edit-label">Нарратив</label>
-                    <textarea
-                        className="lab-edit-textarea"
-                        value={form.narrative}
-                        onChange={e => set('narrative', e.target.value)}
-                        rows={3}
-                    />
-                </div>
-
-                <div className="lab-edit-field">
-                    <label className="lab-edit-label">Задание (цель)</label>
-                    <textarea
-                        className="lab-edit-textarea"
-                        value={form.goal}
-                        onChange={e => set('goal', e.target.value)}
-                        rows={3}
-                    />
-                </div>
 
                 <div className="lab-edit-field">
                     <label className="lab-edit-label lab-edit-label--required">Полное описание</label>
@@ -326,80 +247,6 @@ const LabEditPage = () => {
                             onChange={e => set('credentials', e.target.value)}
                         />
                     </div>
-                </div>
-            </div>
-
-            <div className="lab-edit-section">
-                <p className="lab-edit-section-title">Флаг</p>
-
-                <label className="lab-edit-checkbox-row">
-                    <input
-                        className="lab-edit-checkbox"
-                        type="checkbox"
-                        checked={form.hasFlag}
-                        onChange={e => set('hasFlag', e.target.checked)}
-                    />
-                    <span className="lab-edit-checkbox-label">Лабораторная содержит флаг</span>
-                </label>
-
-                {form.hasFlag && (
-                    <div className="lab-edit-field" style={{ marginTop: 12 }}>
-                        <label className="lab-edit-label">Новый флаг (оставьте пустым, чтобы не менять)</label>
-                        <input
-                            className="lab-edit-input"
-                            placeholder="CTF{...}"
-                            value={form.expectedFlag}
-                            onChange={e => set('expectedFlag', e.target.value)}
-                        />
-                    </div>
-                )}
-            </div>
-
-            <div className="lab-edit-section">
-                <p className="lab-edit-section-title">Подсказки</p>
-
-                <div className="lab-edit-hints">
-                    {hints.map(hint => (
-                        <div key={hint.localId} className="lab-edit-hint-card">
-                            <div className="lab-edit-hint-header">
-                                <span className="lab-edit-hint-num">Подсказка #{hint.orderNumber}</span>
-                                <button className="lab-edit-hint-remove" onClick={() => removeHint(hint.localId)}>×</button>
-                            </div>
-                            <div className="lab-edit-row">
-                                <div className="lab-edit-field">
-                                    <label className="lab-edit-label">Заголовок (необязательно)</label>
-                                    <input
-                                        className="lab-edit-input"
-                                        value={hint.title}
-                                        onChange={e => updateHint(hint.localId, 'title', e.target.value)}
-                                    />
-                                </div>
-                                <div className="lab-edit-field" style={{ maxWidth: 140 }}>
-                                    <label className="lab-edit-label">Штраф (баллы)</label>
-                                    <input
-                                        className="lab-edit-input"
-                                        type="number"
-                                        min={0}
-                                        value={hint.penaltyPoints}
-                                        onChange={e => updateHint(hint.localId, 'penaltyPoints', Number(e.target.value))}
-                                    />
-                                </div>
-                            </div>
-                            <div className="lab-edit-field">
-                                <label className="lab-edit-label">Текст подсказки</label>
-                                <textarea
-                                    className="lab-edit-textarea"
-                                    value={hint.text}
-                                    rows={2}
-                                    onChange={e => updateHint(hint.localId, 'text', e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    ))}
-
-                    <button className="lab-edit-add-hint-btn" onClick={addHint}>
-                        + Добавить подсказку
-                    </button>
                 </div>
             </div>
 

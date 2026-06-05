@@ -192,7 +192,7 @@ const TeacherSidebar: React.FC = () => {
         return (
             <div className="dash-sidebar">
                 <div className="dash-leaderboard-card">
-                    <h3 className="dash-leaderboard-card__title">Рейтинг группы</h3>
+                    <h3 className="dash-leaderboard-card__title">Рейтинг ваших студентов</h3>
                     <div className="dash-sidebar-note">Загрузка...</div>
                 </div>
             </div>
@@ -202,7 +202,7 @@ const TeacherSidebar: React.FC = () => {
     return (
         <div className="dash-sidebar">
             <div className="dash-leaderboard-card">
-                <h3 className="dash-leaderboard-card__title">Рейтинг группы</h3>
+                <h3 className="dash-leaderboard-card__title">Рейтинг ваших студентов</h3>
                 {ranked.length === 0 ? (
                     <div className="dash-sidebar-note">Студентов нет</div>
                 ) : (

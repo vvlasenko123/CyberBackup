@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: 15px;
     color: #8A94A6;
 }
 
@@ -27,7 +27,7 @@
     border: none;
     color: #60A5FA;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 15px;
     font-family: inherit;
     padding: 0;
 }
@@ -136,7 +136,7 @@
 }
 
 .lab-edit-hint-num {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: #8A94A6;
 }
@@ -156,7 +156,7 @@
     border: 1px dashed #374151;
     border-radius: 8px;
     color: #8A94A6;
-    font-size: 13px;
+    font-size: 15px;
     font-family: inherit;
     padding: 10px;
     cursor: pointer;
@@ -173,7 +173,7 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 10px;
     padding: 10px 14px;
-    font-size: 13px;
+    font-size: 15px;
     color: #EF4444;
 }
 

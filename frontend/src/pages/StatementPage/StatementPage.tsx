@@ -124,10 +124,6 @@ const StudentGradebook: React.FC = () => {
 
     return (
         <div className="stmt-page">
-            <div className="stmt-header">
-                <h2 className="stmt-title">Ведомость</h2>
-            </div>
-
             {/* Карточки статистики */}
             <div className="stmt-stats">
                 <div className="stmt-stat-card">
@@ -301,8 +297,28 @@ const TeacherGradebook: React.FC = () => {
 
     return (
         <div className="stmt-page">
-            <div className="stmt-header">
-                <h2 className="stmt-title">Ведомость</h2>
+            {/* Фильтры + экспорт (на месте заголовка) */}
+            <div className="stmt-toolbar">
+                <div className="stmt-filters">
+                    <select
+                        className="stmt-filter-select"
+                        value={groupFilter}
+                        onChange={e => handleGroupChange(e.target.value)}
+                    >
+                        <option value="">Все группы</option>
+                        {allGroups.map(g => (
+                            <option key={g} value={g}>{g}</option>
+                        ))}
+                    </select>
+                    <input
+                        className="stmt-filter-input"
+                        type="text"
+                        placeholder="Поиск по студентам..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        onKeyDown={handleSearch}
+                    />
+                </div>
                 <button
                     className="stmt-export-btn"
                     onClick={handleExport}
@@ -310,28 +326,6 @@ const TeacherGradebook: React.FC = () => {
                 >
                     {exporting ? 'Экспорт...' : '⬇ Экспорт Excel'}
                 </button>
-            </div>
-
-            {/* Фильтры */}
-            <div className="stmt-filters">
-                <select
-                    className="stmt-filter-select"
-                    value={groupFilter}
-                    onChange={e => handleGroupChange(e.target.value)}
-                >
-                    <option value="">Все группы</option>
-                    {allGroups.map(g => (
-                        <option key={g} value={g}>{g}</option>
-                    ))}
-                </select>
-                <input
-                    className="stmt-filter-input"
-                    type="text"
-                    placeholder="Поиск по студентам..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    onKeyDown={handleSearch}
-                />
             </div>
 
             {loading ? (

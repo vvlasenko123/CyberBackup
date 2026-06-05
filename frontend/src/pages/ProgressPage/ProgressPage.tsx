@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './ProgressPage.css';
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum StudentLaboratoryStatus {
     NotStarted = 0,
@@ -12,7 +11,6 @@ enum StudentLaboratoryStatus {
     RevisionRequired = 4,
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface MyProgressLaboratoryDto {
     laboratoryId: string;
@@ -91,10 +89,6 @@ const ProgressPage: React.FC = () => {
 
     return (
         <div className="prog-page">
-            <div className="prog-header">
-                <h2 className="prog-title">Мой прогресс</h2>
-            </div>
-
             {isLoading ? (
                 <div className="prog-loading">Загрузка...</div>
             ) : errorProgress ? (

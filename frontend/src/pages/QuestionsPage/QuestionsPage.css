@@ -1,7 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
 .qst-page {
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
 }
 
 .qst-header {
@@ -10,6 +9,10 @@
     justify-content: space-between;
     margin-bottom: 20px;
     gap: 12px;
+}
+
+.qst-header--end {
+    justify-content: flex-end;
 }
 
 .qst-title {
@@ -27,7 +30,7 @@
     border: none;
     border-radius: 8px;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 600;
     padding: 9px 16px;
@@ -164,7 +167,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
     padding: 8px 13px;
@@ -294,7 +297,7 @@
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     padding: 10px 12px;
     outline: none;
@@ -348,7 +351,7 @@
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     padding: 10px 12px;
     outline: none;
@@ -368,6 +371,30 @@
     cursor: not-allowed;
 }
 
+.qst-form-select {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 10px 12px;
+    padding-right: 32px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.18s;
+    color-scheme: dark;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.qst-form-select:focus { border-color: #027ef2; }
+.qst-form-select option { background: #20252b; }
+
 .qst-form-textarea {
     min-height: 130px;
     resize: vertical;
@@ -378,7 +405,7 @@
     border: none;
     border-radius: 8px;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 600;
     padding: 10px 20px;
@@ -395,7 +422,7 @@
     border: none;
     border-radius: 8px;
     color: rgba(255,255,255,0.65);
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
     padding: 10px 18px;
@@ -516,7 +543,7 @@
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     padding: 9px 12px;
     outline: none;
@@ -538,7 +565,7 @@
     border-radius: 8px;
     color: #fff;
     padding: 9px 18px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -557,7 +584,7 @@
     border-radius: 8px;
     color: rgba(255,255,255,0.5);
     padding: 0 14px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;

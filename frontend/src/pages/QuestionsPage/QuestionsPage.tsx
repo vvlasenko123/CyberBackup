@@ -68,8 +68,7 @@ function StudentQuestionsList() {
 
     return (
         <div className="qst-page">
-            <div className="qst-header">
-                <h1 className="qst-title">Мои вопросы</h1>
+            <div className="qst-header qst-header--end">
                 <button className="qst-new-btn" onClick={() => navigate('/questions/new')}>
                     <Icon name="plus" size={14} />
                     Задать вопрос
@@ -144,10 +143,6 @@ function TeacherQuestionsList() {
 
     return (
         <div className="qst-page">
-            <div className="qst-header">
-                <h1 className="qst-title">Вопросы студентов</h1>
-            </div>
-
             <div className="qst-filters">
                 <select
                     className="qst-filter-select"

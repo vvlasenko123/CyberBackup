@@ -320,6 +320,14 @@
     color: #22C55E;
 }
 
+.labs-teacher-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 /* Teacher tabs */
 .labs-teacher-tabs {
     display: flex;

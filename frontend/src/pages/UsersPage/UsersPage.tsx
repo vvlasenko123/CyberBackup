@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
+import type { SelectOption } from '../../components/CustomSelect/CustomSelect';
 import './UsersPage.css';
 
 type UserRoleStr = 'student' | 'teacher' | 'admin' | 'superadmin';
@@ -164,8 +166,7 @@ export const UsersPage: React.FC = () => {
         }
     };
 
-    const handleGroupSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value;
+    const handleGroupSelectChange = (val: string) => {
         if (val === '__new__') {
             setShowNewGroupInput(true);
             setSelectedGroupId('');
@@ -222,8 +223,7 @@ export const UsersPage: React.FC = () => {
 
     return (
         <div className="users-page">
-            <div className="users-header">
-                <h2 className="users-title">Пользователи</h2>
+            <div className="users-header users-header--end">
                 <button className="users-btn-primary" onClick={() => setShowCreate(true)}>
                     + Создать пользователя
                 </button>
@@ -287,21 +287,23 @@ export const UsersPage: React.FC = () => {
                     {totalPages > 1 && (
                         <div className="users-pagination">
                             <button
-                                className="users-pagination-btn"
+                                className="users-pagination-btn users-pagination-btn--arrow"
                                 onClick={() => setPage(p => p - 1)}
                                 disabled={page === 1}
+                                title="Предыдущая страница"
                             >
-                                ← Назад
+                                ‹
                             </button>
                             <span className="users-pagination-info">
                                 {page} / {totalPages} &nbsp;·&nbsp; {filtered.length} пользователей
                             </span>
                             <button
-                                className="users-pagination-btn"
+                                className="users-pagination-btn users-pagination-btn--arrow"
                                 onClick={() => setPage(p => p + 1)}
                                 disabled={page === totalPages}
+                                title="Следующая страница"
                             >
-                                Вперёд →
+                                ›
                             </button>
                         </div>
                     )}
@@ -353,18 +355,19 @@ export const UsersPage: React.FC = () => {
                     Загрузите RTF-файл со списком группы
                 </p>
 
+                <div className="users-import-group-wrapper">
+                <p className="users-import-group-subtitle">Выберите группу</p>
                 <div className="users-import-group-row">
-                    <select
-                        className="users-import-group-select"
+                    <CustomSelect
+                        className="users-import-csel"
                         value={showNewGroupInput ? '__new__' : selectedGroupId}
                         onChange={handleGroupSelectChange}
-                    >
-                        <option value="">— Без группы —</option>
-                        {groups.map(g => (
-                            <option key={g.id} value={g.id}>{g.name}</option>
-                        ))}
-                        <option value="__new__">+ Создать новую группу</option>
-                    </select>
+                        options={[
+                            { value: '', label: 'Без группы' },
+                            ...groups.map<SelectOption>(g => ({ value: g.id, label: g.name, group: 'Группы' })),
+                            { value: '__new__', label: '+ Создать новую группу', isAction: true },
+                        ]}
+                    />
 
                     {showNewGroupInput && (
                         <>
@@ -392,6 +395,7 @@ export const UsersPage: React.FC = () => {
                         </>
                     )}
                 </div>
+                </div>
 
                 <input
                     ref={fileInputRef}
@@ -399,9 +403,29 @@ export const UsersPage: React.FC = () => {
                     accept=".rtf"
                     onChange={handleFileImport}
                     disabled={importing}
-                    style={{ display: 'block', marginBottom: 8, color: '#D1D5DB' }}
+                    style={{ display: 'none' }}
                 />
-                {importing && <div style={{ color: '#9CA3AF', fontSize: 14 }}>Импортируем...</div>}
+                <button
+                    className={`users-import-file-btn${importing ? ' users-import-file-btn--loading' : ''}`}
+                    onClick={() => !importing && fileInputRef.current?.click()}
+                    disabled={importing}
+                >
+                    {importing ? (
+                        <>
+                            <span className="users-import-spinner" />
+                            Загружаем...
+                        </>
+                    ) : (
+                        <>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            Выбрать RTF-файл
+                        </>
+                    )}
+                </button>
                 {importError && <div className="users-error">{importError}</div>}
                 {importResults && (
                     <div className="users-import-result">

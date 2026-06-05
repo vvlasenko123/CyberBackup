@@ -1,7 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
 .dash-page {
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     display: grid;
     grid-template-columns: 1fr 300px;
     gap: 20px;
@@ -38,7 +37,7 @@
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     cursor: pointer;
     transition: background 0.15s;
     white-space: nowrap;
@@ -72,7 +71,7 @@
     padding: 9px 12px;
     color: #fff;
     font-size: 13px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     outline: none;
     transition: border-color 0.15s;
 }
@@ -92,7 +91,7 @@
     padding: 9px 12px;
     color: #fff;
     font-size: 13px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     outline: none;
     cursor: pointer;
 }
@@ -104,7 +103,7 @@
     padding: 9px 12px;
     color: #fff;
     font-size: 13px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     outline: none;
     resize: vertical;
     transition: border-color 0.15s;
@@ -132,7 +131,7 @@
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     cursor: pointer;
     transition: background 0.15s, opacity 0.15s;
 }
@@ -158,7 +157,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: rgba(255, 255, 255, 0.55);
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
     padding: 7px 16px;
@@ -367,6 +366,7 @@
 }
 
 .dash-leaderboard-card__title {
+    font-family: var(--font-heading);
     font-size: 13px;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.75);

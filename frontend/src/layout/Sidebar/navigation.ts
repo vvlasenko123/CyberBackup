@@ -20,7 +20,7 @@ export const navigationByRole: Record<UserRole, NavItem[]> = {
 
     teacher: [
         { id: 'dashboard', label: 'Главная', icon: 'home', path: '/dashboard' },
-        { id: 'labs', label: 'Отчеты студентов', icon: 'lightbulb', path: '/labs' },
+        { id: 'labs', label: 'Лабораторные', icon: 'lightbulb', path: '/labs' },
         { id: 'questions', label: 'Вопросы студентов', icon: 'messageSquare', path: '/questions' },
         { id: 'calendar', label: 'Календарь', icon: 'calendar', path: '/calendar' },
         { id: 'statement', label: 'Ведомость', icon: 'table', path: '/statement' },

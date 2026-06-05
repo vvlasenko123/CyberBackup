@@ -6,13 +6,6 @@ import './LabCreatePage.css';
 
 type Difficulty = 1 | 2 | 3;
 
-type HintInput = {
-    localId: number;
-    orderNumber: number;
-    title: string;
-    text: string;
-    penaltyPoints: number;
-};
 
 type FormState = {
     title: string;
@@ -55,13 +48,10 @@ const INITIAL_FORM: FormState = {
     deadlineAtUtc: '',
 };
 
-let hintCounter = 0;
-
 const LabCreatePage = () => {
     const navigate = useNavigate();
 
     const [form, setForm] = useState<FormState>(INITIAL_FORM);
-    const [hints, setHints] = useState<HintInput[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [existingBlocks, setExistingBlocks] = useState<string[]>([]);
@@ -74,24 +64,6 @@ const LabCreatePage = () => {
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
         setForm(prev => ({ ...prev, [key]: value }));
-
-    const addHint = () => {
-        hintCounter += 1;
-        setHints(prev => [
-            ...prev,
-            { localId: hintCounter, orderNumber: prev.length + 1, title: '', text: '', penaltyPoints: 0 },
-        ]);
-    };
-
-    const updateHint = (localId: number, field: keyof Omit<HintInput, 'localId'>, value: string | number) =>
-        setHints(prev => prev.map(h => h.localId === localId ? { ...h, [field]: value } : h));
-
-    const removeHint = (localId: number) =>
-        setHints(prev =>
-            prev
-                .filter(h => h.localId !== localId)
-                .map((h, i) => ({ ...h, orderNumber: i + 1 }))
-        );
 
     const handleSubmit = async (publish: boolean) => {
         if (!form.title.trim() || !form.block.trim() || form.maxPoints === '' || !form.description.trim()) return;
@@ -111,17 +83,12 @@ const LabCreatePage = () => {
                 difficulty: form.difficulty,
                 block: form.block.trim(),
                 maxPoints: Number(form.maxPoints),
-                hasFlag: form.hasFlag,
-                expectedFlag: form.hasFlag && form.expectedFlag.trim() ? form.expectedFlag.trim() : null,
+                hasFlag: false,
+                expectedFlag: null,
                 isPublished: publish,
-                sortOrder: form.sortOrder === '' ? 0 : Number(form.sortOrder),
+                sortOrder: 0,
                 deadlineAtUtc: form.deadlineAtUtc ? new Date(form.deadlineAtUtc).toISOString() : null,
-                hints: hints.map(h => ({
-                    orderNumber: h.orderNumber,
-                    title: h.title.trim() || null,
-                    text: h.text.trim(),
-                    penaltyPoints: Number(h.penaltyPoints),
-                })),
+                hints: [],
             };
 
             const res = await axiosInstance.post<CreateLabResponse>('/public/api/v1/teacher/laboratories', payload);
@@ -205,17 +172,6 @@ const LabCreatePage = () => {
                         />
                     </div>
                     <div className="lab-create-field">
-                        <label className="lab-create-label">Порядок</label>
-                        <input
-                            className="lab-create-input"
-                            type="number"
-                            min={0}
-                            placeholder="0"
-                            value={form.sortOrder}
-                            onChange={e => set('sortOrder', e.target.value === '' ? '' : Number(e.target.value))}
-                        />
-                    </div>
-                    <div className="lab-create-field">
                         <label className="lab-create-label">Дедлайн сдачи</label>
                         <input
                             className="lab-create-input"
@@ -230,28 +186,6 @@ const LabCreatePage = () => {
             {/* Content */}
             <div className="lab-create-section">
                 <p className="lab-create-section-title">Содержание</p>
-
-                <div className="lab-create-field">
-                    <label className="lab-create-label">Нарратив</label>
-                    <textarea
-                        className="lab-create-textarea"
-                        placeholder="Ты — молодой специалист по безопасности..."
-                        value={form.narrative}
-                        onChange={e => set('narrative', e.target.value)}
-                        rows={3}
-                    />
-                </div>
-
-                <div className="lab-create-field">
-                    <label className="lab-create-label">Задание (цель)</label>
-                    <textarea
-                        className="lab-create-textarea"
-                        placeholder="Исследуй веб-приложение и найди SQL-уязвимость..."
-                        value={form.goal}
-                        onChange={e => set('goal', e.target.value)}
-                        rows={3}
-                    />
-                </div>
 
                 <div className="lab-create-field">
                     <label className="lab-create-label lab-create-label--required">Полное описание</label>
@@ -283,91 +217,6 @@ const LabCreatePage = () => {
                             onChange={e => set('credentials', e.target.value)}
                         />
                     </div>
-                </div>
-            </div>
-
-            {/* Flag */}
-            <div className="lab-create-section">
-                <p className="lab-create-section-title">Флаг</p>
-
-                <label className="lab-create-checkbox-row">
-                    <input
-                        className="lab-create-checkbox"
-                        type="checkbox"
-                        checked={form.hasFlag}
-                        onChange={e => set('hasFlag', e.target.checked)}
-                    />
-                    <span className="lab-create-checkbox-label">Лабораторная содержит флаг</span>
-                </label>
-
-                {form.hasFlag && (
-                    <div className="lab-create-field">
-                        <label className="lab-create-label">Ожидаемый флаг</label>
-                        <input
-                            className="lab-create-input"
-                            placeholder="CTF{...}"
-                            value={form.expectedFlag}
-                            onChange={e => set('expectedFlag', e.target.value)}
-                        />
-                    </div>
-                )}
-            </div>
-
-            {/* Hints */}
-            <div className="lab-create-section">
-                <p className="lab-create-section-title">Подсказки</p>
-
-                <div className="lab-create-hints">
-                    {hints.map(hint => (
-                        <div key={hint.localId} className="lab-create-hint-card">
-                            <div className="lab-create-hint-header">
-                                <span className="lab-create-hint-num">Подсказка #{hint.orderNumber}</span>
-                                <button
-                                    className="lab-create-hint-remove"
-                                    onClick={() => removeHint(hint.localId)}
-                                    title="Удалить подсказку"
-                                >
-                                    ×
-                                </button>
-                            </div>
-                            <div className="lab-create-row">
-                                <div className="lab-create-field">
-                                    <label className="lab-create-label">Заголовок (необязательно)</label>
-                                    <input
-                                        className="lab-create-input"
-                                        placeholder="Подсказка о SQL"
-                                        value={hint.title}
-                                        onChange={e => updateHint(hint.localId, 'title', e.target.value)}
-                                    />
-                                </div>
-                                <div className="lab-create-field" style={{ maxWidth: 140 }}>
-                                    <label className="lab-create-label">Штраф (баллы)</label>
-                                    <input
-                                        className="lab-create-input"
-                                        type="number"
-                                        min={0}
-                                        placeholder="0"
-                                        value={hint.penaltyPoints}
-                                        onChange={e => updateHint(hint.localId, 'penaltyPoints', Number(e.target.value))}
-                                    />
-                                </div>
-                            </div>
-                            <div className="lab-create-field">
-                                <label className="lab-create-label">Текст подсказки</label>
-                                <textarea
-                                    className="lab-create-textarea"
-                                    placeholder="Попробуй одинарную кавычку..."
-                                    value={hint.text}
-                                    rows={2}
-                                    onChange={e => updateHint(hint.localId, 'text', e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    ))}
-
-                    <button className="lab-create-add-hint-btn" onClick={addHint}>
-                        + Добавить подсказку
-                    </button>
                 </div>
             </div>
 

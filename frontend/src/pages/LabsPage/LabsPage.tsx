@@ -238,21 +238,11 @@ const LabsPage = () => {
 
     return (
         <div className="labs-page">
-            <div className="labs-page-header">
-                {role === 'student' && progress && (
-                    <p className="labs-page-subtitle">
-                        {progress.totalLaboratories} работ · {progress.completedLaboratories} выполнено
-                    </p>
-                )}
-                {role === 'teacher' && (
-                    <button
-                        className="labs-page-create-btn"
-                        onClick={() => navigate('/labs/create')}
-                    >
-                        + Создать лабораторную
-                    </button>
-                )}
-            </div>
+            {role === 'student' && progress && (
+                <p className="labs-page-subtitle">
+                    {progress.totalLaboratories} работ · {progress.completedLaboratories} выполнено
+                </p>
+            )}
 
             {role === 'student' && (
                 <>
@@ -301,21 +291,29 @@ const LabsPage = () => {
 
             {role === 'teacher' && (
                 <>
-                    {/* Вкладки для препода */}
-                    <div className="labs-teacher-tabs">
+                    {/* Вкладки для препода + кнопка создания */}
+                    <div className="labs-teacher-toolbar">
+                        <div className="labs-teacher-tabs">
+                            <button
+                                className={`labs-teacher-tab ${teacherTab === 'labs' ? 'labs-teacher-tab--active' : ''}`}
+                                onClick={() => setTeacherTab('labs')}
+                            >
+                                Мои лабораторные
+                                <span className="labs-teacher-tab-count">{teacherLabs.length}</span>
+                            </button>
+                            <button
+                                className={`labs-teacher-tab ${teacherTab === 'reports' ? 'labs-teacher-tab--active' : ''}`}
+                                onClick={() => setTeacherTab('reports')}
+                            >
+                                Отчёты студентов
+                                <span className="labs-teacher-tab-count">{teacherReports.length}</span>
+                            </button>
+                        </div>
                         <button
-                            className={`labs-teacher-tab ${teacherTab === 'labs' ? 'labs-teacher-tab--active' : ''}`}
-                            onClick={() => setTeacherTab('labs')}
+                            className="labs-page-create-btn"
+                            onClick={() => navigate('/labs/create')}
                         >
-                            Мои лабораторные
-                            <span className="labs-teacher-tab-count">{teacherLabs.length}</span>
-                        </button>
-                        <button
-                            className={`labs-teacher-tab ${teacherTab === 'reports' ? 'labs-teacher-tab--active' : ''}`}
-                            onClick={() => setTeacherTab('reports')}
-                        >
-                            Отчёты студентов
-                            <span className="labs-teacher-tab-count">{teacherReports.length}</span>
+                            + Создать лабораторную
                         </button>
                     </div>
 
