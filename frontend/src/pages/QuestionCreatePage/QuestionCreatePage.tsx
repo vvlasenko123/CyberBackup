@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import { Icon } from '../../shared/Icon';
+import CustomSelect from '../../components/CustomSelect/CustomSelect';
 import '../QuestionsPage/QuestionsPage.css';
 
 interface LabOption {
@@ -94,20 +95,15 @@ export default function QuestionCreatePage() {
 
                     <div className="qst-form-field">
                         <label className="qst-form-label">Лабораторная работа (необязательно)</label>
-                        <select
-                            className="qst-form-input"
+                        <CustomSelect
                             value={selectedLabId}
-                            onChange={e => setSelectedLabId(e.target.value)}
+                            onChange={setSelectedLabId}
                             disabled={labsLoading}
-                            style={{ cursor: labsLoading ? 'not-allowed' : 'pointer', colorScheme: 'dark' }}
-                        >
-                            <option value="">
-                                {labsLoading ? 'Загрузка…' : '— Не привязывать к лабораторной —'}
-                            </option>
-                            {labs.map(l => (
-                                <option key={l.id} value={l.id}>{l.title}</option>
-                            ))}
-                        </select>
+                            options={[
+                                { value: '', label: labsLoading ? 'Загрузка…' : '— Не привязывать к лабораторной —' },
+                                ...labs.map(l => ({ value: l.id, label: l.title })),
+                            ]}
+                        />
                     </div>
 
                     <div className="qst-form-field">

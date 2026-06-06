@@ -1,0 +1,55 @@
+.blk-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.blk-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #1A2232;
+    border: 1px solid #2D3748;
+    border-radius: 8px;
+    z-index: 100;
+    overflow-y: auto;
+    max-height: calc(5 * 38px); /* ровно 5 элементов */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.blk-dropdown::-webkit-scrollbar {
+    width: 4px;
+}
+.blk-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+.blk-dropdown::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 2px;
+}
+.blk-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #4B5563;
+}
+
+.blk-item {
+    padding: 9px 12px;
+    font-size: 14px;
+    color: #E2E8F0;
+    cursor: pointer;
+    transition: background 0.1s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 38px;
+    box-sizing: border-box;
+    line-height: 20px;
+}
+
+.blk-item:hover {
+    background: #243044;
+}
+
+.blk-item--active {
+    background: rgba(29, 155, 240, 0.15);
+    color: #60A5FA;
+}

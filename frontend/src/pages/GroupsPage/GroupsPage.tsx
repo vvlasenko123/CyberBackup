@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import './GroupsPage.css';
@@ -15,9 +15,11 @@ const GroupsPage = () => {
     const navigate = useNavigate();
     const [groups, setGroups] = useState<GroupListItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [modalOpen, setModalOpen] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const fetchGroups = async () => {
         try {
@@ -32,12 +34,27 @@ const GroupsPage = () => {
 
     useEffect(() => { fetchGroups(); }, []);
 
+    const openModal = () => {
+        setNewGroupName('');
+        setError(null);
+        setModalOpen(true);
+        setTimeout(() => inputRef.current?.focus(), 50);
+    };
+
+    const closeModal = () => {
+        if (creating) return;
+        setModalOpen(false);
+        setNewGroupName('');
+        setError(null);
+    };
+
     const handleCreate = async () => {
         if (!newGroupName.trim() || creating) return;
         setCreating(true);
         setError(null);
         try {
             await axiosInstance.post('/public/api/v1/admin/groups', { name: newGroupName.trim() });
+            setModalOpen(false);
             setNewGroupName('');
             await fetchGroups();
         } catch {
@@ -61,36 +78,24 @@ const GroupsPage = () => {
 
     return (
         <div className="groups-page">
-            <div className="groups-create-bar">
-                <input
-                    className="groups-create-input"
-                    type="text"
-                    placeholder="Название группы (напр. «Группа 4203»)"
-                    value={newGroupName}
-                    onChange={e => setNewGroupName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                />
-                <button
-                    className="groups-create-btn"
-                    onClick={handleCreate}
-                    disabled={creating || !newGroupName.trim()}
-                >
-                    {creating ? 'Создание...' : '+ Создать группу'}
+            <div className="groups-header">
+                <button className="groups-create-btn" onClick={openModal}>
+                    + Создать группу
                 </button>
             </div>
 
-            {error && <div className="groups-error">{error}</div>}
+            {error && !modalOpen && <div className="groups-error">{error}</div>}
 
             {groups.length === 0 ? (
-                <div className="groups-empty">Групп ещё нет. Создайте первую группу выше.</div>
+                <div className="groups-empty">Групп ещё нет. Создайте первую группу.</div>
             ) : (
                 <div className="groups-table-wrap">
                     <table className="groups-table">
                         <thead>
                             <tr>
-                                <th>Название</th>
-                                <th>Студентов</th>
-                                <th>Преподавателей</th>
+                                <th className="groups-th--name">Название</th>
+                                <th className="groups-th--count">Студентов</th>
+                                <th className="groups-th--count">Преподавателей</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -116,6 +121,39 @@ const GroupsPage = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {modalOpen && (
+                <div className="groups-modal-overlay" onClick={closeModal}>
+                    <div className="groups-modal" onClick={e => e.stopPropagation()}>
+                        <h3 className="groups-modal-title">Новая группа</h3>
+                        <input
+                            ref={inputRef}
+                            className="groups-modal-input"
+                            type="text"
+                            placeholder="Например: РИ-111111"
+                            value={newGroupName}
+                            onChange={e => setNewGroupName(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') handleCreate();
+                                if (e.key === 'Escape') closeModal();
+                            }}
+                        />
+                        {error && <div className="groups-modal-error">{error}</div>}
+                        <div className="groups-modal-actions">
+                            <button className="groups-modal-cancel" onClick={closeModal} disabled={creating}>
+                                Отмена
+                            </button>
+                            <button
+                                className="groups-modal-confirm"
+                                onClick={handleCreate}
+                                disabled={creating || !newGroupName.trim()}
+                            >
+                                {creating ? 'Создание...' : 'Создать'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

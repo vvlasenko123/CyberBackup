@@ -34,6 +34,7 @@ type StudentLabDetail = {
     reportStatus: number;
     allowReportUpload: boolean;
     canResubmitReport: boolean;
+    deadlineAtUtc: string | null;
     hints: StudentHint[];
     report: { reportId: string; status: number } | null;
 };
@@ -60,6 +61,7 @@ type TeacherLabDetail = {
     maxPoints: number;
     hasFlag: boolean;
     isPublished: boolean;
+    deadlineAtUtc: string | null;
     hints: TeacherHint[];
 };
 
@@ -192,7 +194,7 @@ const LabDetailPage = () => {
     if (error) return <div className="lab-detail-error">{error}</div>;
 
     if (role === 'teacher' && teacherLab) {
-        return <TeacherView lab={teacherLab} onBack={() => navigate('/labs')} />;
+        return <TeacherView lab={teacherLab} onBack={() => navigate('/labs')} onEdit={() => navigate(`/labs/${labId}/edit`)} />;
     }
 
     if (role === 'student' && studentLab) {
@@ -319,17 +321,30 @@ const LabDetailPage = () => {
                         )}
 
                         <div className="lab-detail-actions">
-                            {lab.allowReportUpload && (
-                                <button
-                                    className="lab-detail-btn-primary"
-                                    onClick={() => navigate(`/labs/${lab.id}/report`, { state: { labTitle: lab.title } })}
-                                >
-                                    Загрузить отчет
-                                </button>
-                            )}
+                            {lab.allowReportUpload && (() => {
+                                const deadlinePassed = lab.deadlineAtUtc
+                                    ? new Date(lab.deadlineAtUtc) < new Date()
+                                    : false;
+                                return (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                        <button
+                                            className="lab-detail-btn-primary"
+                                            onClick={() => !deadlinePassed && navigate(`/labs/${lab.id}/report`, { state: { labTitle: lab.title } })}
+                                            disabled={deadlinePassed}
+                                        >
+                                            Загрузить отчет
+                                        </button>
+                                        {deadlinePassed && (
+                                            <span style={{ fontSize: 12, color: '#EF4444' }}>
+                                                Срок сдачи истёк
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                             <button
                                 className="lab-detail-btn-outline"
-                                onClick={() => navigate('/questions')}
+                                onClick={() => navigate('/questions/new?lab=' + encodeURIComponent(lab.title))}
                             >
                                 Задать вопрос
                             </button>
@@ -381,12 +396,25 @@ const LabDetailPage = () => {
                             </div>
                             <div className="lab-detail-info-row">
                                 <span className="lab-detail-info-label">Баллов</span>
-                                <span className="lab-detail-info-value">{lab.maxPoints} pts</span>
+                                <span className="lab-detail-info-value">{lab.maxPoints} баллов</span>
                             </div>
                             <div className="lab-detail-info-row">
                                 <span className="lab-detail-info-label">Блок</span>
                                 <span className="lab-detail-info-value">{lab.block}</span>
                             </div>
+                            {lab.deadlineAtUtc && (
+                                <div className="lab-detail-info-row">
+                                    <span className="lab-detail-info-label">Дедлайн</span>
+                                    <span className="lab-detail-info-value" style={{
+                                        color: new Date(lab.deadlineAtUtc) < new Date() ? '#ef4444' : 'inherit'
+                                    }}>
+                                        {new Date(lab.deadlineAtUtc).toLocaleString('ru-RU', {
+                                            day: '2-digit', month: '2-digit', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -400,9 +428,10 @@ const LabDetailPage = () => {
 type TeacherViewProps = {
     lab: TeacherLabDetail;
     onBack: () => void;
+    onEdit: () => void;
 };
 
-const TeacherView = ({ lab, onBack }: TeacherViewProps) => (
+const TeacherView = ({ lab, onBack, onEdit }: TeacherViewProps) => (
     <div className="lab-detail-page">
         <div className="lab-detail-breadcrumb">
             <button className="lab-detail-breadcrumb-link" onClick={onBack}>
@@ -424,6 +453,13 @@ const TeacherView = ({ lab, onBack }: TeacherViewProps) => (
                             <span className="lab-detail-narrative-label">НАРРАТИВ</span>
                         </div>
                         <p className="lab-detail-narrative-text">{lab.narrative}</p>
+                    </div>
+                )}
+
+                {lab.description && (
+                    <div className="lab-detail-card">
+                        <h3 className="lab-detail-card-title">Описание</h3>
+                        <p className="lab-detail-task-description">{lab.description}</p>
                     </div>
                 )}
 
@@ -483,7 +519,7 @@ const TeacherView = ({ lab, onBack }: TeacherViewProps) => (
                     </div>
                     <div className="lab-detail-info-row">
                         <span className="lab-detail-info-label">Баллов</span>
-                        <span className="lab-detail-info-value">{lab.maxPoints} pts</span>
+                        <span className="lab-detail-info-value">{lab.maxPoints} баллов</span>
                     </div>
                     <div className="lab-detail-info-row">
                         <span className="lab-detail-info-label">Блок</span>
@@ -492,6 +528,28 @@ const TeacherView = ({ lab, onBack }: TeacherViewProps) => (
                     <div className="lab-detail-info-row">
                         <span className="lab-detail-info-label">Флаг</span>
                         <span className="lab-detail-info-value">{lab.hasFlag ? 'Есть' : 'Нет'}</span>
+                    </div>
+                    {lab.deadlineAtUtc && (
+                        <div className="lab-detail-info-row">
+                            <span className="lab-detail-info-label">Дедлайн</span>
+                            <span className="lab-detail-info-value" style={{
+                                color: new Date(lab.deadlineAtUtc) < new Date() ? '#ef4444' : 'inherit'
+                            }}>
+                                {new Date(lab.deadlineAtUtc).toLocaleString('ru-RU', {
+                                    day: '2-digit', month: '2-digit', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                })}
+                            </span>
+                        </div>
+                    )}
+                    <div style={{ marginTop: 16 }}>
+                        <button
+                            className="lab-detail-btn-primary"
+                            style={{ width: '100%' }}
+                            onClick={onEdit}
+                        >
+                            Редактировать
+                        </button>
                     </div>
                 </div>
             </div>

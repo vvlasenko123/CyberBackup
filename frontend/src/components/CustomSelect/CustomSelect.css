@@ -1,0 +1,119 @@
+.csel-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.csel-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #0F1720;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    padding: 9px 12px;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+    min-height: 38px;
+}
+
+.csel-trigger:hover:not(:disabled),
+.csel-trigger--open {
+    border-color: #1D9BF0;
+}
+
+.csel-trigger--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.csel-trigger span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.csel-placeholder {
+    color: #4B5563;
+}
+
+.csel-chevron {
+    flex-shrink: 0;
+    color: #8A94A6;
+    transition: transform 0.18s;
+}
+
+.csel-chevron--open {
+    transform: rotate(180deg);
+}
+
+.csel-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #1A2232;
+    border: 1px solid #2D3748;
+    border-radius: 8px;
+    z-index: 200;
+    overflow-y: auto;
+    max-height: calc(6 * 38px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.csel-dropdown::-webkit-scrollbar { width: 4px; }
+.csel-dropdown::-webkit-scrollbar-track { background: transparent; }
+.csel-dropdown::-webkit-scrollbar-thumb { background: #374151; border-radius: 2px; }
+.csel-dropdown::-webkit-scrollbar-thumb:hover { background: #4B5563; }
+
+.csel-item {
+    padding: 9px 12px;
+    font-size: 14px;
+    color: #E2E8F0;
+    cursor: pointer;
+    transition: background 0.1s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 38px;
+    box-sizing: border-box;
+    line-height: 20px;
+}
+
+.csel-item:hover {
+    background: #243044;
+}
+
+.csel-item--active {
+    background: rgba(29, 155, 240, 0.15);
+    color: #60A5FA;
+}
+
+.csel-item--action {
+    color: #60A5FA;
+    font-weight: 500;
+}
+
+.csel-item--action:hover {
+    background: rgba(29, 155, 240, 0.08);
+}
+
+.csel-group-label {
+    padding: 7px 12px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #4B5563;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-top: 1px solid #2D3748;
+    margin-top: 2px;
+    pointer-events: none;
+}

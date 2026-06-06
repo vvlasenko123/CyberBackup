@@ -9,7 +9,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 15px;
     color: #8A94A6;
 }
 
@@ -19,7 +19,7 @@
     background: none;
     border: none;
     padding: 0;
-    font-size: 13px;
+    font-size: 15px;
     cursor: pointer;
     font-family: inherit;
 }
@@ -71,7 +71,7 @@
 }
 
 .lab-create-label {
-    font-size: 13px;
+    font-size: 15px;
     color: #8A94A6;
     font-weight: 500;
 }
@@ -196,7 +196,7 @@
     border: 1px dashed #334155;
     border-radius: 8px;
     color: #8A94A6;
-    font-size: 13px;
+    font-size: 15px;
     font-family: inherit;
     cursor: pointer;
     transition: border-color 0.15s, color 0.15s;
@@ -256,7 +256,7 @@
 }
 
 .lab-create-error {
-    font-size: 13px;
+    font-size: 15px;
     color: #F87171;
     padding: 10px 14px;
     background: rgba(239, 68, 68, 0.08);

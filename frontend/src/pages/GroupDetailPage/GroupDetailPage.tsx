@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
+import MultiUserPicker from '../../components/MultiUserPicker/MultiUserPicker';
+import type { PickerUser } from '../../components/MultiUserPicker/MultiUserPicker';
 import './GroupDetailPage.css';
 
 type GroupMember = {
@@ -24,7 +26,6 @@ type UserItem = {
     role: number; // 0=student, 1=teacher, 2=admin, 3=superadmin
 };
 
-const ROLE_STUDENT = 0;
 const ROLE_TEACHER = 1;
 
 const GroupDetailPage = () => {
@@ -33,6 +34,7 @@ const GroupDetailPage = () => {
 
     const [group, setGroup] = useState<GroupDetail | null>(null);
     const [allUsers, setAllUsers] = useState<UserItem[]>([]);
+    const [ungroupedStudents, setUngroupedStudents] = useState<GroupMember[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -51,15 +53,26 @@ const GroupDetailPage = () => {
         }
     };
 
+    const fetchUngroupedStudents = async () => {
+        try {
+            const res = await axiosInstance.get<GroupMember[]>('/public/api/v1/admin/groups/ungrouped-students');
+            setUngroupedStudents(res.data);
+        } catch {
+            // не критично
+        }
+    };
+
     useEffect(() => {
         const init = async () => {
             try {
-                const [groupRes, usersRes] = await Promise.all([
+                const [groupRes, usersRes, ungroupedRes] = await Promise.all([
                     axiosInstance.get<GroupDetail>(`/public/api/v1/admin/groups/${groupId}`),
                     axiosInstance.get<UserItem[]>('/public/api/v1/user/get-all'),
+                    axiosInstance.get<GroupMember[]>('/public/api/v1/admin/groups/ungrouped-students'),
                 ]);
                 setGroup(groupRes.data);
                 setAllUsers(usersRes.data);
+                setUngroupedStudents(ungroupedRes.data);
             } catch {
                 setError('Не удалось загрузить данные');
             } finally {
@@ -75,7 +88,7 @@ const GroupDetailPage = () => {
         setError(null);
         try {
             await axiosInstance.post(`/public/api/v1/admin/groups/${groupId}/students/${userId}`);
-            await fetchGroup();
+            await Promise.all([fetchGroup(), fetchUngroupedStudents()]);
             setStudentSearch('');
         } catch {
             setError('Не удалось добавить студента');
@@ -84,11 +97,22 @@ const GroupDetailPage = () => {
         }
     };
 
+    const handleAddStudentsBulk = async (userIds: string[]) => {
+        setError(null);
+        try {
+            await axiosInstance.post(`/public/api/v1/admin/groups/${groupId}/students/bulk`, { userIds });
+            await Promise.all([fetchGroup(), fetchUngroupedStudents()]);
+        } catch {
+            setError('Не удалось добавить студентов');
+        }
+    };
+
     const handleRemoveStudent = async (userId: string) => {
         setRemovingId(userId);
         try {
             await axiosInstance.delete(`/public/api/v1/admin/groups/${groupId}/students/${userId}`);
             setGroup(prev => prev ? { ...prev, students: prev.students.filter(s => s.userId !== userId) } : prev);
+            await fetchUngroupedStudents();
         } catch {
             setError('Не удалось убрать студента');
         } finally {
@@ -110,6 +134,16 @@ const GroupDetailPage = () => {
         }
     };
 
+    const handleAddTeachersBulk = async (userIds: string[]) => {
+        setError(null);
+        try {
+            await axiosInstance.post(`/public/api/v1/admin/groups/${groupId}/teachers/bulk`, { userIds });
+            await fetchGroup();
+        } catch {
+            setError('Не удалось добавить преподавателей');
+        }
+    };
+
     const handleRemoveTeacher = async (userId: string) => {
         setRemovingId(userId);
         try {
@@ -125,23 +159,30 @@ const GroupDetailPage = () => {
     if (loading) return <div className="gdp-loading">Загрузка...</div>;
     if (!group) return <div className="gdp-loading">{error ?? 'Группа не найдена'}</div>;
 
-    const memberStudentIds = new Set(group.students.map(s => s.userId));
     const memberTeacherIds = new Set(group.teachers.map(t => t.userId));
 
-    const availableStudents = allUsers.filter(u =>
-        u.role === ROLE_STUDENT &&
-        !memberStudentIds.has(u.id) &&
-        (studentSearch === '' ||
-            u.fullName.toLowerCase().includes(studentSearch.toLowerCase()) ||
-            u.email.toLowerCase().includes(studentSearch.toLowerCase()))
+    // Студенты состоят максимум в одной группе — предлагаем только тех, кто без группы
+    const studentCandidates: PickerUser[] = ungroupedStudents.map(s => ({
+        id: s.userId,
+        fullName: s.fullName,
+        email: s.email,
+    }));
+
+    // Преподаватели могут быть в нескольких группах — предлагаем всех, кроме уже добавленных
+    const teacherCandidates: PickerUser[] = allUsers
+        .filter(u => u.role === ROLE_TEACHER && !memberTeacherIds.has(u.id))
+        .map(u => ({ id: u.id, fullName: u.fullName, email: u.email }));
+
+    const availableStudents = studentCandidates.filter(u =>
+        studentSearch === '' ||
+        u.fullName.toLowerCase().includes(studentSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(studentSearch.toLowerCase())
     );
 
-    const availableTeachers = allUsers.filter(u =>
-        u.role === ROLE_TEACHER &&
-        !memberTeacherIds.has(u.id) &&
-        (teacherSearch === '' ||
-            u.fullName.toLowerCase().includes(teacherSearch.toLowerCase()) ||
-            u.email.toLowerCase().includes(teacherSearch.toLowerCase()))
+    const availableTeachers = teacherCandidates.filter(u =>
+        teacherSearch === '' ||
+        u.fullName.toLowerCase().includes(teacherSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(teacherSearch.toLowerCase())
     );
 
     return (
@@ -168,7 +209,7 @@ const GroupDetailPage = () => {
                         {group.students.length === 0 ? (
                             <p className="gdp-members-empty">Студентов нет</p>
                         ) : (
-                            group.students.map(s => (
+                            [...group.students].sort((a, b) => a.fullName.localeCompare(b.fullName, 'ru')).map(s => (
                                 <div key={s.userId} className="gdp-member-row">
                                     <div className="gdp-member-avatar">{s.fullName[0]?.toUpperCase()}</div>
                                     <div className="gdp-member-info">
@@ -187,12 +228,13 @@ const GroupDetailPage = () => {
                         )}
                     </div>
 
-                    {/* Поиск для добавления */}
+                    {/* Добавление студентов в группу */}
                     <div className="gdp-add-section">
+                        <p className="gdp-add-label">Добавить студента в группу</p>
                         <input
                             className="gdp-search"
                             type="text"
-                            placeholder="Найти студента по имени или email..."
+                            placeholder="Введите имя или email для поиска и добавления..."
                             value={studentSearch}
                             onChange={e => setStudentSearch(e.target.value)}
                         />
@@ -220,6 +262,18 @@ const GroupDetailPage = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Массовое добавление студентов */}
+                    <div className="gdp-bulk-section">
+                        <div className="gdp-bulk-divider"><span>или выберите нескольких из списка</span></div>
+                        <MultiUserPicker
+                            users={studentCandidates}
+                            onAdd={handleAddStudentsBulk}
+                            accent="student"
+                            triggerLabel="Выбрать студентов из списка"
+                            emptyText="Все студенты уже распределены по группам"
+                        />
+                    </div>
                 </section>
 
                 {/* ── Преподаватели ── */}
@@ -230,7 +284,7 @@ const GroupDetailPage = () => {
                         {group.teachers.length === 0 ? (
                             <p className="gdp-members-empty">Преподавателей нет</p>
                         ) : (
-                            group.teachers.map(t => (
+                            [...group.teachers].sort((a, b) => a.fullName.localeCompare(b.fullName, 'ru')).map(t => (
                                 <div key={t.userId} className="gdp-member-row">
                                     <div className="gdp-member-avatar gdp-member-avatar--teacher">{t.fullName[0]?.toUpperCase()}</div>
                                     <div className="gdp-member-info">
@@ -250,10 +304,11 @@ const GroupDetailPage = () => {
                     </div>
 
                     <div className="gdp-add-section">
+                        <p className="gdp-add-label">Добавить преподавателя в группу</p>
                         <input
                             className="gdp-search"
                             type="text"
-                            placeholder="Найти преподавателя по имени или email..."
+                            placeholder="Введите имя или email для поиска и добавления..."
                             value={teacherSearch}
                             onChange={e => setTeacherSearch(e.target.value)}
                         />
@@ -280,6 +335,18 @@ const GroupDetailPage = () => {
                                 )}
                             </div>
                         )}
+                    </div>
+
+                    {/* Массовое добавление преподавателей */}
+                    <div className="gdp-bulk-section">
+                        <div className="gdp-bulk-divider"><span>или выберите нескольких из списка</span></div>
+                        <MultiUserPicker
+                            users={teacherCandidates}
+                            onAdd={handleAddTeachersBulk}
+                            accent="teacher"
+                            triggerLabel="Выбрать преподавателей из списка"
+                            emptyText="Нет доступных преподавателей"
+                        />
                     </div>
                 </section>
             </div>

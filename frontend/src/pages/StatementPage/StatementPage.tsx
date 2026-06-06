@@ -124,10 +124,6 @@ const StudentGradebook: React.FC = () => {
 
     return (
         <div className="stmt-page">
-            <div className="stmt-header">
-                <h2 className="stmt-title">Ведомость</h2>
-            </div>
-
             {/* Карточки статистики */}
             <div className="stmt-stats">
                 <div className="stmt-stat-card">
@@ -208,6 +204,7 @@ const TeacherGradebook: React.FC = () => {
     const [editForm, setEditForm]     = useState<EditForm | null>(null);
     const [saving, setSaving]         = useState(false);
     const [saveError, setSaveError]   = useState<string | null>(null);
+    const [exporting, setExporting]   = useState(false);
 
     const fetchData = useCallback(async (group?: string, q?: string) => {
         setLoading(true);
@@ -247,6 +244,27 @@ const TeacherGradebook: React.FC = () => {
         }
     };
 
+    const handleExport = async () => {
+        setExporting(true);
+        try {
+            const res = await axiosInstance.get('/public/api/v1/teacher/gradebook/export', {
+                responseType: 'blob',
+            });
+            const url = URL.createObjectURL(new Blob([res.data]));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Ведомость_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch {
+            // ignore
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const openEdit = (item: TeacherGradebookItemDto) => {
         setEditForm({
             studentId:        item.studentId,
@@ -279,37 +297,35 @@ const TeacherGradebook: React.FC = () => {
 
     return (
         <div className="stmt-page">
-            <div className="stmt-header">
-                <h2 className="stmt-title">Ведомость</h2>
+            {/* Фильтры + экспорт (на месте заголовка) */}
+            <div className="stmt-toolbar">
+                <div className="stmt-filters">
+                    <select
+                        className="stmt-filter-select"
+                        value={groupFilter}
+                        onChange={e => handleGroupChange(e.target.value)}
+                    >
+                        <option value="">Все группы</option>
+                        {allGroups.map(g => (
+                            <option key={g} value={g}>{g}</option>
+                        ))}
+                    </select>
+                    <input
+                        className="stmt-filter-input"
+                        type="text"
+                        placeholder="Поиск по студентам..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        onKeyDown={handleSearch}
+                    />
+                </div>
                 <button
                     className="stmt-export-btn"
-                    disabled
-                    title="Экспорт не реализован на бэкенде"
+                    onClick={handleExport}
+                    disabled={exporting}
                 >
-                    ⬇ Экспорт Excel
+                    {exporting ? 'Экспорт...' : '⬇ Экспорт Excel'}
                 </button>
-            </div>
-
-            {/* Фильтры */}
-            <div className="stmt-filters">
-                <select
-                    className="stmt-filter-select"
-                    value={groupFilter}
-                    onChange={e => handleGroupChange(e.target.value)}
-                >
-                    <option value="">Все группы</option>
-                    {allGroups.map(g => (
-                        <option key={g} value={g}>{g}</option>
-                    ))}
-                </select>
-                <input
-                    className="stmt-filter-input"
-                    type="text"
-                    placeholder="Поиск по студентам..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    onKeyDown={handleSearch}
-                />
             </div>
 
             {loading ? (

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './CalendarPage.css';
 
-// 0=Lecture, 1=Webinar, 2=Exam, 3=Lab, 4=Other — matches CalendarEventType enum
 type EventType = 0 | 1 | 2 | 3 | 4;
 
 interface CalendarEvent {
@@ -69,7 +68,9 @@ const toLocalInput = (d: Date) => {
 export const CalendarPage: React.FC = () => {
     const today = new Date();
     const role = localStorage.getItem('user_role') || 'student';
+    const currentUserId = localStorage.getItem('user_id') || '';
     const canCreate = role === 'admin' || role === 'teacher';
+    const isAdmin = role === 'admin';
 
     const [currentDate, setCurrentDate] = useState(
         new Date(today.getFullYear(), today.getMonth(), 1)
@@ -117,6 +118,17 @@ export const CalendarPage: React.FC = () => {
         });
         setFormError(null);
         setShowModal(true);
+    };
+
+    const handleDeleteEvent = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('Удалить это событие?')) return;
+        try {
+            await axiosInstance.delete(`/public/calendar/event/${id}`);
+            setEvents(prev => prev.filter(ev => ev.id !== id));
+        } catch {
+            // ignore
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -201,10 +213,16 @@ export const CalendarPage: React.FC = () => {
                                         <div
                                             key={ev.id}
                                             className="cal-event"
-                                            style={{ borderLeftColor: EVENT_TYPE_COLORS[ev.eventType] }}
+                                            style={{ borderLeftColor: EVENT_TYPE_COLORS[ev.eventType], display: 'flex', alignItems: 'center' }}
                                         >
-                                            <span className="cal-event__title">{ev.title}</span>
-                                            <span className="cal-event__time">{formatTime(ev.startsAtUtc)}</span>
+                                            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatTime(ev.startsAtUtc)} {ev.title}</span>
+                                            {(isAdmin || (canCreate && ev.userId === currentUserId)) && (
+                                                <button
+                                                    onClick={e => handleDeleteEvent(ev.id, e)}
+                                                    style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '0 2px', fontSize: 12, opacity: 0.8, flexShrink: 0 }}
+                                                    title="Удалить"
+                                                >×</button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
