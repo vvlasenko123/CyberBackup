@@ -1,5 +1,6 @@
 using Application.DTO.Calendar;
 using Domain.Calendar;
+using Domain.User.Enums;
 
 namespace Application.Abstractions.Services.Calendar.Contracts;
 
@@ -9,9 +10,9 @@ namespace Application.Abstractions.Services.Calendar.Contracts;
 public interface ICalendarEventService
 {
     /// <summary>
-    /// Создать событие календаря
+    /// Создать событие календаря и разослать уведомления
     /// </summary>
-    Task<CalendarEventModel> Create(CalendarEventDto request, Guid userId, CancellationToken cancellationToken);
+    Task<CalendarEventModel> Create(CalendarEventDto request, Guid userId, UserRole creatorRole, CancellationToken cancellationToken);
 
     /// <summary>
     /// Получить события пользователя
@@ -22,6 +23,11 @@ public interface ICalendarEventService
     /// Получить все события календаря
     /// </summary>
     Task<IReadOnlyCollection<CalendarEventModel>> GetAll(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить события видимые студенту
+    /// </summary>
+    Task<IReadOnlyCollection<CalendarEventModel>> GetStudentEvents(Guid studentId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Удалить событие календаря. Если isAdmin = true — удаляет без проверки владельца.

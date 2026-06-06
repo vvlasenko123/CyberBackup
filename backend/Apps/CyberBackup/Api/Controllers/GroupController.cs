@@ -71,11 +71,27 @@ public sealed class GroupController : PublicController
         return NoContent();
     }
 
+    /// <summary>Получить студентов, не состоящих ни в одной группе</summary>
+    [HttpGet("ungrouped-students")]
+    public async Task<IActionResult> GetUngroupedStudents(CancellationToken cancellationToken)
+    {
+        var students = await _groupService.GetUngroupedStudentsAsync(cancellationToken);
+        return Ok(students);
+    }
+
     /// <summary>Добавить студента в группу</summary>
     [HttpPost("{groupId:guid}/students/{userId:guid}")]
     public async Task<IActionResult> AddStudent(Guid groupId, Guid userId, CancellationToken cancellationToken)
     {
         await _groupService.AddStudentToGroupAsync(groupId, userId, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Добавить нескольких студентов в группу</summary>
+    [HttpPost("{groupId:guid}/students/bulk")]
+    public async Task<IActionResult> AddStudents(Guid groupId, [FromBody] BulkMembersRequest request, CancellationToken cancellationToken)
+    {
+        await _groupService.AddStudentsToGroupAsync(groupId, request.UserIds, cancellationToken);
         return NoContent();
     }
 
@@ -92,6 +108,14 @@ public sealed class GroupController : PublicController
     public async Task<IActionResult> AddTeacher(Guid groupId, Guid userId, CancellationToken cancellationToken)
     {
         await _groupService.AddTeacherToGroupAsync(groupId, userId, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Назначить нескольких преподавателей на группу</summary>
+    [HttpPost("{groupId:guid}/teachers/bulk")]
+    public async Task<IActionResult> AddTeachers(Guid groupId, [FromBody] BulkMembersRequest request, CancellationToken cancellationToken)
+    {
+        await _groupService.AddTeachersToGroupAsync(groupId, request.UserIds, cancellationToken);
         return NoContent();
     }
 

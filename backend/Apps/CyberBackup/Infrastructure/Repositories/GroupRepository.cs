@@ -128,6 +128,26 @@ public sealed class GroupRepository : IGroupRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyCollection<GroupMemberDto>> GetUngroupedStudentsAsync(CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           SELECT
+                               u.id        AS "UserId",
+                               u.full_name AS "FullName",
+                               u.email     AS "Email"
+                           FROM users u
+                           WHERE u.role = 0
+                             AND NOT EXISTS (
+                                 SELECT 1 FROM user_groups ug WHERE ug.user_id = u.id
+                             )
+                           ORDER BY u.full_name;
+                           """;
+
+        var result = await _connection.QueryAsync<GroupMemberDto>(sql, null, cancellationToken);
+        return result.ToList();
+    }
+
+    /// <inheritdoc />
     public async Task AddStudentToGroupAsync(Guid groupId, Guid userId, CancellationToken cancellationToken)
     {
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
@@ -152,6 +172,35 @@ public sealed class GroupRepository : IGroupRepository
     }
 
     /// <inheritdoc />
+    public async Task AddStudentsToGroupAsync(Guid groupId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+    {
+        if (userIds.Count == 0)
+            return;
+
+        await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        var ids = userIds.ToArray();
+
+        // Студент принадлежит ровно одной группе: убираем из текущих
+        await connection.ExecuteAsync(
+            "DELETE FROM user_groups WHERE user_id = ANY(@UserIds);",
+            new { UserIds = ids },
+            transaction);
+
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO user_groups (user_id, group_id)
+            SELECT unnest(@UserIds), @GroupId
+            ON CONFLICT DO NOTHING;
+            """,
+            new { UserIds = ids, GroupId = groupId },
+            transaction);
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task RemoveStudentFromGroupAsync(Guid groupId, Guid userId, CancellationToken cancellationToken)
         => _connection.ExecuteAsync(
             "DELETE FROM user_groups WHERE user_id = @UserId AND group_id = @GroupId;",
@@ -168,6 +217,22 @@ public sealed class GroupRepository : IGroupRepository
             """,
             new { UserId = userId, GroupId = groupId, AddedAt = DateTimeOffset.UtcNow },
             cancellationToken);
+
+    /// <inheritdoc />
+    public Task AddTeachersToGroupAsync(Guid groupId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+    {
+        if (userIds.Count == 0)
+            return Task.CompletedTask;
+
+        return _connection.ExecuteAsync(
+            """
+            INSERT INTO teacher_groups (teacher_id, group_id, added_at_utc)
+            SELECT unnest(@UserIds), @GroupId, @AddedAt
+            ON CONFLICT (teacher_id, group_id) DO NOTHING;
+            """,
+            new { UserIds = userIds.ToArray(), GroupId = groupId, AddedAt = DateTimeOffset.UtcNow },
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task RemoveTeacherFromGroupAsync(Guid groupId, Guid userId, CancellationToken cancellationToken)

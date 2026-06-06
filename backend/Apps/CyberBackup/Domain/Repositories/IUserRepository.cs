@@ -52,4 +52,14 @@ public interface IUserRepository
     /// Сменить пароль пользователя
     /// </summary>
     Task ChangePasswordAsync(Guid userId, PasswordHash passwordHash, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить ID студентов преподавателя (через группы)
+    /// </summary>
+    Task<IReadOnlyCollection<Guid>> GetStudentIdsByTeacherAsync(Guid teacherId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить ID всех пользователей с заданными ролями
+    /// </summary>
+    Task<IReadOnlyCollection<Guid>> GetUserIdsByRolesAsync(IEnumerable<int> roles, CancellationToken cancellationToken);
 }

@@ -42,8 +42,16 @@ public sealed class GroupService : IGroupService
         => _repository.DeleteGroupAsync(groupId, cancellationToken);
 
     /// <inheritdoc />
+    public Task<IReadOnlyCollection<GroupMemberDto>> GetUngroupedStudentsAsync(CancellationToken cancellationToken)
+        => _repository.GetUngroupedStudentsAsync(cancellationToken);
+
+    /// <inheritdoc />
     public Task AddStudentToGroupAsync(Guid groupId, Guid userId, CancellationToken cancellationToken)
         => _repository.AddStudentToGroupAsync(groupId, userId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task AddStudentsToGroupAsync(Guid groupId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+        => _repository.AddStudentsToGroupAsync(groupId, userIds, cancellationToken);
 
     /// <inheritdoc />
     public Task RemoveStudentFromGroupAsync(Guid groupId, Guid userId, CancellationToken cancellationToken)
@@ -52,6 +60,10 @@ public sealed class GroupService : IGroupService
     /// <inheritdoc />
     public Task AddTeacherToGroupAsync(Guid groupId, Guid userId, CancellationToken cancellationToken)
         => _repository.AddTeacherToGroupAsync(groupId, userId, cancellationToken);
+
+    /// <inheritdoc />
+    public Task AddTeachersToGroupAsync(Guid groupId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+        => _repository.AddTeachersToGroupAsync(groupId, userIds, cancellationToken);
 
     /// <inheritdoc />
     public Task RemoveTeacherFromGroupAsync(Guid groupId, Guid userId, CancellationToken cancellationToken)

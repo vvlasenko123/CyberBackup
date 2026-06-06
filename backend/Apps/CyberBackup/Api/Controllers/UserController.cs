@@ -146,7 +146,7 @@ public class UserController : PublicController
 
         foreach (var (personalNumber, fullName) in students)
         {
-            var email = $"{personalNumber}@student.local";
+            var email = $"{personalNumber}@urfu.ru";
             var password = personalNumber;
 
             try

@@ -41,4 +41,9 @@ public interface ICalendarEventRepository
     /// Удалить любое событие календаря (для администратора)
     /// </summary>
     Task DeleteByIdAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить события видимые студенту: созданные его преподами + созданные администраторами
+    /// </summary>
+    Task<IReadOnlyCollection<CalendarEventModel>> GetStudentEventsAsync(Guid studentId, CancellationToken cancellationToken);
 }

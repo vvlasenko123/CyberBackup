@@ -25,6 +25,6 @@ public sealed class CreateCalendarEventUseCaseManager : ICreateCalendarEventUseC
     {
         var currentUser = _jwtService.GetCurrentUser();
 
-        return await _calendarEventService.Create(request, currentUser.UserId, cancellationToken);
+        return await _calendarEventService.Create(request, currentUser.UserId, currentUser.Role, cancellationToken);
     }
 }

@@ -248,6 +248,36 @@ public sealed class UserRepository : IUserRepository
         }, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<Guid>> GetStudentIdsByTeacherAsync(Guid teacherId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT DISTINCT ug.user_id AS "Id"
+                               FROM teacher_groups tg
+                               JOIN user_groups ug ON ug.group_id = tg.group_id
+                               WHERE tg.teacher_id = @TeacherId;
+                           """;
+
+        var result = await _connection.QueryAsync<GuidDbModel>(sql, new { TeacherId = teacherId }, cancellationToken);
+        return result.Select(x => x.Id).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<Guid>> GetUserIdsByRolesAsync(IEnumerable<int> roles, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT id AS "Id" FROM users WHERE role = ANY(@Roles);
+                           """;
+
+        var result = await _connection.QueryAsync<GuidDbModel>(sql, new { Roles = roles.ToArray() }, cancellationToken);
+        return result.Select(x => x.Id).ToList();
+    }
+
+    private sealed class GuidDbModel
+    {
+        public Guid Id { get; init; }
+    }
+
     /// <summary>
     /// Преобразовать db model в domain model
     /// </summary>

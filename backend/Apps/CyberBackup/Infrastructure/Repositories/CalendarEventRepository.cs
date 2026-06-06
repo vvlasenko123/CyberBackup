@@ -186,6 +186,42 @@ public sealed class CalendarEventRepository : ICalendarEventRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyCollection<CalendarEventModel>> GetStudentEventsAsync(Guid studentId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT
+                                   ce.id AS Id,
+                                   ce.user_id AS UserId,
+                                   ce.title AS Title,
+                                   ce.event_type AS EventType,
+                                   ce.status AS Status,
+                                   ce.starts_at_utc AS StartsAtUtc,
+                                   ce.ends_at_utc AS EndsAtUtc,
+                                   ce.notify_at_utc AS NotifyAtUtc,
+                                   ce.notified_at_utc AS NotifiedAtUtc,
+                                   ce.created_at_utc AS CreatedAtUtc,
+                                   ce.updated_at_utc AS UpdatedAtUtc
+                               FROM calendar_events ce
+                               JOIN users u ON u.id = ce.user_id
+                               WHERE u.role >= 2
+                                  OR ce.user_id = @StudentId
+                                  OR (
+                                      u.role = 1
+                                      AND ce.user_id IN (
+                                          SELECT DISTINCT tg.teacher_id
+                                          FROM user_groups ug
+                                          JOIN teacher_groups tg ON tg.group_id = ug.group_id
+                                          WHERE ug.user_id = @StudentId
+                                      )
+                                  )
+                               ORDER BY ce.starts_at_utc;
+                           """;
+
+        var events = await _connection.QueryAsync<CalendarEventModel>(sql, new { StudentId = studentId }, cancellationToken);
+        return events.ToList();
+    }
+
+    /// <inheritdoc />
     public async Task SetNotifiedAsync(
         Guid id,
         DateTimeOffset notifiedAtUtc,

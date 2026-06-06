@@ -76,6 +76,12 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                  AND (@Block IS NULL OR lw.block = @Block)
                                  AND (@Difficulty IS NULL OR lw.difficulty = @Difficulty)
                                  AND (@Search IS NULL OR LOWER(lw.title) LIKE LOWER('%' || @Search || '%'))
+                                 AND lw.created_by_teacher_id IN (
+                                     SELECT DISTINCT tg.teacher_id
+                                     FROM user_groups ug
+                                     JOIN teacher_groups tg ON tg.group_id = ug.group_id
+                                     WHERE ug.user_id = @StudentId
+                                 )
                            )
                            SELECT COUNT(*) FROM source WHERE (@Status IS NULL OR "Status" = @Status);
 
@@ -130,6 +136,12 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                  AND (@Block IS NULL OR lw.block = @Block)
                                  AND (@Difficulty IS NULL OR lw.difficulty = @Difficulty)
                                  AND (@Search IS NULL OR LOWER(lw.title) LIKE LOWER('%' || @Search || '%'))
+                                 AND lw.created_by_teacher_id IN (
+                                     SELECT DISTINCT tg.teacher_id
+                                     FROM user_groups ug
+                                     JOIN teacher_groups tg ON tg.group_id = ug.group_id
+                                     WHERE ug.user_id = @StudentId
+                                 )
                            )
                            SELECT * FROM source
                            WHERE (@Status IS NULL OR "Status" = @Status)
@@ -1125,12 +1137,15 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            WHERE (@Status IS NULL OR r.status = @Status)
                              AND (
                                  @IncludeAll = true
-                                 OR EXISTS (
-                                     SELECT 1
-                                     FROM teacher_groups tg
-                                     JOIN user_groups sug ON sug.group_id = tg.group_id
-                                     WHERE tg.teacher_id = @TeacherId
-                                       AND sug.user_id = r.student_id
+                                 OR (
+                                     lw.created_by_teacher_id = @TeacherId
+                                     AND EXISTS (
+                                         SELECT 1
+                                         FROM teacher_groups tg
+                                         JOIN user_groups sug ON sug.group_id = tg.group_id
+                                         WHERE tg.teacher_id = @TeacherId
+                                           AND sug.user_id = r.student_id
+                                     )
                                  )
                              )
                              AND (@LaboratoryId IS NULL OR lw.id = @LaboratoryId)
@@ -1159,16 +1174,19 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                            LEFT JOIN groups g ON g.id = ug.group_id
                            JOIN laboratory_report_versions rv ON rv.laboratory_report_id = r.id AND rv.version_number = r.current_version_number
                            WHERE (@Status IS NULL OR r.status = @Status)
-                              AND (
-                                  @IncludeAll = true
-                                  OR EXISTS (
-                                      SELECT 1
-                                      FROM teacher_groups tg
-                                      JOIN user_groups sug ON sug.group_id = tg.group_id
-                                      WHERE tg.teacher_id = @TeacherId
-                                        AND sug.user_id = r.student_id
-                                  )
-                              )
+                             AND (
+                                 @IncludeAll = true
+                                 OR (
+                                     lw.created_by_teacher_id = @TeacherId
+                                     AND EXISTS (
+                                         SELECT 1
+                                         FROM teacher_groups tg
+                                         JOIN user_groups sug ON sug.group_id = tg.group_id
+                                         WHERE tg.teacher_id = @TeacherId
+                                           AND sug.user_id = r.student_id
+                                     )
+                                 )
+                             )
                              AND (@LaboratoryId IS NULL OR lw.id = @LaboratoryId)
                              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
                              AND (@GroupName IS NULL OR g.name = @GroupName)
