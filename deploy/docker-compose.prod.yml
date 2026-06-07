@@ -6,7 +6,7 @@ services:
         environment:
             POSTGRES_USER: test
             POSTGRES_PASSWORD: driver
-            POSTGRES_DB: postgres
+            POSTGRES_DB: cyber-backup-api
         volumes:
             - postgres_data:/var/lib/postgresql/data
 
@@ -23,11 +23,6 @@ services:
             - "9001:9001"
         volumes:
             - minio_data:/data
-        healthcheck:
-            test: [ "CMD", "mc", "ready", "local" ]
-            interval: 5s
-            timeout: 5s
-            retries: 10
 
     backend:
         build:
@@ -40,26 +35,26 @@ services:
         environment:
             - ASPNETCORE_URLS=http://+:8080
             - ASPNETCORE_ENVIRONMENT=Production
-        
+
             - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=test;Password=driver;Database=cyber-backup-api;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
             - PostgresOptions__AutoMigration=true
 
-            - CyberCorsOptions__Origins__0=http://frontend
-        
+            - CyberCorsOptions__Origins__0=http://111.88.159.80
+
             - JwtOptions__Issuer=solution
             - JwtOptions__Audience=auth-api
             - JwtOptions__SigningKey=local-dev-signing-key-change-me-please-32-bytes-minimum
             - JwtOptions__AccessTokenLifetimeMinutes=15
-        
+
             - RefreshTokenOptions__LifetimeDays=7
             - RefreshTokenOptions__TokenBytes=64
-        
+
             - AuthTokenOptions__ClientId=web-client
             - AuthTokenOptions__Scopes__0=identity
-        
+
             - PasswordHashOptions__Pepper=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
             - PasswordHashOptions__WorkFactor=12
-        
+
             - SuperAdminOptions__Email=superadmin@coreteam.com
             - SuperAdminOptions__Password=admincoreteam
             - SuperAdminOptions__FullName=Суперадминистратор
@@ -71,20 +66,16 @@ services:
             - MinioOptions__UseSsl=false
         depends_on:
             - postgres
+            - minio
 
     frontend:
-        image: node:20-alpine
+        build:
+            context: ../frontend
+            dockerfile: Dockerfile
         container_name: frontend
-        working_dir: /app
-        command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
         restart: unless-stopped
         ports:
-            - "5173:5173"
-        volumes:
-            - ../frontend:/app
-            - /app/node_modules
-        environment:
-            - CHOKIDAR_USEPOLLING=true
+            - "80:80"
         depends_on:
             - backend
 
