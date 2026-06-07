@@ -3,6 +3,9 @@ import axiosInstance from '../utils/axiosInstance';
 
 const RECORD_SEP = '\x1e';
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000').replace(/\/$/, '');
+const WS_BASE = API_BASE.replace(/^http/, 'ws');
+
 export interface AppNotification {
     id: string;
     title: string;
@@ -19,13 +22,7 @@ type ApiNotification = {
     createdAtUtc: string;
 };
 
-
-const baseUrl = (import.meta.env.VITE_API_URL as string | undefined ?? 'http://localhost:5000')
-    .replace(/\/$/, '')
-    .replace(/^http/, 'ws');
-
 const RECONNECT_DELAYS = [1000, 2000, 5000, 10000, 30000];
-
 
 export function useNotifications() {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -39,9 +36,12 @@ export function useNotifications() {
 
     const connect = useCallback(() => {
         const token = localStorage.getItem('token');
-        if (!token || destroyed.current) return;
 
-        const url = `${baseUrl}/notification-hub?access_token=${encodeURIComponent(token)}`;
+        if (!token || destroyed.current) {
+            return;
+        }
+
+        const url = `${WS_BASE}/notification-hub?access_token=${encodeURIComponent(token)}`;
         const ws = new WebSocket(url);
         wsRef.current = ws;
 
@@ -51,30 +51,43 @@ export function useNotifications() {
         };
 
         ws.onmessage = (event: MessageEvent<string>) => {
-            const frames = (event.data as string).split(RECORD_SEP).filter(Boolean);
+            const frames = event.data.split(RECORD_SEP).filter(Boolean);
 
             for (const frame of frames) {
                 let msg: Record<string, unknown>;
-                try { msg = JSON.parse(frame); }
-                catch { continue; }
+
+                try {
+                    msg = JSON.parse(frame);
+                } catch {
+                    continue;
+                }
 
                 if (Object.keys(msg).length === 0) {
                     console.log('[SignalR] Handshake OK — notifications ready');
                     retryCount.current = 0;
+
                     pingRef.current = setInterval(() => {
                         if (ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({ type: 6 }) + RECORD_SEP);
                         }
                     }, 15_000);
+
                     continue;
                 }
 
                 if (msg.type === 1 && msg.target === 'NotificationReceived') {
                     const args = msg.arguments as Array<{
-                        id: string; title: string; message: string; createdAtUtc: string;
+                        id: string;
+                        title: string;
+                        message: string;
+                        createdAtUtc: string;
                     }>;
+
                     const payload = args?.[0];
-                    if (!payload) continue;
+
+                    if (!payload) {
+                        continue;
+                    }
 
                     const notification: AppNotification = {
                         id: payload.id,
@@ -83,6 +96,7 @@ export function useNotifications() {
                         createdAtUtc: payload.createdAtUtc,
                         read: false,
                     };
+
                     console.log('[SignalR] Notification received:', notification);
                     setNotifications(prev => [notification, ...prev].slice(0, 50));
                     setLatestToast(notification);
@@ -90,17 +104,24 @@ export function useNotifications() {
             }
         };
 
-        ws.onclose = (ev) => {
+        ws.onclose = ev => {
             console.warn('[SignalR] WebSocket closed', ev.code, ev.reason);
-            if (pingRef.current) { clearInterval(pingRef.current); pingRef.current = null; }
-            if (destroyed.current) return;
+
+            if (pingRef.current) {
+                clearInterval(pingRef.current);
+                pingRef.current = null;
+            }
+
+            if (destroyed.current) {
+                return;
+            }
 
             const delay = RECONNECT_DELAYS[Math.min(retryCount.current, RECONNECT_DELAYS.length - 1)];
             retryCount.current++;
             retryRef.current = setTimeout(connect, delay);
         };
 
-        ws.onerror = (ev) => {
+        ws.onerror = ev => {
             console.error('[SignalR] WebSocket error', ev);
             ws.close();
         };
@@ -108,7 +129,10 @@ export function useNotifications() {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (!token) return;
+
+        if (!token) {
+            return;
+        }
 
         axiosInstance.get<ApiNotification[]>('/public/api/v1/notifications')
             .then(res => {
@@ -119,10 +143,13 @@ export function useNotifications() {
                     createdAtUtc: n.createdAtUtc,
                     read: n.isRead,
                 }));
+
                 setNotifications(prev => {
                     const ids = new Set(prev.map(n => n.id));
                     const merged = [...prev, ...loaded.filter(n => !ids.has(n.id))];
+
                     merged.sort((a, b) => new Date(b.createdAtUtc).getTime() - new Date(a.createdAtUtc).getTime());
+
                     return merged.slice(0, 50);
                 });
             })
@@ -135,8 +162,15 @@ export function useNotifications() {
 
         return () => {
             destroyed.current = true;
-            if (retryRef.current) clearTimeout(retryRef.current);
-            if (pingRef.current) clearInterval(pingRef.current);
+
+            if (retryRef.current) {
+                clearTimeout(retryRef.current);
+            }
+
+            if (pingRef.current) {
+                clearInterval(pingRef.current);
+            }
+
             wsRef.current?.close();
         };
     }, [connect]);
