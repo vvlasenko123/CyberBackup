@@ -4,8 +4,8 @@ services:
         container_name: postgres
         restart: unless-stopped
         environment:
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: test
+            POSTGRES_PASSWORD: driver
             POSTGRES_DB: postgres
         volumes:
             - postgres_data:/var/lib/postgresql/data
@@ -41,7 +41,7 @@ services:
             - ASPNETCORE_URLS=http://+:8080
             - ASPNETCORE_ENVIRONMENT=Production
         
-            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=cyber-backup-api;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
+            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=test;Password=driver;Database=cyber-backup-api;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
             - PostgresOptions__AutoMigration=true
 
             - CyberCorsOptions__Origins__0=http://frontend
@@ -60,8 +60,8 @@ services:
             - PasswordHashOptions__Pepper=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
             - PasswordHashOptions__WorkFactor=12
         
-            - SuperAdminOptions__Email=superadmin@example.com
-            - SuperAdminOptions__Password=admin123
+            - SuperAdminOptions__Email=superadmin@coreteam.com
+            - SuperAdminOptions__Password=admincoreteam
             - SuperAdminOptions__FullName=Суперадминистратор
 
             - MinioOptions__Endpoint=minio:9000
