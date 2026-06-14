@@ -30,7 +30,7 @@ public sealed class GetCalendarEventsUseCaseManager : IGetCalendarEventsUseCaseM
             UserRole.Admin or UserRole.SuperAdmin =>
                 await _calendarEventService.GetAll(cancellationToken),
             UserRole.Teacher =>
-                await _calendarEventService.GetByUserId(currentUser.UserId, cancellationToken),
+                await _calendarEventService.GetTeacherEvents(currentUser.UserId, cancellationToken),
             _ =>
                 await _calendarEventService.GetStudentEvents(currentUser.UserId, cancellationToken),
         };

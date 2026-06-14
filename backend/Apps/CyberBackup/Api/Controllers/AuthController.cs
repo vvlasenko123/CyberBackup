@@ -2,6 +2,7 @@
 using Api.Controllers.Models.Request;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.DTO.Auth;
+using Application.Features.Auth.Login;
 using AutoMapper;
 using Infrastructure.Core.Controllers.Public;
 using Microsoft.AspNetCore.Mvc;
@@ -54,14 +55,19 @@ public sealed class AuthController : PublicController
         CancellationToken cancellationToken)
     {
         var dto = _mapper.Map<LoginRequestDto>(request);
-        var result = await _loginUseCaseManager.Execute(dto, cancellationToken);
+        LoginResultDto? result;
+        try
+        {
+            result = await _loginUseCaseManager.Execute(dto, cancellationToken);
+        }
+        catch (AccountDeactivatedException ex)
+        {
+            return Unauthorized(new { Message = ex.Message });
+        }
 
         if (result is null)
         {
-            return Unauthorized(new
-            {
-                Message = SecurityText.InvalidEmailOrPassword
-            });
+            return Unauthorized(new { Message = SecurityText.InvalidEmailOrPassword });
         }
 
         return Ok(result);

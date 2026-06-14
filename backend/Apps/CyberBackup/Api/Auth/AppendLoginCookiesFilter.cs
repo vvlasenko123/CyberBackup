@@ -52,7 +52,8 @@ public sealed class AppendLoginCookiesFilter : IAsyncResultFilter
 
         context.Result = new OkObjectResult(new LoginResponse(
             AccessToken: result.AccessToken,
-            ExpiresAt: result.ExpiresAt));
+            ExpiresAt: result.ExpiresAt,
+            MustChangePassword: result.MustChangePassword));
 
         await next();
     }

@@ -2,6 +2,7 @@ using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.Posts.Contracts;
 using Application.DTO.Laboratories;
 using Application.DTO.Posts;
+using Domain.User.Enums;
 
 namespace Application.Abstractions.Services.Posts;
 
@@ -26,7 +27,10 @@ public sealed class PostService : IPostService
             PageSize = Math.Clamp(request.PageSize, 1, 50)
         };
 
-        return _repository.GetPostsAsync(normalized, cancellationToken);
+        var currentUser = _jwtService.GetCurrentUser();
+        var filterByStudentTeachers = currentUser.Role == UserRole.Student;
+
+        return _repository.GetPostsAsync(normalized, currentUser.UserId, filterByStudentTeachers, cancellationToken);
     }
 
     /// <inheritdoc />

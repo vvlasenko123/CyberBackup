@@ -8,4 +8,5 @@ public sealed record LoginResultDto(
     string AccessToken,
     string RefreshToken,
     DateTimeOffset ExpiresAt,
-    DateTimeOffset RefreshTokenExpiresAtUtc);
+    DateTimeOffset RefreshTokenExpiresAtUtc,
+    bool MustChangePassword);

@@ -47,11 +47,16 @@ public sealed class LoginUseCaseManager : ILoginUseCaseManager
             return null;
         }
 
+        if (!user.IsActive)
+        {
+            throw new AccountDeactivatedException();
+        }
+
         var passwordIsValid = _passwordHashService.Verify(
             request.Password,
             user.Password.Value);
 
-        if (!passwordIsValid || !user.IsActive)
+        if (!passwordIsValid)
         {
             return null;
         }
@@ -87,6 +92,7 @@ public sealed class LoginUseCaseManager : ILoginUseCaseManager
             AccessToken: accessToken.AccessToken,
             RefreshToken: refreshToken.RefreshToken,
             ExpiresAt: accessToken.ExpiresAtUtc,
-            RefreshTokenExpiresAtUtc: refreshToken.ExpiresAtUtc);
+            RefreshTokenExpiresAtUtc: refreshToken.ExpiresAtUtc,
+            MustChangePassword: user.MustChangePassword);
     }
 }

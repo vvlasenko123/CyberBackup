@@ -52,6 +52,7 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, CreateQuestions_202605270002>();
         services.AddTransient<IDatabaseMigration, UpdateQuestionRepliesForChat_202605280001>();
         services.AddTransient<IDatabaseMigration, AddDeadlineToLaboratories_202605310001>();
+        services.AddTransient<IDatabaseMigration, AddAttendanceLessons_202606100001>();
         #endregion
 
         #region repositories

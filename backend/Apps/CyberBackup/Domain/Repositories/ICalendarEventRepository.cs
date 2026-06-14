@@ -46,4 +46,9 @@ public interface ICalendarEventRepository
     /// Получить события видимые студенту: созданные его преподами + созданные администраторами
     /// </summary>
     Task<IReadOnlyCollection<CalendarEventModel>> GetStudentEventsAsync(Guid studentId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить события преподавателя: собственные + созданные администраторами
+    /// </summary>
+    Task<IReadOnlyCollection<CalendarEventModel>> GetTeacherEventsAsync(Guid teacherId, CancellationToken cancellationToken);
 }

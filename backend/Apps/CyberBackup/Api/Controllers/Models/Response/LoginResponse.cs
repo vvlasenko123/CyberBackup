@@ -5,4 +5,5 @@ namespace Api.Controllers.Models.Response;
 /// </summary>
 public sealed record LoginResponse(
     string AccessToken,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    bool MustChangePassword);

@@ -666,6 +666,12 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
             LEFT JOIN laboratory_progress lp ON lp.laboratory_work_id = lw.id AND lp.student_id = @StudentId
             WHERE lw.is_published = true AND lw.delete_date_utc IS NULL
+              AND lw.created_by_teacher_id IN (
+                  SELECT DISTINCT tg.teacher_id
+                  FROM user_groups ug
+                  JOIN teacher_groups tg ON tg.group_id = ug.group_id
+                  WHERE ug.user_id = @StudentId
+              )
             ORDER BY lw.sort_order, lw.title;
             """,
             new { StudentId = studentId })).ToList();
@@ -1542,6 +1548,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                u.full_name AS "FullName",
                                g.name AS "GroupName",
                                COALESCE(sgr.attendance_percent, 0) AS "AttendancePercent",
+                               COALESCE(sgr.lessons_attended, 0) AS "LessonsAttended",
+                               COALESCE(sgr.total_lessons, 0) AS "TotalLessons",
                                COALESCE(sgr.is_exam_allowed, false) AS "IsExamAllowed",
                                COALESCE(sgr.has_automatic_grade, false) AS "HasAutomaticGrade",
                                COALESCE(SUM(CASE WHEN r.status = 4 THEN r.points ELSE 0 END), 0)::int AS "TotalPoints",
@@ -1550,12 +1558,21 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                    SELECT COUNT(*)::int
                                    FROM laboratory_works
                                    WHERE is_published = true AND delete_date_utc IS NULL
+                                     AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
                                ) AS "TotalLaboratories"
                            FROM users u
                            LEFT JOIN user_groups ug ON ug.user_id = u.id
                            LEFT JOIN groups g ON g.id = ug.group_id
                            LEFT JOIN student_gradebook_records sgr ON sgr.student_id = u.id
                            LEFT JOIN laboratory_reports r ON r.student_id = u.id
+                               AND EXISTS (
+                                   SELECT 1
+                                   FROM laboratory_works lw
+                                   WHERE lw.id = r.laboratory_work_id
+                                     AND lw.is_published = true
+                                     AND lw.delete_date_utc IS NULL
+                                     AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
+                               )
                            WHERE u.role = @StudentRole
                              AND (
                                  @IncludeAll = true
@@ -1569,7 +1586,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                              AND (@GroupName IS NULL OR g.name = @GroupName)
                              AND (@IsExamAllowed IS NULL OR COALESCE(sgr.is_exam_allowed, false) = @IsExamAllowed)
                              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
-                           GROUP BY u.id, u.full_name, g.name, sgr.attendance_percent, sgr.is_exam_allowed, sgr.has_automatic_grade
+                           GROUP BY u.id, u.full_name, g.name, sgr.attendance_percent, sgr.lessons_attended, sgr.total_lessons, sgr.is_exam_allowed, sgr.has_automatic_grade
                            ORDER BY g.name, u.full_name
                            OFFSET @Offset LIMIT @PageSize;
                            """;
@@ -1640,29 +1657,39 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         await connection.ExecuteAsync(
             """
             INSERT INTO student_gradebook_records (
-                id, student_id, group_id, attendance_percent, is_exam_allowed,
-                has_automatic_grade, update_date_utc, updated_by_teacher_id
+                id, student_id, group_id,
+                lessons_attended, total_lessons, attendance_percent,
+                is_exam_allowed, has_automatic_grade,
+                update_date_utc, updated_by_teacher_id
             )
             SELECT
-                @Id, @StudentId, ug.group_id, @AttendancePercent, @IsExamAllowed,
-                @HasAutomaticGrade, @UpdateDateUtc, @TeacherId
+                @Id, @StudentId, ug.group_id,
+                @LessonsAttended, @TotalLessons,
+                CASE WHEN @TotalLessons > 0
+                     THEN ROUND(@LessonsAttended::numeric / @TotalLessons * 100, 2)
+                     ELSE 0 END,
+                @IsExamAllowed, @HasAutomaticGrade,
+                @UpdateDateUtc, @TeacherId
             FROM users u
             LEFT JOIN user_groups ug ON ug.user_id = u.id
             WHERE u.id = @StudentId
             ORDER BY ug.group_id NULLS LAST
             LIMIT 1
             ON CONFLICT (student_id) DO UPDATE
-            SET attendance_percent = EXCLUDED.attendance_percent,
-                is_exam_allowed = EXCLUDED.is_exam_allowed,
+            SET lessons_attended   = EXCLUDED.lessons_attended,
+                total_lessons      = EXCLUDED.total_lessons,
+                attendance_percent = EXCLUDED.attendance_percent,
+                is_exam_allowed    = EXCLUDED.is_exam_allowed,
                 has_automatic_grade = EXCLUDED.has_automatic_grade,
-                update_date_utc = EXCLUDED.update_date_utc,
+                update_date_utc    = EXCLUDED.update_date_utc,
                 updated_by_teacher_id = EXCLUDED.updated_by_teacher_id;
             """,
             new
             {
                 Id = UUIDNext.Uuid.NewSequential(),
                 StudentId = studentId,
-                request.AttendancePercent,
+                request.LessonsAttended,
+                request.TotalLessons,
                 request.IsExamAllowed,
                 request.HasAutomaticGrade,
                 UpdateDateUtc = DateTimeOffset.UtcNow,
@@ -1901,6 +1928,14 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             LEFT JOIN groups g ON g.id = ug.group_id
             LEFT JOIN student_gradebook_records sgr ON sgr.student_id = u.id
             LEFT JOIN laboratory_reports r ON r.student_id = u.id
+                AND EXISTS (
+                    SELECT 1
+                    FROM laboratory_works lw
+                    WHERE lw.id = r.laboratory_work_id
+                      AND lw.is_published = true
+                      AND lw.delete_date_utc IS NULL
+                      AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
+                )
             WHERE u.role = @StudentRole
               AND (
                   @IncludeAll = true

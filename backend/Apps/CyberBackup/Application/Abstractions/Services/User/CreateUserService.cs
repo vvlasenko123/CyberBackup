@@ -44,7 +44,7 @@ public class CreateUserService : ICreateUserService
             password: new PasswordHash(passwordHash),
             role: request.Role,
             isActive: true,
-            mustChangePassword: false,
+            mustChangePassword: true,
             createdBy: currentUserId,
             createdAt: DateTimeOffset.UtcNow,
             updatedAt: DateTimeOffset.UtcNow);

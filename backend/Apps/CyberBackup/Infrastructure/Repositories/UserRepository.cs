@@ -255,10 +255,14 @@ public sealed class UserRepository : IUserRepository
                                SELECT DISTINCT ug.user_id AS "Id"
                                FROM teacher_groups tg
                                JOIN user_groups ug ON ug.group_id = tg.group_id
+                               JOIN users u ON u.id = ug.user_id AND u.role = @StudentRole
                                WHERE tg.teacher_id = @TeacherId;
                            """;
 
-        var result = await _connection.QueryAsync<GuidDbModel>(sql, new { TeacherId = teacherId }, cancellationToken);
+        var result = await _connection.QueryAsync<GuidDbModel>(
+            sql,
+            new { TeacherId = teacherId, StudentRole = (int)UserRole.Student },
+            cancellationToken);
         return result.Select(x => x.Id).ToList();
     }
 

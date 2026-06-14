@@ -9,9 +9,14 @@ namespace Application.Abstractions.Services.Posts.Contracts;
 public interface IPostRepository
 {
     /// <summary>
-    /// Получить список постов с пагинацией и фильтром по категории
+    /// Получить список постов с пагинацией и фильтром по категории.
+    /// Для студента возвращаются только посты администраторов и преподавателей его групп.
     /// </summary>
-    Task<PagedResultDto<PostItemDto>> GetPostsAsync(GetPostsRequest request, CancellationToken cancellationToken);
+    Task<PagedResultDto<PostItemDto>> GetPostsAsync(
+        GetPostsRequest request,
+        Guid currentUserId,
+        bool filterByStudentTeachers,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Создать пост

@@ -38,6 +38,15 @@ public sealed class GroupService : IGroupService
     }
 
     /// <inheritdoc />
+    public Task RenameGroupAsync(Guid groupId, string name, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new GroupException("group.name_required", "Название группы не может быть пустым");
+
+        return _repository.RenameGroupAsync(groupId, name.Trim(), cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task DeleteGroupAsync(Guid groupId, CancellationToken cancellationToken)
         => _repository.DeleteGroupAsync(groupId, cancellationToken);
 

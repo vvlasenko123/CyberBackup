@@ -107,6 +107,15 @@ public sealed class GroupRepository : IGroupRepository
     }
 
     /// <inheritdoc />
+    public async Task RenameGroupAsync(Guid groupId, string name, CancellationToken cancellationToken)
+    {
+        await _connection.ExecuteAsync(
+            "UPDATE groups SET name = @Name WHERE id = @GroupId;",
+            new { GroupId = groupId, Name = name },
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task DeleteGroupAsync(Guid groupId, CancellationToken cancellationToken)
     {
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);

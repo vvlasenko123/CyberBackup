@@ -70,7 +70,7 @@ public sealed class CalendarNotificationHostedService : BackgroundService
                 userId: calendarEvent.UserId,
                 calendarEventId: calendarEvent.Id,
                 title: "Напоминание о событии",
-                message: $"Скоро начнётся событие: {calendarEvent.Title}",
+                message: $"Скоро начнётся событие: {calendarEvent.Title} ({calendarEvent.StartsAtUtc.ToOffset(TimeSpan.FromHours(3)):dd.MM.yyyy HH:mm})",
                 isRead: false,
                 createdAtUtc: nowUtc);
 

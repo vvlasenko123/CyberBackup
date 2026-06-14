@@ -63,6 +63,24 @@ public sealed class GroupController : PublicController
         }
     }
 
+    /// <summary>Переименовать группу</summary>
+    [HttpPut("{groupId:guid}")]
+    public async Task<IActionResult> RenameGroup(
+        Guid groupId,
+        [FromBody] CreateGroupRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _groupService.RenameGroupAsync(groupId, request.Name, cancellationToken);
+            return NoContent();
+        }
+        catch (GroupException ex)
+        {
+            return BadRequest(new { ex.Code, Message = ex.Message });
+        }
+    }
+
     /// <summary>Удалить группу</summary>
     [HttpDelete("{groupId:guid}")]
     public async Task<IActionResult> DeleteGroup(Guid groupId, CancellationToken cancellationToken)

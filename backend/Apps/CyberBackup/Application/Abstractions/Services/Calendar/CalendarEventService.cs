@@ -4,6 +4,7 @@ using Domain.Calendar;
 using Domain.Calendar.Enums;
 using Domain.Repositories;
 using Domain.User.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Abstractions.Services.Calendar;
 
@@ -14,17 +15,20 @@ public sealed class CalendarEventService : ICalendarEventService
     private readonly IUserRepository _userRepository;
     private readonly INotificationRepository _notificationRepository;
     private readonly INotificationPushService _notificationPush;
+    private readonly ILogger<CalendarEventService> _logger;
 
     public CalendarEventService(
         ICalendarEventRepository calendarEventRepository,
         IUserRepository userRepository,
         INotificationRepository notificationRepository,
-        INotificationPushService notificationPush)
+        INotificationPushService notificationPush,
+        ILogger<CalendarEventService> logger)
     {
         _calendarEventRepository = calendarEventRepository;
         _userRepository = userRepository;
         _notificationRepository = notificationRepository;
         _notificationPush = notificationPush;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -53,9 +57,12 @@ public sealed class CalendarEventService : ICalendarEventService
         {
             await SendCreationNotificationsAsync(calendarEvent, userId, creatorRole, cancellationToken);
         }
-        catch
+        catch (Exception exception)
         {
-            // Уведомления — best-effort, не ломают создание события
+            _logger.LogError(
+                exception,
+                "Не удалось разослать уведомления о создании события календаря {CalendarEventId}",
+                calendarEvent.Id);
         }
 
         return calendarEvent;
@@ -77,6 +84,12 @@ public sealed class CalendarEventService : ICalendarEventService
     public async Task<IReadOnlyCollection<CalendarEventModel>> GetStudentEvents(Guid studentId, CancellationToken cancellationToken)
     {
         return await _calendarEventRepository.GetStudentEventsAsync(studentId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<CalendarEventModel>> GetTeacherEvents(Guid teacherId, CancellationToken cancellationToken)
+    {
+        return await _calendarEventRepository.GetTeacherEventsAsync(teacherId, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -106,7 +119,12 @@ public sealed class CalendarEventService : ICalendarEventService
         }
         else if (creatorRole == UserRole.Teacher)
         {
-            recipientIds = await _userRepository.GetStudentIdsByTeacherAsync(creatorId, cancellationToken);
+            var studentIds = await _userRepository.GetStudentIdsByTeacherAsync(creatorId, cancellationToken);
+            var adminIds = await _userRepository.GetUserIdsByRolesAsync(
+                [(int)UserRole.Admin, (int)UserRole.SuperAdmin],
+                cancellationToken);
+
+            recipientIds = studentIds.Concat(adminIds).Distinct().ToList();
         }
         else
         {
@@ -114,26 +132,38 @@ public sealed class CalendarEventService : ICalendarEventService
         }
 
         var title = "Новое событие в календаре";
-        var message = calendarEvent.Title;
+        var startsLocal = calendarEvent.StartsAtUtc.ToOffset(TimeSpan.FromHours(3));
+        var message = $"{calendarEvent.Title} — {startsLocal:dd.MM.yyyy HH:mm}";
         var nowUtc = DateTimeOffset.UtcNow;
 
         foreach (var recipientId in recipientIds)
         {
             if (recipientId == creatorId) continue;
 
-            var notification = new NotificationModel(
-                id: UUIDNext.Uuid.NewSequential(),
-                userId: recipientId,
-                calendarEventId: calendarEvent.Id,
-                title: title,
-                message: message,
-                isRead: false,
-                createdAtUtc: nowUtc);
+            try
+            {
+                var notification = new NotificationModel(
+                    id: UUIDNext.Uuid.NewSequential(),
+                    userId: recipientId,
+                    calendarEventId: calendarEvent.Id,
+                    title: title,
+                    message: message,
+                    isRead: false,
+                    createdAtUtc: nowUtc);
 
-            await _notificationRepository.CreateAsync(notification, cancellationToken);
+                await _notificationRepository.CreateAsync(notification, cancellationToken);
 
-            var dto = new NotificationMessageDto(notification.Id, title, message, nowUtc);
-            await _notificationPush.SendToUserAsync(recipientId, dto, cancellationToken);
+                var dto = new NotificationMessageDto(notification.Id, title, message, nowUtc);
+                await _notificationPush.SendToUserAsync(recipientId, dto, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "Не удалось отправить уведомление о событии {CalendarEventId} пользователю {RecipientId}",
+                    calendarEvent.Id,
+                    recipientId);
+            }
         }
     }
 

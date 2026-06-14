@@ -30,6 +30,11 @@ public interface ICalendarEventService
     Task<IReadOnlyCollection<CalendarEventModel>> GetStudentEvents(Guid studentId, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Получить события преподавателя: свои + админские
+    /// </summary>
+    Task<IReadOnlyCollection<CalendarEventModel>> GetTeacherEvents(Guid teacherId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Удалить событие календаря. Если isAdmin = true — удаляет без проверки владельца.
     /// </summary>
     Task DeleteAsync(Guid id, Guid userId, bool isAdmin, CancellationToken cancellationToken);

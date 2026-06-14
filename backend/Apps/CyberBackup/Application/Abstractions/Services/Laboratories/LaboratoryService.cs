@@ -623,9 +623,9 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         var currentUser = GetCurrentUser();
 
-        if (request.AttendancePercent is < 0 or > 100)
+        if (request.LessonsAttended < 0 || request.TotalLessons < 0 || request.LessonsAttended > request.TotalLessons)
         {
-            throw new LaboratoryException("gradebook.attendance_out_of_range", "Посещаемость должна быть от 0 до 100");
+            throw new LaboratoryException("gradebook.attendance_invalid", "Число посещённых занятий не может превышать общее число занятий");
         }
 
         var result = await _repository.UpdateGradebookAsync(

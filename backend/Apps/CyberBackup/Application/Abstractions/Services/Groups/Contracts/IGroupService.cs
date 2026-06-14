@@ -16,6 +16,9 @@ public interface IGroupService
     /// <summary>Создать группу</summary>
     Task<Guid> CreateGroupAsync(CreateGroupRequest request, CancellationToken cancellationToken);
 
+    /// <summary>Переименовать группу</summary>
+    Task RenameGroupAsync(Guid groupId, string name, CancellationToken cancellationToken);
+
     /// <summary>Удалить группу</summary>
     Task DeleteGroupAsync(Guid groupId, CancellationToken cancellationToken);
 

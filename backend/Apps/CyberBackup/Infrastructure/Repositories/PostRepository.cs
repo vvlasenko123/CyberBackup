@@ -2,6 +2,7 @@ using Application.Abstractions.Services.Posts.Contracts;
 using Application.DTO.Laboratories;
 using Application.DTO.Posts;
 using Dapper;
+using Domain.User.Enums;
 using Infrastructure.Database.Connection.Contracts;
 
 namespace Infrastructure.Repositories;
@@ -19,12 +20,26 @@ public sealed class PostRepository : IPostRepository
     /// <inheritdoc />
     public async Task<PagedResultDto<PostItemDto>> GetPostsAsync(
         GetPostsRequest request,
+        Guid currentUserId,
+        bool filterByStudentTeachers,
         CancellationToken cancellationToken)
     {
         const string sql = """
                            SELECT COUNT(*)
                            FROM posts p
-                           WHERE @Category IS NULL OR p.category = @Category;
+                           JOIN users u ON u.id = p.author_id
+                           WHERE (@Category IS NULL OR p.category = @Category)
+                             AND (
+                                 @FilterByStudentTeachers = false
+                                 OR u.role IN (@AdminRole, @SuperAdminRole)
+                                 OR EXISTS (
+                                     SELECT 1
+                                     FROM teacher_groups tg
+                                     JOIN user_groups ug ON ug.group_id = tg.group_id
+                                     WHERE tg.teacher_id = p.author_id
+                                       AND ug.user_id = @CurrentUserId
+                                 )
+                             );
 
                            SELECT
                                p.id AS "Id",
@@ -35,7 +50,18 @@ public sealed class PostRepository : IPostRepository
                                p.created_at_utc AS "CreatedAtUtc"
                            FROM posts p
                            JOIN users u ON u.id = p.author_id
-                           WHERE @Category IS NULL OR p.category = @Category
+                           WHERE (@Category IS NULL OR p.category = @Category)
+                             AND (
+                                 @FilterByStudentTeachers = false
+                                 OR u.role IN (@AdminRole, @SuperAdminRole)
+                                 OR EXISTS (
+                                     SELECT 1
+                                     FROM teacher_groups tg
+                                     JOIN user_groups ug ON ug.group_id = tg.group_id
+                                     WHERE tg.teacher_id = p.author_id
+                                       AND ug.user_id = @CurrentUserId
+                                 )
+                             )
                            ORDER BY p.created_at_utc DESC
                            OFFSET @Offset LIMIT @PageSize;
                            """;
@@ -44,6 +70,10 @@ public sealed class PostRepository : IPostRepository
         using var grid = await connection.QueryMultipleAsync(sql, new
         {
             Category = (int?)request.Category,
+            CurrentUserId = currentUserId,
+            FilterByStudentTeachers = filterByStudentTeachers,
+            AdminRole = (int)UserRole.Admin,
+            SuperAdminRole = (int)UserRole.SuperAdmin,
             Offset = (request.Page - 1) * request.PageSize,
             request.PageSize
         });

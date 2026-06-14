@@ -16,6 +16,9 @@ public interface IGroupRepository
     /// <summary>Создать группу, вернуть её Id</summary>
     Task<Guid> CreateGroupAsync(string name, CancellationToken cancellationToken);
 
+    /// <summary>Переименовать группу</summary>
+    Task RenameGroupAsync(Guid groupId, string name, CancellationToken cancellationToken);
+
     /// <summary>Удалить группу (каскадно чистит teacher_groups и user_groups)</summary>
     Task DeleteGroupAsync(Guid groupId, CancellationToken cancellationToken);
 
