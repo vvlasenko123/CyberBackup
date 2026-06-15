@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 import type { User, UserRole } from '../../types';
@@ -15,6 +15,7 @@ export const Sidebar: React.FC<Props> = ({ role, user, onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const nav = navigationByRole[role];
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     return (
         <aside className="sidebar">
@@ -50,9 +51,21 @@ export const Sidebar: React.FC<Props> = ({ role, user, onLogout }) => {
                     </div>
                 </div>
 
-                <button className="sidebar__logout" onClick={onLogout}>
-                    <Icon name="logout" size={18} />
-                </button>
+                <div className="sidebar__logout-wrap">
+                    <button className="sidebar__logout" onClick={() => setShowLogoutConfirm(true)}>
+                        <Icon name="logout" size={18} />
+                    </button>
+
+                    {showLogoutConfirm && (
+                        <div className="sidebar__logout-popup">
+                            <p className="sidebar__logout-popup__text">Выйти из аккаунта?</p>
+                            <div className="sidebar__logout-popup__actions">
+                                <button className="sidebar__logout-popup__yes" onClick={onLogout}>Да</button>
+                                <button className="sidebar__logout-popup__no" onClick={() => setShowLogoutConfirm(false)}>Нет</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </aside>
     );

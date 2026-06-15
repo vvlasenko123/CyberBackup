@@ -123,6 +123,41 @@
     border-color: rgba(239, 68, 68, 0.4);
 }
 
+.groups-row-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.groups-rename-btn {
+    background: none;
+    border: 1px solid #374151;
+    border-radius: 7px;
+    padding: 5px 12px;
+    color: #9CA3AF;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.groups-rename-btn:hover {
+    background: rgba(156, 163, 175, 0.1);
+    border-color: rgba(156, 163, 175, 0.4);
+}
+
+.groups-rename-input {
+    background: #15171C;
+    border: 1px solid #2563EB;
+    border-radius: 7px;
+    padding: 6px 10px;
+    color: #E5E7EB;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+    max-width: 240px;
+}
+
 /* Modal */
 .groups-modal-overlay {
     position: fixed;

@@ -11,6 +11,7 @@ interface UserRecord {
     fullName: string;
     email: string;
     role: number; // 0=student,1=teacher,2=admin,3=superadmin
+    isActive?: boolean;
 }
 
 interface CreateForm {
@@ -85,6 +86,12 @@ export const UsersPage: React.FC = () => {
     const [importResults, setImportResults] = useState<ImportResult[] | null>(null);
     const [importing, setImporting] = useState(false);
     const [importError, setImportError] = useState<string | null>(null);
+
+    const [editUser, setEditUser] = useState<UserRecord | null>(null);
+    const [editForm, setEditForm] = useState({ fullName: '', email: '', role: 0, isActive: true });
+    const [editPassword, setEditPassword] = useState('');
+    const [savingEdit, setSavingEdit] = useState(false);
+    const [editError, setEditError] = useState<string | null>(null);
 
     // Group selection for import
     const [groups, setGroups] = useState<GroupListItem[]>([]);
@@ -164,6 +171,84 @@ export const UsersPage: React.FC = () => {
             const err = e as { response?: { data?: { message?: string } } };
             alert(err?.response?.data?.message || 'Не удалось удалить пользователя');
         }
+    };
+
+    const openEdit = async (u: UserRecord) => {
+        setEditError(null);
+        setEditPassword('');
+        try {
+            const res = await axiosInstance.get(`/public/api/v1/user/get/${u.id}`);
+            setEditForm({
+                fullName: res.data.fullName,
+                email: res.data.email,
+                role: res.data.role,
+                isActive: res.data.isActive ?? true,
+            });
+        } catch {
+            setEditForm({ fullName: u.fullName, email: u.email, role: u.role, isActive: u.isActive ?? true });
+        }
+        setEditUser(u);
+    };
+
+    const generatePassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+        let p = '';
+        for (let i = 0; i < 10; i++) p += chars[Math.floor(Math.random() * chars.length)];
+        setEditPassword(p);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editUser) return;
+        if (!editForm.fullName.trim() || !editForm.email.trim()) return;
+        setSavingEdit(true);
+        setEditError(null);
+        try {
+            await axiosInstance.put(`/public/api/v1/user/update/${editUser.id}`, {
+                fullName: editForm.fullName.trim(),
+                email: editForm.email.trim(),
+                role: editForm.role,
+                isActive: editForm.isActive,
+                password: editPassword ? editPassword : null,
+                mustChangePassword: editPassword ? true : false,
+            });
+            setEditUser(null);
+            await fetchUsers();
+        } catch (e: unknown) {
+            const err = e as { response?: { data?: { message?: string } } };
+            setEditError(err?.response?.data?.message || 'Не удалось сохранить изменения');
+        } finally {
+            setSavingEdit(false);
+        }
+    };
+
+    const exportImportCsv = () => {
+        if (!importResults) return;
+        const rows = importResults
+            .filter(r => r.success && r.password)
+            .map(r => `"${r.fullName}";"${r.email}";"${r.password}"`);
+        const csv = ['"ФИО";"Email";"Пароль"', ...rows].join('\r\n');
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'credentials.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const printImport = () => {
+        if (!importResults) return;
+        const rows = importResults
+            .filter(r => r.success && r.password)
+            .map(r => `<tr><td>${r.fullName}</td><td>${r.email}</td><td>${r.password}</td></tr>`)
+            .join('');
+        const w = window.open('', '_blank');
+        if (!w) return;
+        w.document.write(`<html><head><title>Доступы</title></head><body>
+            <table border="1" cellpadding="6" style="border-collapse:collapse">
+            <tr><th>ФИО</th><th>Email</th><th>Пароль</th></tr>${rows}</table>
+            <script>window.print()</script></body></html>`);
+        w.document.close();
     };
 
     const handleGroupSelectChange = (val: string) => {
@@ -265,12 +350,20 @@ export const UsersPage: React.FC = () => {
                                         </td>
                                         <td>
                                             {u.role !== 3 && (
-                                                <button
-                                                    className="users-btn-danger"
-                                                    onClick={() => handleDelete(u.id, u.fullName)}
-                                                >
-                                                    Удалить
-                                                </button>
+                                                <div className="users-row-actions">
+                                                    <button
+                                                        className="users-btn-secondary"
+                                                        onClick={() => openEdit(u)}
+                                                    >
+                                                        Редактировать
+                                                    </button>
+                                                    <button
+                                                        className="users-btn-danger"
+                                                        onClick={() => handleDelete(u.id, u.fullName)}
+                                                    >
+                                                        Удалить
+                                                    </button>
+                                                </div>
                                             )}
                                         </td>
                                     </tr>
@@ -343,6 +436,74 @@ export const UsersPage: React.FC = () => {
                             <button className="users-btn-secondary" onClick={() => setShowCreate(false)}>Отмена</button>
                             <button className="users-btn-primary" onClick={handleCreate} disabled={creating}>
                                 {creating ? 'Создание...' : 'Создать'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {editUser && (
+                <div className="users-modal-overlay" onClick={() => setEditUser(null)}>
+                    <div className="users-modal" onClick={e => e.stopPropagation()}>
+                        <h3 className="users-modal__title">Редактировать пользователя</h3>
+                        <div className="users-modal__field">
+                            <label className="users-modal__label">ФИО *</label>
+                            <input className="users-modal__input" value={editForm.fullName}
+                                onChange={e => setEditForm(f => ({ ...f, fullName: e.target.value }))} />
+                        </div>
+                        <div className="users-modal__field">
+                            <label className="users-modal__label">Email *</label>
+                            <input className="users-modal__input" type="email" value={editForm.email}
+                                onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} />
+                        </div>
+                        <div className="users-modal__field">
+                            <label className="users-modal__label">Роль</label>
+                            <select className="users-modal__select" value={editForm.role}
+                                onChange={e => setEditForm(f => ({ ...f, role: Number(e.target.value) }))}>
+                                <option value={0}>Студент</option>
+                                <option value={1}>Преподаватель</option>
+                                <option value={2}>Администратор</option>
+                            </select>
+                        </div>
+                        <div className="users-modal__field">
+                            <label className="users-modal__label">Аккаунт</label>
+                            <label className="users-toggle">
+                                <input
+                                    type="checkbox"
+                                    className="users-toggle__input"
+                                    checked={editForm.isActive}
+                                    onChange={e => setEditForm(f => ({ ...f, isActive: e.target.checked }))}
+                                />
+                                <span className="users-toggle__track">
+                                    <span className="users-toggle__thumb" />
+                                </span>
+                                <span className="users-toggle__label">
+                                    {editForm.isActive ? 'Активен' : 'Неактивен'}
+                                </span>
+                            </label>
+                        </div>
+                        <div className="users-modal__field">
+                            <label className="users-modal__label">Сбросить пароль</label>
+                            <div className="users-modal__password-row">
+                                <input className="users-modal__input" type="text"
+                                    placeholder="Оставьте пустым, чтобы не менять"
+                                    value={editPassword} onChange={e => setEditPassword(e.target.value)} />
+                                <button type="button" className="users-btn-secondary" onClick={generatePassword}>
+                                    Сгенерировать
+                                </button>
+                                {editPassword && <CopyButton text={editPassword} />}
+                            </div>
+                            {editPassword && (
+                                <small className="users-modal__hint">
+                                    Передайте пароль пользователю — при следующем входе он обязан его сменить.
+                                </small>
+                            )}
+                        </div>
+                        {editError && <div className="users-modal__error">{editError}</div>}
+                        <div className="users-modal__actions">
+                            <button className="users-btn-secondary" onClick={() => setEditUser(null)}>Отмена</button>
+                            <button className="users-btn-primary" onClick={handleSaveEdit} disabled={savingEdit}>
+                                {savingEdit ? 'Сохранение...' : 'Сохранить'}
                             </button>
                         </div>
                     </div>
@@ -433,6 +594,12 @@ export const UsersPage: React.FC = () => {
                             Результат: {importResults.filter(r => r.success).length} создано,{' '}
                             {importResults.filter(r => !r.success).length} ошибок
                         </div>
+                        {importResults.some(r => r.success && r.password) && (
+                            <div className="users-import-export">
+                                <button className="users-btn-secondary" onClick={exportImportCsv}>Скачать CSV</button>
+                                <button className="users-btn-secondary" onClick={printImport}>Печать</button>
+                            </div>
+                        )}
                         {importResults.map((r, i) => (
                             <div key={i} className={`users-import-row users-import-row--${r.success ? 'ok' : 'err'}`}>
                                 {r.success ? '✓' : '✗'} {r.fullName} — {r.email}

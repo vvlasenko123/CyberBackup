@@ -26,6 +26,11 @@ function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allow
         return <Navigate to="/unauthorized" />;
     }
 
+    const mustChange = localStorage.getItem('must_change_password') === 'true';
+    if (mustChange && window.location.pathname !== '/change-password') {
+        return <Navigate to="/change-password" />;
+    }
+
     return <>{children}</>;
 }
 

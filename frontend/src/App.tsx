@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import { AppLayout } from './layout/AppLayout';
+import { useIsDesktop } from './shared/useIsDesktop';
+import DesktopOnlyScreen from './pages/DesktopOnly/DesktopOnlyScreen';
 
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
@@ -27,11 +29,18 @@ import GroupDetailPage from './pages/GroupDetailPage/GroupDetailPage';
 import LabEditPage from './pages/LabEditPage/LabEditPage';
 
 function App() {
+    const isDesktop = useIsDesktop();
+
+    if (!isDesktop) {
+        return <DesktopOnlyScreen />;
+    }
+
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/change-password" element={<ChangePasswordPage />} />
                 <Route path="/logout" element={<LogOut />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 <Route path="*" element={<NotFound />} />
@@ -136,7 +145,6 @@ function App() {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/change-password" element={<ChangePasswordPage />} />
                 </Route>
             </Routes>
         </BrowserRouter>

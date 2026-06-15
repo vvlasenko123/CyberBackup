@@ -50,6 +50,8 @@ interface TeacherGradebookItemDto {
     fullName: string;
     groupName?: string;
     attendancePercent: number;
+    lessonsAttended: number;
+    totalLessons: number;
     isExamAllowed: boolean;
     hasAutomaticGrade: boolean;
     totalPoints: number;
@@ -189,7 +191,8 @@ const StudentGradebook: React.FC = () => {
 interface EditForm {
     studentId: string;
     fullName: string;
-    attendancePercent: number;
+    lessonsAttended: number;
+    totalLessons: number;
     isExamAllowed: boolean;
     hasAutomaticGrade: boolean;
 }
@@ -267,10 +270,11 @@ const TeacherGradebook: React.FC = () => {
 
     const openEdit = (item: TeacherGradebookItemDto) => {
         setEditForm({
-            studentId:        item.studentId,
-            fullName:         item.fullName,
-            attendancePercent: item.attendancePercent,
-            isExamAllowed:    item.isExamAllowed,
+            studentId:       item.studentId,
+            fullName:        item.fullName,
+            lessonsAttended: item.lessonsAttended,
+            totalLessons:    item.totalLessons,
+            isExamAllowed:   item.isExamAllowed,
             hasAutomaticGrade: item.hasAutomaticGrade,
         });
         setSaveError(null);
@@ -282,7 +286,8 @@ const TeacherGradebook: React.FC = () => {
         setSaveError(null);
         try {
             await axiosInstance.put(`/public/api/v1/teacher/gradebook/${editForm.studentId}`, {
-                attendancePercent: editForm.attendancePercent,
+                lessonsAttended:  editForm.lessonsAttended,
+                totalLessons:     editForm.totalLessons,
                 isExamAllowed:    editForm.isExamAllowed,
                 hasAutomaticGrade: editForm.hasAutomaticGrade,
             });
@@ -351,7 +356,12 @@ const TeacherGradebook: React.FC = () => {
                                 <tr key={item.studentId}>
                                     <td>{item.fullName}</td>
                                     <td>{item.groupName ?? <span className="stmt-dash">—</span>}</td>
-                                    <td>{Math.round(item.attendancePercent)}%</td>
+                                    <td>
+                                        {item.totalLessons > 0
+                                            ? <>{item.lessonsAttended} / {item.totalLessons} <span className="stmt-dash">({Math.round(item.attendancePercent)}%)</span></>
+                                            : <span className="stmt-dash">—</span>
+                                        }
+                                    </td>
                                     <td>{item.completedLaboratories} / {item.totalLaboratories}</td>
                                     <td>
                                         <Badge info={{
@@ -390,46 +400,84 @@ const TeacherGradebook: React.FC = () => {
                         <h3 className="stmt-modal__title">{editForm.fullName}</h3>
 
                         <div className="stmt-modal__body">
-                            <label className="stmt-modal__field">
-                                <span className="stmt-modal__label">Посещаемость (%)</span>
-                                <input
-                                    className="stmt-modal__input"
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    step={0.1}
-                                    value={editForm.attendancePercent}
-                                    onChange={e => setEditForm(f => f
-                                        ? { ...f, attendancePercent: parseFloat(e.target.value) || 0 }
-                                        : f
-                                    )}
-                                />
-                            </label>
+                            <div className="stmt-modal__field">
+                                <div className="stmt-modal__label-row">
+                                    <span className="stmt-modal__label">Посещаемость</span>
+                                    <span className="stmt-modal__pct-value">
+                                        {editForm.totalLessons > 0 && editForm.lessonsAttended <= editForm.totalLessons
+                                            ? `${Math.round(editForm.lessonsAttended / editForm.totalLessons * 100)}%`
+                                            : '—'}
+                                    </span>
+                                </div>
+                                <div className="stmt-modal__counters">
+                                    <div className="stmt-modal__counter">
+                                        <span className="stmt-modal__counter-label">Посещено</span>
+                                        <div className="stmt-modal__counter-row">
+                                            <button type="button" className="stmt-modal__counter-btn"
+                                                onClick={() => setEditForm(f => f && f.lessonsAttended > 0 ? { ...f, lessonsAttended: f.lessonsAttended - 1 } : f)}>−</button>
+                                            <input
+                                                className="stmt-modal__counter-input"
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={editForm.lessonsAttended}
+                                                onChange={e => {
+                                                    const digits = e.target.value.replace(/\D/g, '');
+                                                    const v = digits === '' ? 0 : Math.min(editForm.totalLessons, Math.max(0, parseInt(digits, 10)));
+                                                    setEditForm(f => f ? { ...f, lessonsAttended: v } : f);
+                                                }}
+                                            />
+                                            <button type="button" className="stmt-modal__counter-btn"
+                                                onClick={() => setEditForm(f => f && f.lessonsAttended < f.totalLessons ? { ...f, lessonsAttended: f.lessonsAttended + 1 } : f)}>+</button>
+                                        </div>
+                                    </div>
+                                    <span className="stmt-modal__counter-sep">из</span>
+                                    <div className="stmt-modal__counter">
+                                        <span className="stmt-modal__counter-label">Всего пар</span>
+                                        <div className="stmt-modal__counter-row">
+                                            <button type="button" className="stmt-modal__counter-btn"
+                                                onClick={() => setEditForm(f => f && f.totalLessons > 0 ? { ...f, totalLessons: f.totalLessons - 1, lessonsAttended: Math.min(f.lessonsAttended, f.totalLessons - 1) } : f)}>−</button>
+                                            <input
+                                                className="stmt-modal__counter-input"
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={editForm.totalLessons}
+                                                onChange={e => {
+                                                    const digits = e.target.value.replace(/\D/g, '');
+                                                    const v = digits === '' ? 0 : Math.max(0, parseInt(digits, 10));
+                                                    setEditForm(f => f ? { ...f, totalLessons: v } : f);
+                                                }}
+                                                onBlur={() => setEditForm(f => f ? {
+                                                    ...f,
+                                                    lessonsAttended: Math.min(f.lessonsAttended, f.totalLessons),
+                                                } : f)}
+                                            />
+                                            <button type="button" className="stmt-modal__counter-btn"
+                                                onClick={() => setEditForm(f => f ? { ...f, totalLessons: f.totalLessons + 1 } : f)}>+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div className="stmt-modal__field stmt-modal__field--toggle">
                                 <span className="stmt-modal__label">Допуск к зачёту</span>
-                                <input
-                                    type="checkbox"
-                                    className="stmt-modal__checkbox"
-                                    checked={editForm.isExamAllowed}
-                                    onChange={e => setEditForm(f => f
-                                        ? { ...f, isExamAllowed: e.target.checked }
-                                        : f
-                                    )}
-                                />
+                                <label className="stmt-toggle">
+                                    <input type="checkbox" className="stmt-toggle__input"
+                                        checked={editForm.isExamAllowed}
+                                        onChange={e => setEditForm(f => f ? { ...f, isExamAllowed: e.target.checked } : f)} />
+                                    <span className="stmt-toggle__track"><span className="stmt-toggle__thumb" /></span>
+                                    <span className="stmt-toggle__text">{editForm.isExamAllowed ? 'Допущен' : 'Не допущен'}</span>
+                                </label>
                             </div>
 
                             <div className="stmt-modal__field stmt-modal__field--toggle">
                                 <span className="stmt-modal__label">Автомат</span>
-                                <input
-                                    type="checkbox"
-                                    className="stmt-modal__checkbox"
-                                    checked={editForm.hasAutomaticGrade}
-                                    onChange={e => setEditForm(f => f
-                                        ? { ...f, hasAutomaticGrade: e.target.checked }
-                                        : f
-                                    )}
-                                />
+                                <label className="stmt-toggle">
+                                    <input type="checkbox" className="stmt-toggle__input"
+                                        checked={editForm.hasAutomaticGrade}
+                                        onChange={e => setEditForm(f => f ? { ...f, hasAutomaticGrade: e.target.checked } : f)} />
+                                    <span className="stmt-toggle__track"><span className="stmt-toggle__thumb" /></span>
+                                    <span className="stmt-toggle__text">{editForm.hasAutomaticGrade ? 'Да' : 'Нет'}</span>
+                                </label>
                             </div>
                         </div>
 

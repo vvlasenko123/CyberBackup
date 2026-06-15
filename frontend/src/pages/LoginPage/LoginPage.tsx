@@ -21,8 +21,8 @@ const LoginPage: React.FC = () => {
         try {
             setError('');
             setLoading(true);
-            await loginRequest(email, password);
-            navigate('/dashboard');
+            const res = await loginRequest(email, password);
+            navigate(res.mustChangePassword ? '/change-password' : '/dashboard');
         } catch (e) {
             if (e instanceof Error) {
                 setError(e.message === 'Failed to fetch' ? 'Ошибка соединения' : e.message);

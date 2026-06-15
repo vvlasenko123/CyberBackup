@@ -1,0 +1,136 @@
+.desktop-only {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0F1720;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.desktop-only__card {
+    --card-radius: 28px;
+    --card-pad: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--card-pad);
+    width: min(420px, 100%);
+    border-radius: var(--card-radius);
+    padding: var(--card-pad);
+    background: #1F2937;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    box-sizing: border-box;
+}
+
+.desktop-only__hero {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 32px;
+    min-height: 180px;
+    padding: 26px;
+    color: #fff;
+    border-radius: calc(var(--card-radius) - var(--card-pad));
+}
+
+.desktop-only .animated-gradient {
+    background:
+        radial-gradient(75% 75% at 18% 12%, rgba(29, 155, 240, 0.45) 0%, transparent 55%),
+        radial-gradient(65% 80% at 88% 90%, rgba(102, 110, 234, 0.40) 0%, transparent 60%),
+        linear-gradient(135deg, #243089 0%, #221fc7 40%, #1a2566 78%, #141d52 100%);
+    background-size: 170% 170%, 190% 190%, 200% 200%;
+    background-position: 0% 0%, 100% 100%, 0% 50%;
+    animation: desktop-only-gradient 8s ease-in-out infinite alternate;
+}
+
+@keyframes desktop-only-gradient {
+    0% {
+        background-position: 0% 0%, 100% 100%, 0% 50%;
+    }
+
+    100% {
+        background-position: 55% 35%, 45% 65%, 100% 50%;
+    }
+}
+
+.desktop-only__hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+    -webkit-mask-image: radial-gradient(130% 130% at 25% 10%, #000 50%, transparent 100%);
+    mask-image: radial-gradient(130% 130% at 25% 10%, #000 50%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .desktop-only .animated-gradient {
+        animation: none;
+    }
+}
+
+.desktop-only__logo {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-heading);
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+
+.desktop-only__logo span {
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.desktop-only__icon {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    backdrop-filter: blur(2px);
+}
+
+.desktop-only__body {
+    padding: 14px 18px 22px;
+    text-align: left;
+}
+
+.desktop-only__kicker {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #6B7280;
+    margin: 0 0 12px;
+}
+
+.desktop-only__title {
+    font-family: var(--font-heading);
+    font-size: 23px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: #F9FAFB;
+    margin: 0 0 12px;
+}
+
+.desktop-only__subtitle {
+    font-size: 15px;
+    line-height: 1.55;
+    color: #9CA3AF;
+    margin: 0;
+}

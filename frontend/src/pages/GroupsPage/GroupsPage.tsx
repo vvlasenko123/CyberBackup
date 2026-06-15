@@ -19,6 +19,8 @@ const GroupsPage = () => {
     const [newGroupName, setNewGroupName] = useState('');
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [renamingId, setRenamingId] = useState<string | null>(null);
+    const [renameValue, setRenameValue] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
 
     const fetchGroups = async () => {
@@ -64,6 +66,29 @@ const GroupsPage = () => {
         }
     };
 
+    const startRename = (groupId: string, currentName: string) => {
+        setRenamingId(groupId);
+        setRenameValue(currentName);
+    };
+
+    const cancelRename = () => {
+        setRenamingId(null);
+        setRenameValue('');
+    };
+
+    const submitRename = async (groupId: string) => {
+        const name = renameValue.trim();
+        if (!name) return;
+        try {
+            await axiosInstance.put(`/public/api/v1/admin/groups/${groupId}`, { name });
+            setGroups(prev => prev.map(g => (g.id === groupId ? { ...g, name } : g)));
+            cancelRename();
+        } catch (e: unknown) {
+            const err = e as { response?: { data?: { message?: string } } };
+            setError(err?.response?.data?.message || 'Не удалось переименовать группу');
+        }
+    };
+
     const handleDelete = async (groupId: string, groupName: string) => {
         if (!confirm(`Удалить группу «${groupName}»? Студенты и преподаватели будут откреплены.`)) return;
         try {
@@ -104,18 +129,60 @@ const GroupsPage = () => {
                                 <tr
                                     key={group.id}
                                     className="groups-row"
-                                    onClick={() => navigate(`/groups/${group.id}`)}
+                                    onClick={() => { if (renamingId !== group.id) navigate(`/groups/${group.id}`); }}
                                 >
-                                    <td className="groups-cell--name">{group.name}</td>
+                                    <td className="groups-cell--name">
+                                        {renamingId === group.id ? (
+                                            <input
+                                                className="groups-rename-input"
+                                                autoFocus
+                                                value={renameValue}
+                                                onClick={e => e.stopPropagation()}
+                                                onChange={e => setRenameValue(e.target.value)}
+                                                onKeyDown={e => {
+                                                    e.stopPropagation();
+                                                    if (e.key === 'Enter') submitRename(group.id);
+                                                    if (e.key === 'Escape') cancelRename();
+                                                }}
+                                            />
+                                        ) : (
+                                            group.name
+                                        )}
+                                    </td>
                                     <td className="groups-cell--count">{group.studentCount}</td>
                                     <td className="groups-cell--count">{group.teacherCount}</td>
                                     <td>
-                                        <button
-                                            className="groups-delete-btn"
-                                            onClick={e => { e.stopPropagation(); handleDelete(group.id, group.name); }}
-                                        >
-                                            Удалить
-                                        </button>
+                                        <div className="groups-row-actions">
+                                            {renamingId === group.id ? (
+                                                <>
+                                                    <button
+                                                        className="groups-rename-btn"
+                                                        onClick={e => { e.stopPropagation(); submitRename(group.id); }}
+                                                    >
+                                                        Сохранить
+                                                    </button>
+                                                    <button
+                                                        className="groups-rename-btn"
+                                                        onClick={e => { e.stopPropagation(); cancelRename(); }}
+                                                    >
+                                                        Отмена
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    className="groups-rename-btn"
+                                                    onClick={e => { e.stopPropagation(); startRename(group.id, group.name); }}
+                                                >
+                                                    Переименовать
+                                                </button>
+                                            )}
+                                            <button
+                                                className="groups-delete-btn"
+                                                onClick={e => { e.stopPropagation(); handleDelete(group.id, group.name); }}
+                                            >
+                                                Удалить
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

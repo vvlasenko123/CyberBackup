@@ -92,9 +92,78 @@
     font-size: 13px;
 }
 
+.sidebar__logout-wrap {
+    position: relative;
+}
+
 .sidebar__logout {
     background: transparent;
     border: none;
     cursor: pointer;
     color: #8A94A6;
+    transition: color 0.15s;
+}
+
+.sidebar__logout:hover {
+    color: #EF4444;
+}
+
+.sidebar__logout-popup {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 0;
+    background: #1F2937;
+    border: 1px solid #374151;
+    border-radius: 12px;
+    padding: 14px 16px;
+    width: 180px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 200;
+}
+
+.sidebar__logout-popup__text {
+    font-size: 13px;
+    color: #D1D5DB;
+    margin: 0 0 12px;
+    text-align: center;
+}
+
+.sidebar__logout-popup__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.sidebar__logout-popup__yes {
+    flex: 1;
+    padding: 7px 0;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 8px;
+    color: #EF4444;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.sidebar__logout-popup__yes:hover {
+    background: rgba(239, 68, 68, 0.28);
+}
+
+.sidebar__logout-popup__no {
+    flex: 1;
+    padding: 7px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #374151;
+    border-radius: 8px;
+    color: #9CA3AF;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.sidebar__logout-popup__no:hover {
+    background: rgba(255, 255, 255, 0.1);
 }

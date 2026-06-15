@@ -4,6 +4,7 @@ const API_URL = `${API_BASE}/public/auth`;
 export interface LoginResponse {
     accessToken: string;
     expiresAt: string;
+    mustChangePassword?: boolean;
 }
 
 const parseJwt = (token: string) => {
@@ -60,6 +61,7 @@ export const loginRequest = async (
     localStorage.setItem('expiresAt', data.expiresAt);
     localStorage.setItem('user_id', userId);
     localStorage.setItem('user_role', userRole);
+    localStorage.setItem('must_change_password', data.mustChangePassword ? 'true' : 'false');
 
     // Admin получает fullName через API, остальные видят email
     const fullName = await fetchFullName(userId, data.accessToken);
