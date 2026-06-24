@@ -4,11 +4,16 @@ services:
         container_name: postgres
         restart: unless-stopped
         environment:
-            POSTGRES_USER: test
-            POSTGRES_PASSWORD: driver
-            POSTGRES_DB: cyber-backup-api
+            POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+            POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
         volumes:
             - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
 
     minio:
         image: minio/minio:latest
@@ -16,13 +21,18 @@ services:
         restart: unless-stopped
         command: server /data --console-address ":9001"
         environment:
-            MINIO_ROOT_USER: minioadmin
-            MINIO_ROOT_PASSWORD: minioadmin
+            MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+            MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
         ports:
-            - "9000:9000"
-            - "9001:9001"
+            - "${MINIO_API_PORT:-9000}:9000"
+            - "${MINIO_CONSOLE_PORT:-9001}:9001"
         volumes:
             - minio_data:/data
+        healthcheck:
+            test: ["CMD", "mc", "ready", "local"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
 
     backend:
         build:
@@ -31,53 +41,55 @@ services:
         container_name: backend
         restart: unless-stopped
         ports:
-            - "5000:8080"
+            - "${BACKEND_PORT:-5000}:8080"
         environment:
             - ASPNETCORE_URLS=http://+:8080
             - ASPNETCORE_ENVIRONMENT=Production
 
-            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=test;Password=driver;Database=cyber-backup-api;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
-            - PostgresOptions__AutoMigration=true
+            - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=${POSTGRES_USER:?POSTGRES_USER is required};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required};Database=${POSTGRES_DB:?POSTGRES_DB is required};Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
+            - PostgresOptions__AutoMigration=${POSTGRES_AUTO_MIGRATION:-true}
 
-            - CyberCorsOptions__Origins__0=http://111.88.159.80
+            - CyberCorsOptions__Origins__0=${CYBER_CORS_ORIGIN:?CYBER_CORS_ORIGIN is required}
 
-            - JwtOptions__Issuer=solution
-            - JwtOptions__Audience=auth-api
-            - JwtOptions__SigningKey=local-dev-signing-key-change-me-please-32-bytes-minimum
-            - JwtOptions__AccessTokenLifetimeMinutes=15
+            - JwtOptions__Issuer=${JWT_ISSUER:-cyberbackup}
+            - JwtOptions__Audience=${JWT_AUDIENCE:-cyberbackup-api}
+            - JwtOptions__SigningKey=${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
+            - JwtOptions__AccessTokenLifetimeMinutes=${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:-15}
 
-            - RefreshTokenOptions__LifetimeDays=7
-            - RefreshTokenOptions__TokenBytes=64
+            - RefreshTokenOptions__LifetimeDays=${REFRESH_TOKEN_LIFETIME_DAYS:-7}
+            - RefreshTokenOptions__TokenBytes=${REFRESH_TOKEN_BYTES:-64}
 
-            - AuthTokenOptions__ClientId=web-client
-            - AuthTokenOptions__Scopes__0=identity
+            - AuthTokenOptions__ClientId=${AUTH_TOKEN_CLIENT_ID:-web-client}
+            - AuthTokenOptions__Scopes__0=${AUTH_TOKEN_SCOPE:-identity}
 
-            - PasswordHashOptions__Pepper=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
-            - PasswordHashOptions__WorkFactor=12
+            - PasswordHashOptions__Pepper=${PASSWORD_HASH_PEPPER:?PASSWORD_HASH_PEPPER is required}
+            - PasswordHashOptions__WorkFactor=${PASSWORD_HASH_WORK_FACTOR:-12}
 
-            - SuperAdminOptions__Email=superadmin@coreteam.com
-            - SuperAdminOptions__Password=admincoreteam
-            - SuperAdminOptions__FullName=Суперадминистратор
+            - SuperAdminOptions__Email=${SUPERADMIN_EMAIL:?SUPERADMIN_EMAIL is required}
+            - SuperAdminOptions__Password=${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD is required}
+            - SuperAdminOptions__FullName=${SUPERADMIN_FULL_NAME:-Super Administrator}
 
             - MinioOptions__Endpoint=minio:9000
-            - MinioOptions__AccessKey=minioadmin
-            - MinioOptions__SecretKey=minioadmin
-            - MinioOptions__BucketName=cyberbackup
-            - MinioOptions__UseSsl=false
+            - MinioOptions__AccessKey=${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+            - MinioOptions__SecretKey=${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+            - MinioOptions__BucketName=${MINIO_BUCKET_NAME:-cyberbackup}
+            - MinioOptions__UseSsl=${MINIO_USE_SSL:-false}
         depends_on:
-            - postgres
-            - minio
+            postgres:
+                condition: service_healthy
+            minio:
+                condition: service_healthy
 
     frontend:
         build:
             context: ../frontend
             dockerfile: Dockerfile
             args:
-                VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+                VITE_API_BASE_URL: ${VITE_API_BASE_URL:?VITE_API_BASE_URL is required}
         container_name: frontend
         restart: unless-stopped
         ports:
-            - "80:80"
+            - "${FRONTEND_PORT:-80}:80"
         depends_on:
             - backend
 
