@@ -1,0 +1,27 @@
+.git
+.gitignore
+
+# Environment files must never be sent to Docker build context.
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Local/editor files
+.idea
+.vscode
+*.code-workspace
+*.user
+
+# Build outputs and dependencies
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/build
+**/.next
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
