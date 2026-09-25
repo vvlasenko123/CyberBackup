@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
-import { Icon } from '../../shared/Icon';
+import { Icon } from '../../components/Icon';
 import './LabDetailPage.css';
 
 type LabDifficulty = 1 | 2 | 3;

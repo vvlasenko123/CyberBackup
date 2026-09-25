@@ -1,13 +1,13 @@
 import React from 'react';
-import HomeIcon from '../components/icons/home-icon';
-import LogoutIcon from '../components/icons/logout-icon';
-import FilledBellIcon from '../components/icons/filled-bell-icon';
-import UsersIcon from '../components/icons/users-icon';
-import BulbSvg from '../components/icons/bulb-svg';
-import ChartLineIcon from '../components/icons/chart-line-icon';
-import MessageCircleIcon from '../components/icons/message-circle-icon';
-import ClockIcon from '../components/icons/clock-icon';
-import FileDescriptionIcon from '../components/icons/file-description-icon';
+import HomeIcon from './icons/home-icon';
+import LogoutIcon from './icons/logout-icon';
+import FilledBellIcon from './icons/filled-bell-icon';
+import UsersIcon from './icons/users-icon';
+import BulbSvg from './icons/bulb-svg';
+import ChartLineIcon from './icons/chart-line-icon';
+import MessageCircleIcon from './icons/message-circle-icon';
+import ClockIcon from './icons/clock-icon';
+import FileDescriptionIcon from './icons/file-description-icon';
 
 export type IconName =
     | 'home'

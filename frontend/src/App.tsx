@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import ProtectedRoute from './components/ProtectedRoute';
-import { AppLayout } from './layout/AppLayout';
-import { useIsDesktop } from './shared/useIsDesktop';
+import { AppLayout } from './components/AppLayout/AppLayout';
+import { useIsDesktop } from './hooks/useIsDesktop';
 import DesktopOnlyScreen from './pages/DesktopOnly/DesktopOnlyScreen';
 
 import NotFound from './pages/NotFound';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
-import { Icon } from '../../shared/Icon';
+import { Icon } from '../../components/Icon';
 import '../QuestionsPage/QuestionsPage.css';
 
 enum QuestionStatus {

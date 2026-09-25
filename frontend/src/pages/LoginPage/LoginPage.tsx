@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginRequest } from '../../auth/auth';
+import { loginRequest } from '../../features/auth/auth';
 import { EyeIcon, EyeOffIcon } from '../../components/Icons';
 import { Input } from '../../components/Input/Input';
 import './LoginPage.css';

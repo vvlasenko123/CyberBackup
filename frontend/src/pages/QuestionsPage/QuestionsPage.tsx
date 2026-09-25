@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
-import { Icon } from '../../shared/Icon';
+import { Icon } from '../../components/Icon';
 import './QuestionsPage.css';
 
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
-import { Icon } from '../../shared/Icon';
+import { Icon } from '../../components/Icon';
 import './LabReportPage.css';
 
 const downloadFileByUrl = async (url: string, fallbackName: string) => {

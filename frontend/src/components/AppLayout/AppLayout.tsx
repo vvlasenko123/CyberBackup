@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import './AppLayout.css';
-import type { User, UserRole } from '../types';
+import type { User, UserRole } from '../../utils/types';
 import { Sidebar } from './Sidebar/Sidebar';
 import { Header } from './Header/Header';
-import { useNotifications } from '../notifications/useNotifications';
-import { NotificationBell } from '../notifications/NotificationBell';
-import { NotificationToast } from '../notifications/NotificationToast';
+import { useNotifications } from '../../features/notifications/useNotifications';
+import { NotificationBell } from '../../features/notifications/NotificationBell';
+import { NotificationToast } from '../../features/notifications/NotificationToast';
 
 export const AppLayout: React.FC = () => {
     const navigate = useNavigate();
