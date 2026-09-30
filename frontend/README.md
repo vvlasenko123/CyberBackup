@@ -71,3 +71,22 @@ export default defineConfig([
   },
 ])
 ```
+
+Запуск тестов
+
+## Тесты
+
+Запуск из каталога `frontend` (Node.js 20.19.5):
+
+```bash
+npm ci
+npm test
+```
+
+Дополнительные команды:
+
+```bash
+npm run test:watch
+npm run test:coverage
+npm run test:typecheck
+```
