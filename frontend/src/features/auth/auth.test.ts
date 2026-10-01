@@ -48,3 +48,22 @@ describe('loginRequest', () => {
         expect(localStorage.length).toBe(0);
     });
 });
+
+it('replaces a previous account and resets the password-change flag on a new login', async () => {
+    localStorage.setItem('token', tokenFor('admin'));
+    localStorage.setItem('user_role', 'admin');
+    localStorage.setItem('user_id', 'previous-user');
+    localStorage.setItem('user_name', 'Previous User');
+    localStorage.setItem('must_change_password', 'true');
+    server.use(
+        http.post(`${API}/public/auth/login`, () => HttpResponse.json({ accessToken: tokenFor(), expiresAt: '2099-02-01' })),
+        http.get(`${API}/public/api/v1/user/get/user-1`, () => HttpResponse.json({ fullName: 'New User' })),
+    );
+    await loginRequest('new@example.com', 'secret');
+    expect(localStorage.getItem('token')).toBe(tokenFor());
+    expect(localStorage.getItem('user_role')).toBe('student');
+    expect(localStorage.getItem('user_id')).toBe('user-1');
+    expect(localStorage.getItem('user_name')).toBe('New User');
+    expect(localStorage.getItem('expiresAt')).toBe('2099-02-01');
+    expect(localStorage.getItem('must_change_password')).toBe('false');
+});

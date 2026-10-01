@@ -17,6 +17,7 @@ export default defineConfig({
                 'src/hooks/useIsDesktop.ts',
                 'src/utils/axiosInstance.ts',
                 'src/pages/LoginPage/LoginPage.tsx',
+                'src/pages/LogOut.tsx',
                 'src/pages/LabsPage/LabsPage.tsx',
                 'src/pages/LabReportPage/LabReportPage.tsx',
             ],

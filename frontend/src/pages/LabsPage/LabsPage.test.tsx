@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
@@ -62,5 +62,93 @@ describe('LabsPage', () => {
         await user.clear(screen.getByRole('textbox'));
         await user.click(screen.getByText('Анна Сидорова'));
         expect(screen.getByLabelText('Current route')).toHaveTextContent('/teacher/reports/r2');
+    });
+});
+
+function teacherData(labs: typeof lab[] = [], reports: object[] = []) {
+    setSession('teacher');
+    server.use(
+        http.get(`${API}/public/api/v1/teacher/laboratories`, () => HttpResponse.json({ items: labs })),
+        http.get(`${API}/public/api/v1/teacher/reports`, () => HttpResponse.json({ items: reports })),
+    );
+}
+
+describe('laboratory lists', () => {
+    it('groups student labs alphabetically and sorts within each block', async () => {
+        setSession();
+        server.use(
+            http.get(`${API}/public/api/v1/laboratories`, () => HttpResponse.json({ items: [
+                { ...lab, id: 'second', title: 'Вторая', sortOrder: 2 },
+                { ...lab, id: 'first', title: 'Первая', sortOrder: 1, isCompleted: true, earnedPoints: 7 },
+                { ...lab, id: 'unassigned', title: 'Без раздела', block: '', difficulty: 3 },
+                { ...lab, id: 'other', title: 'Алгоритмы', block: 'Алгоритмы', difficulty: 2 },
+            ] })),
+            http.get(`${API}/public/api/v1/laboratories/progress/my`, () => HttpResponse.json({ totalLaboratories: 4, completedLaboratories: 1 })),
+        );
+        renderPage(<LabsPage />, '/labs');
+        await screen.findByRole('button', { name: /Первая/ });
+        expect(screen.getAllByRole('heading').map(h => h.textContent)).toEqual(['АЛГОРИТМЫ', 'БЕЗ БЛОКА', 'СЕТИ']);
+        expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual([
+            expect.stringContaining('Алгоритмы'), expect.stringContaining('Без раздела'),
+            expect.stringContaining('Первая'), expect.stringContaining('Вторая'),
+        ]);
+        expect(screen.getByRole('button', { name: /Первая/ })).toHaveTextContent('7 / 10 баллов');
+        expect(screen.getByText('4 работ · 1 выполнено')).toBeInTheDocument();
+    });
+    it('sorts teacher labs by order then title and displays publication state', async () => {
+        teacherData([
+            { ...lab, id: 'b', title: 'Бета', sortOrder: 2 },
+            { ...lab, id: 'a', title: 'Альфа', sortOrder: 2, isPublished: false },
+            { ...lab, id: 'c', title: 'Гамма', sortOrder: 1 },
+        ]);
+        renderPage(<LabsPage />, '/labs');
+        await screen.findByRole('button', { name: /Альфа/ });
+        const cards = screen.getAllByRole('button').filter(b => /Альфа|Бета|Гамма/.test(b.textContent ?? ''));
+        expect(cards.map(b => b.textContent)).toEqual([
+            expect.stringContaining('Гамма'), expect.stringContaining('Альфа'), expect.stringContaining('Бета'),
+        ]);
+        expect(cards[1]).toHaveTextContent('Черновик');
+        expect(cards[0]).toHaveTextContent('Опубликована');
+        await userEvent.setup().click(cards[1]);
+        expect(screen.getByLabelText('Current route')).toHaveTextContent('/labs/a');
+    });
+    it('opens creation from the empty teacher list', async () => {
+        teacherData();
+        renderPage(<LabsPage />, '/labs');
+        expect(await screen.findByText('Лабораторных работ ещё нет. Создайте первую!')).toBeInTheDocument();
+        await userEvent.setup().click(screen.getByRole('button', { name: '+ Создать лабораторную' }));
+        expect(screen.getByLabelText('Current route')).toHaveTextContent('/labs/create');
+    });
+    it('switches between empty reports and the laboratory list', async () => {
+        teacherData([lab]);
+        renderPage(<LabsPage />, '/labs');
+        const user = userEvent.setup();
+        await user.click(await screen.findByRole('button', { name: /Отчёты студентов/ }));
+        expect(screen.getByText('Отчёты не найдены')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Основы сетей/ })).not.toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: /Мои лабораторные/ }));
+        expect(screen.getByRole('button', { name: /Основы сетей/ })).toBeInTheDocument();
+    });
+    it('sorts reports by submission time and searches by laboratory title', async () => {
+        const base = { studentFullName: 'Иван', groupName: null, currentVersionNumber: 1, maxPoints: 10, points: null, status: 3 };
+        teacherData([], [
+            { ...base, reportId: 'old', laboratoryTitle: 'Сети', lastSubmitDateUtc: '2026-01-01T12:00:00Z' },
+            { ...base, reportId: 'new', laboratoryTitle: 'Linux', lastSubmitDateUtc: '2026-02-01T12:00:00Z' },
+        ]);
+        renderPage(<LabsPage />, '/labs');
+        const user = userEvent.setup();
+        await user.click(await screen.findByRole('button', { name: /Отчёты студентов/ }));
+        const rows = screen.getAllByRole('row').slice(1);
+        expect(rows[0]).toHaveTextContent('Linux');
+        expect(rows[1]).toHaveTextContent('Сети');
+        expect(within(rows[0]).getByText('—')).toBeInTheDocument();
+        expect(rows[0]).toHaveTextContent('— / 10');
+        await user.type(screen.getByRole('textbox'), 'LINUX');
+        expect(screen.queryByText('Сети')).not.toBeInTheDocument();
+        expect(screen.getByText('Linux')).toBeInTheDocument();
+        await user.selectOptions(screen.getByRole('combobox'), '4');
+        expect(screen.getByText('Отчёты не найдены')).toBeInTheDocument();
+        await user.selectOptions(screen.getByRole('combobox'), '');
+        expect(screen.getByText('Linux')).toBeInTheDocument();
     });
 });
