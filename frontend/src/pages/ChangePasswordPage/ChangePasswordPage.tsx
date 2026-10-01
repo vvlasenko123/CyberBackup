@@ -15,7 +15,7 @@ const ChangePasswordPage: React.FC = () => {
     const isDisabled = !currentPassword || !newPassword || newPassword !== confirmPassword;
 
     const handleSubmit = async () => {
-        if (isDisabled) return;
+        if (isDisabled || loading) return;
         try {
             setError('');
             setLoading(true);

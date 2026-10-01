@@ -67,3 +67,18 @@ it('replaces a previous account and resets the password-change flag on a new log
     expect(localStorage.getItem('expiresAt')).toBe('2099-02-01');
     expect(localStorage.getItem('must_change_password')).toBe('false');
 });
+
+it.each([
+    null,
+    {},
+    { accessToken: 'broken', expiresAt: '2099-01-01' },
+    { expiresAt: '2099-01-01' },
+    { accessToken: tokenFor() },
+    { accessToken: tokenFor(), expiresAt: 'invalid' },
+    { accessToken: tokenFor('unknown'), expiresAt: '2099-01-01' },
+    { accessToken: `header.${btoa(JSON.stringify({ role: 'student' }))}.signature`, expiresAt: '2099-01-01' },
+])('rejects malformed authentication response without storing credentials: %j', async response => {
+    server.use(http.post(`${API}/public/auth/login`, () => HttpResponse.json(response)));
+    await expect(loginRequest('user@example.com', 'secret')).rejects.toThrow('Некорректная авторизация');
+    expect(localStorage.length).toBe(0);
+});

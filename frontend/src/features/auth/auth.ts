@@ -50,7 +50,12 @@ export const loginRequest = async (
 
     const data: LoginResponse = await response.json();
 
-    const jwtPayload = parseJwt(data.accessToken);
+    const jwtPayload = parseJwt(data?.accessToken);
+    if (!jwtPayload || typeof jwtPayload.sub !== 'string' || !jwtPayload.sub
+        || !['student', 'teacher', 'admin', 'superadmin'].includes(jwtPayload.role)
+        || typeof data.expiresAt !== 'string' || !Number.isFinite(Date.parse(data.expiresAt))) {
+        throw new Error('Некорректная авторизация');
+    }
     let userRole = 'student';
     if (jwtPayload?.role === 'teacher') userRole = 'teacher';
     if (jwtPayload?.role === 'admin' || jwtPayload?.role === 'superadmin') userRole = 'admin';

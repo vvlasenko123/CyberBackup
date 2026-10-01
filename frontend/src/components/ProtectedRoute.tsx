@@ -2,7 +2,8 @@ import { Navigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
 function isTokenExpired(expiresAt: string) {
-    return new Date(expiresAt) < new Date();
+    const timestamp = new Date(expiresAt).getTime();
+    return !Number.isFinite(timestamp) || timestamp <= Date.now();
 }
 
 function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allowedRoles: string[] }) {

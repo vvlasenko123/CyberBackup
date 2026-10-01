@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import type { AppNotification } from './useNotifications';
-import { Icon } from '../shared/Icon';
+import { Icon } from '../../components/Icon';
 import './Notifications.css';
 
 interface Props {

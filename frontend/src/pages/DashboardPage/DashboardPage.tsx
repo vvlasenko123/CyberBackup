@@ -3,11 +3,12 @@ import axiosInstance from '../../utils/axiosInstance';
 import './DashboardPage.css';
 
 
-enum PostCategory {
-    Event       = 0,
-    Laboratory  = 1,
-    Information = 2,
-}
+const PostCategory = {
+    Event: 0,
+    Laboratory: 1,
+    Information: 2,
+} as const;
+type PostCategory = typeof PostCategory[keyof typeof PostCategory];
 
 
 interface PostItemDto {
@@ -89,11 +90,13 @@ const StudentSidebar: React.FC = () => {
         axiosInstance
             .get<GetMyProgressResponse>('/public/api/v1/laboratories/progress/my')
             .then(res => setProgress(res.data))
+            .catch(() => setProgress(null))
             .finally(() => setLoadingP(false));
 
         axiosInstance
             .get<GetGroupLeaderboardResponse>('/public/api/v1/laboratories/progress/leaderboard')
             .then(res => setLeaderboard(res.data))
+            .catch(() => setLeaderboard(null))
             .finally(() => setLoadingL(false));
     }, []);
 

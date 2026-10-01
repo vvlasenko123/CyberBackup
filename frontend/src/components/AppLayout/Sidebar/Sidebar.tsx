@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Sidebar.css';
-import type { User, UserRole } from '../../types';
+import type { User, UserRole } from '../../../utils/types';
 import { navigationByRole } from './navigation';
-import { Icon } from '../../shared/Icon';
+import { Icon } from '../../Icon';
 
 type Props = {
     role: UserRole;

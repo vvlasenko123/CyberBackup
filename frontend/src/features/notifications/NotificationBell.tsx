@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Icon } from '../shared/Icon';
+import { useRef, useEffect, useState } from 'react';
+import { Icon } from '../../components/Icon';
 import type { AppNotification } from './useNotifications';
 import './Notifications.css';
 

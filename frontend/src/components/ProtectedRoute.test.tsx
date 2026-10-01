@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import ProtectedRoute from './ProtectedRoute';
 import { renderPage } from '../test/render';
@@ -47,4 +47,17 @@ describe('ProtectedRoute', () => {
         renderProtected(['student'], '/change-password');
         expect(screen.getByRole('heading')).toHaveTextContent('Private content');
     });
+});
+
+it.each(['not-a-date', '2026-01-01T12:00:00.000Z'])('rejects invalid or exactly expired expiry: %s', expiresAt => {
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-01-01T12:00:00.000Z'));
+    setSession(); localStorage.setItem('expiresAt', expiresAt);
+    renderProtected();
+    expect(screen.getByLabelText('Current route')).toHaveTextContent('/login');
+    expect(localStorage.getItem('token')).toBeNull();
+});
+it('allows the last millisecond before expiration', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-01-01T12:00:00.000Z') - 1);
+    setSession(); localStorage.setItem('expiresAt', '2026-01-01T12:00:00.000Z');
+    renderProtected(); expect(screen.getByText('Private content')).toBeInTheDocument();
 });
