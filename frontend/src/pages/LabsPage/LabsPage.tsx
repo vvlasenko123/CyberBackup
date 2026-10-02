@@ -164,20 +164,22 @@ const LabsPage = () => {
     const [teacherTab, setTeacherTab] = useState<'labs' | 'reports'>('labs');
     const [progress, setProgress] = useState<ProgressSummary | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [searchFilter, setSearchFilter] = useState('');
 
     useEffect(() => {
         const fetchStudent = async () => {
             try {
-                const [labsRes, progressRes] = await Promise.all([
+                const [labsRes, progressRes] = await Promise.allSettled([
                     axiosInstance.get<PagedResult>('/public/api/v1/laboratories', {
                         params: { page: 1, pageSize: 100 },
                     }),
                     axiosInstance.get<ProgressSummary>('/public/api/v1/laboratories/progress/my'),
                 ]);
-                setLabs(labsRes.data.items);
-                setProgress(progressRes.data);
+                if (labsRes.status === 'fulfilled') setLabs(labsRes.value.data.items);
+                if (progressRes.status === 'fulfilled') setProgress(progressRes.value.data);
+                if (labsRes.status === 'rejected' || progressRes.status === 'rejected') setError('Не удалось загрузить часть данных. Попробуйте обновить страницу.');
             } catch {
                 // ignore
             } finally {
@@ -187,7 +189,7 @@ const LabsPage = () => {
 
         const fetchTeacher = async () => {
             try {
-                const [reportsRes, labsRes] = await Promise.all([
+                const [reportsRes, labsRes] = await Promise.allSettled([
                     axiosInstance.get<TeacherReportsPagedResult>('/public/api/v1/teacher/reports', {
                         params: { page: 1, pageSize: 200 },
                     }),
@@ -195,8 +197,9 @@ const LabsPage = () => {
                         params: { page: 1, pageSize: 200 },
                     }),
                 ]);
-                setTeacherReports(reportsRes.data.items);
-                setTeacherLabs(labsRes.data.items);
+                if (reportsRes.status === 'fulfilled') setTeacherReports(reportsRes.value.data.items);
+                if (labsRes.status === 'fulfilled') setTeacherLabs(labsRes.value.data.items);
+                if (reportsRes.status === 'rejected' || labsRes.status === 'rejected') setError('Не удалось загрузить часть данных. Попробуйте обновить страницу.');
             } catch {
                 // ignore
             } finally {
@@ -238,6 +241,7 @@ const LabsPage = () => {
 
     return (
         <div className="labs-page">
+            {error && <div role="alert">{error}</div>}
             {role === 'student' && progress && (
                 <p className="labs-page-subtitle">
                     {progress.totalLaboratories} работ · {progress.completedLaboratories} выполнено

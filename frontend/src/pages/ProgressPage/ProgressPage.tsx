@@ -3,13 +3,14 @@ import axiosInstance from '../../utils/axiosInstance';
 import './ProgressPage.css';
 
 
-enum StudentLaboratoryStatus {
-    NotStarted = 0,
-    InProgress = 1,
-    PendingReview = 2,
-    Accepted = 3,
-    RevisionRequired = 4,
-}
+const StudentLaboratoryStatus = {
+    NotStarted: 0,
+    InProgress: 1,
+    PendingReview: 2,
+    Accepted: 3,
+    RevisionRequired: 4,
+} as const;
+type StudentLaboratoryStatus = typeof StudentLaboratoryStatus[keyof typeof StudentLaboratoryStatus];
 
 
 interface MyProgressLaboratoryDto {

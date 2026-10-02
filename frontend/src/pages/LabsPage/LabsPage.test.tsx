@@ -46,10 +46,12 @@ describe('LabsPage', () => {
         const base = { laboratoryTitle: 'Основы сетей', laboratoryId: 'lab-1', groupName: 'Группа 1', currentVersionNumber: 1, maxPoints: 10, lastSubmitDateUtc: '2026-01-01T12:00:00Z' };
         server.use(
             http.get(`${API}/public/api/v1/teacher/laboratories`, () => HttpResponse.json({ items: [lab] })),
-            http.get(`${API}/public/api/v1/teacher/reports`, () => HttpResponse.json({ items: [
-                { ...base, reportId: 'r1', studentFullName: 'Иван Петров', status: 1, points: null },
-                { ...base, reportId: 'r2', studentFullName: 'Анна Сидорова', status: 4, points: 10 },
-            ] })),
+            http.get(`${API}/public/api/v1/teacher/reports`, () => HttpResponse.json({
+                items: [
+                    { ...base, reportId: 'r1', studentFullName: 'Иван Петров', status: 1, points: null },
+                    { ...base, reportId: 'r2', studentFullName: 'Анна Сидорова', status: 4, points: 10 },
+                ]
+            })),
         );
         renderPage(<LabsPage />, '/labs');
         const user = userEvent.setup();
@@ -77,12 +79,14 @@ describe('laboratory lists', () => {
     it('groups student labs alphabetically and sorts within each block', async () => {
         setSession();
         server.use(
-            http.get(`${API}/public/api/v1/laboratories`, () => HttpResponse.json({ items: [
-                { ...lab, id: 'second', title: 'Вторая', sortOrder: 2 },
-                { ...lab, id: 'first', title: 'Первая', sortOrder: 1, isCompleted: true, earnedPoints: 7 },
-                { ...lab, id: 'unassigned', title: 'Без раздела', block: '', difficulty: 3 },
-                { ...lab, id: 'other', title: 'Алгоритмы', block: 'Алгоритмы', difficulty: 2 },
-            ] })),
+            http.get(`${API}/public/api/v1/laboratories`, () => HttpResponse.json({
+                items: [
+                    { ...lab, id: 'second', title: 'Вторая', sortOrder: 2 },
+                    { ...lab, id: 'first', title: 'Первая', sortOrder: 1, isCompleted: true, earnedPoints: 7 },
+                    { ...lab, id: 'unassigned', title: 'Без раздела', block: '', difficulty: 3 },
+                    { ...lab, id: 'other', title: 'Алгоритмы', block: 'Алгоритмы', difficulty: 2 },
+                ]
+            })),
             http.get(`${API}/public/api/v1/laboratories/progress/my`, () => HttpResponse.json({ totalLaboratories: 4, completedLaboratories: 1 })),
         );
         renderPage(<LabsPage />, '/labs');
@@ -151,4 +155,26 @@ describe('laboratory lists', () => {
         await user.selectOptions(screen.getByRole('combobox'), '');
         expect(screen.getByText('Linux')).toBeInTheDocument();
     });
+});
+
+it.each(['labs', 'progress', 'both'])('preserves available student data when %s fails', async failing => {
+    setSession();
+    server.use(http.get(`${API}/public/api/v1/laboratories`, () => failing === 'progress' ? HttpResponse.json({ items: [lab] }) : HttpResponse.error()),
+        http.get(`${API}/public/api/v1/laboratories/progress/my`, () => failing === 'labs' ? HttpResponse.json({ totalLaboratories: 1, completedLaboratories: 0 }) : HttpResponse.error()));
+    renderPage(<LabsPage />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось загрузить часть данных');
+    if (failing === 'progress') expect(screen.getByRole('button', { name: /Основы сетей/ })).toBeInTheDocument();
+    if (failing === 'labs') expect(screen.getByText('1 работ · 0 выполнено')).toBeInTheDocument();
+    expect(screen.queryByText('Загрузка...')).not.toBeInTheDocument();
+});
+it.each(['labs', 'reports'])('preserves available teacher data when %s fails', async failing => {
+    setSession('teacher');
+    server.use(http.get(`${API}/public/api/v1/teacher/laboratories`, () => failing === 'labs' ? HttpResponse.error() : HttpResponse.json({ items: [lab] })),
+        http.get(`${API}/public/api/v1/teacher/reports`, () => failing === 'reports' ? HttpResponse.error() : HttpResponse.json({ items: [{ reportId: 'r1', studentFullName: 'Иван', laboratoryTitle: 'Сети', currentVersionNumber: 1, status: 1, points: null, maxPoints: 10, lastSubmitDateUtc: '2026-01-01' }] })));
+    renderPage(<LabsPage />); await screen.findByRole('alert');
+    if (failing === 'reports') expect(screen.getByRole('button', { name: /Основы сетей/ })).toBeInTheDocument();
+    else {
+        await userEvent.setup().click(screen.getByRole('button', { name: /Отчёты студентов/ }));
+        expect(screen.getByText('Иван')).toBeInTheDocument();
+    }
 });

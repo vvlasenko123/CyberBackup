@@ -4,7 +4,7 @@ import axiosInstance from '../../utils/axiosInstance';
 import { Icon } from '../../components/Icon';
 import './LabReportPage.css';
 
-const downloadFileByUrl = async (url: string, fallbackName: string) => {
+const downloadFileByUrl = async (url: string, fallbackName: string, onError: () => void) => {
     try {
         const response = await axiosInstance.get(url, { responseType: 'blob' });
         const contentDisposition = response.headers['content-disposition'] as string | undefined;
@@ -23,7 +23,7 @@ const downloadFileByUrl = async (url: string, fallbackName: string) => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
     } catch {
-        // ignore
+        onError();
     }
 };
 
@@ -76,7 +76,7 @@ const CloudUploadIcon = () => (
     </svg>
 );
 
-const LabReportPage = () => {
+const LabReportContent = () => {
     const { labId } = useParams<{ labId: string }>();
     const navigate = useNavigate();
     const location = useLocation();
@@ -94,31 +94,39 @@ const LabReportPage = () => {
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const currentLabId = useRef(labId);
+
     const fetchReport = async () => {
         try {
             const res = await axiosInstance.get<MyReport>(`/public/api/v1/laboratories/${labId}/reports/my`);
-            setReport(res.data);
-        } catch {
-            // 404 = отчёта ещё нет, 500 = бэкенд не нашёл — в обоих случаях просто показываем форму загрузки
+            if (currentLabId.current === labId) setReport(res.data);
+        } catch (err) {
+            if (currentLabId.current !== labId) return;
+            const status = (err as { response?: { status?: number } }).response?.status;
+            if (status !== 404) setError('Не удалось обновить историю отчётов. Попробуйте обновить страницу.');
         } finally {
-            setLoading(false);
+            if (currentLabId.current === labId) setLoading(false);
         }
     };
 
     useEffect(() => {
+        currentLabId.current = labId;
+        let active = true;
         const fetchLabTitle = async () => {
-            if (labTitle) return;
+            if (state?.labTitle) return;
             try {
                 const res = await axiosInstance.get<{ title: string }>(`/public/api/v1/laboratories/${labId}`);
-                setLabTitle(res.data.title);
+                if (active) setLabTitle(res.data.title);
             } catch {
                 // ignore
             }
         };
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchReport();
         fetchLabTitle();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        return () => { active = false; currentLabId.current = undefined; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [labId]);
 
     const handleFileSelect = (file: File) => {
@@ -145,14 +153,15 @@ const LabReportPage = () => {
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );
+            if (currentLabId.current !== labId) return;
             setSelectedFile(null);
             setUploadSuccess(true);
             await fetchReport();
-            setView('history');
+            if (currentLabId.current === labId) setView('history');
         } catch {
-            setError('Не удалось загрузить отчёт. Попробуйте ещё раз.');
+            if (currentLabId.current === labId) setError('Не удалось загрузить отчёт. Попробуйте ещё раз.');
         } finally {
-            setUploading(false);
+            if (currentLabId.current === labId) setUploading(false);
         }
     };
 
@@ -315,7 +324,7 @@ const LabReportPage = () => {
                                                     {version.fileDownloadUrl && (
                                                         <button
                                                             className="lab-report-download-btn"
-                                                            onClick={() => downloadFileByUrl(version.fileDownloadUrl!, version.originalFileName)}
+                                                            onClick={() => downloadFileByUrl(version.fileDownloadUrl!, version.originalFileName, () => setError('Не удалось скачать отчёт. Попробуйте ещё раз.'))}
                                                         >
                                                             Скачать
                                                         </button>
@@ -331,6 +340,11 @@ const LabReportPage = () => {
             )}
         </div>
     );
+};
+
+const LabReportPage = () => {
+    const { labId } = useParams<{ labId: string }>();
+    return <LabReportContent key={labId} />;
 };
 
 export default LabReportPage;

@@ -88,6 +88,10 @@ const TeacherReportDetailPage = () => {
             setError('Укажите баллы для принятия отчёта');
             return;
         }
+        if (reviewStatus === '4' && (!Number.isFinite(Number(reviewPoints)) || Number(reviewPoints) < 0 || Number(reviewPoints) > (report?.laboratory.maxPoints ?? 0))) {
+            setError('Баллы должны быть от 0 до максимума за лабораторную');
+            return;
+        }
         setSubmitting(true);
         setError(null);
         try {

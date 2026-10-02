@@ -74,7 +74,7 @@ export default function QuestionCreatePage() {
     return (
         <div className="qst-page">
             <button className="qst-back" onClick={() => navigate('/questions')}>
-                <Icon name="chevron-left" size={14} />
+                <Icon name="chevronLeft" size={14} />
                 Назад к вопросам
             </button>
 

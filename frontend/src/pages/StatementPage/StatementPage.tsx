@@ -3,21 +3,23 @@ import axiosInstance from '../../utils/axiosInstance';
 import './StatementPage.css';
 
 
-enum LaboratoryReportStatus {
-    NotSubmitted = 0,
-    Submitted = 1,
-    UnderReview = 2,
-    RevisionRequired = 3,
-    Accepted = 4,
-}
+const LaboratoryReportStatus = {
+    NotSubmitted: 0,
+    Submitted: 1,
+    UnderReview: 2,
+    RevisionRequired: 3,
+    Accepted: 4,
+} as const;
+type LaboratoryReportStatus = typeof LaboratoryReportStatus[keyof typeof LaboratoryReportStatus];
 
-enum StudentLaboratoryStatus {
-    NotStarted = 0,
-    InProgress = 1,
-    PendingReview = 2,
-    Accepted = 3,
-    RevisionRequired = 4,
-}
+const StudentLaboratoryStatus = {
+    NotStarted: 0,
+    InProgress: 1,
+    PendingReview: 2,
+    Accepted: 3,
+    RevisionRequired: 4,
+} as const;
+type StudentLaboratoryStatus = typeof StudentLaboratoryStatus[keyof typeof StudentLaboratoryStatus];
 
 
 interface GradebookStudentDto {

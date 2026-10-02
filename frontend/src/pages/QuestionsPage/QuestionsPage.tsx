@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import { Icon } from '../../components/Icon';
 import './QuestionsPage.css';
 
 
-enum QuestionStatus {
-    Open     = 0,
-    Answered = 1,
-    Closed   = 2,
-}
+const QuestionStatus = {
+    Open: 0,
+    Answered: 1,
+    Closed: 2,
+} as const;
+type QuestionStatus = typeof QuestionStatus[keyof typeof QuestionStatus];
 
 interface QuestionListItemDto {
     id: string;

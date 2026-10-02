@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -152,9 +153,11 @@ describe('report history and resubmission', () => {
         [null, 'report.pdf'],
     ])('downloads using the server filename or fallback: %s', async (disposition, expectedName) => {
         existingReport([{ ...version(1), fileDownloadUrl: `${API}/download` }]);
-        server.use(http.get(`${API}/download`, () => new HttpResponse('PDF contents', { headers: {
-            'Content-Type': 'application/pdf', ...(disposition ? { 'Content-Disposition': disposition } : {}),
-        } })));
+        server.use(http.get(`${API}/download`, () => new HttpResponse('PDF contents', {
+            headers: {
+                'Content-Type': 'application/pdf', ...(disposition ? { 'Content-Disposition': disposition } : {}),
+            }
+        })));
         const create = vi.fn(() => 'blob:test-report');
         const revoke = vi.fn();
         vi.spyOn(URL, 'createObjectURL').mockImplementation(create);
@@ -205,4 +208,43 @@ it('prevents duplicate submission while the upload is pending', async () => {
     } finally { release(); }
     expect(await screen.findByText('Отчёты ещё не загружались')).toBeInTheDocument();
     expect(requests).toBe(1);
+});
+
+it('shows download failure and permits retry', async () => {
+    existingReport([{ ...version(1), fileDownloadUrl: `${API}/download` }]);
+    let calls = 0; server.use(http.get(`${API}/download`, () => { calls++; return HttpResponse.error(); }));
+    renderReport(); const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'История версий' }));
+    await user.click(screen.getByRole('button', { name: 'Скачать' }));
+    expect(await screen.findByText('Не удалось скачать отчёт. Попробуйте ещё раз.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Скачать' }));
+    await waitFor(() => expect(calls).toBe(2));
+});
+it('reports history refresh failure separately after a successful upload', async () => {
+    existingReport([version(1)]); let uploaded = false;
+    server.use(http.post(`${endpoint}/reports`, () => { uploaded = true; return new HttpResponse(null, { status: 201 }); }),
+        http.get(`${endpoint}/reports/my`, () => uploaded ? HttpResponse.error() : HttpResponse.json({ allowResubmit: true, versions: [version(1)] })));
+    const { container } = renderReport(); const user = userEvent.setup(); await screen.findByRole('button', { name: 'Отправить отчет' });
+    await user.upload(container.querySelector<HTMLInputElement>('input[type=file]')!, new File(['test'], 'report.pdf', { type: 'application/pdf' }));
+    await user.click(screen.getByRole('button', { name: 'Отправить отчет' }));
+    expect(await screen.findByText('Не удалось обновить историю отчётов. Попробуйте обновить страницу.')).toBeInTheDocument();
+    expect(screen.getByText('v1')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Загрузить' }));
+    expect(screen.getByText('Отчёт успешно отправлен!')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Отправить отчет' })).toBeDisabled();
+});
+it('clears the previous title, report and selected file when labId changes without unmounting', async () => {
+    existingReport([version(1)]);
+    server.use(http.get(`${API}/public/api/v1/laboratories/lab-2`, () => HttpResponse.json({ title: 'Другая работа' })),
+        http.get(`${API}/public/api/v1/laboratories/lab-2/reports/my`, () => new HttpResponse(null, { status: 404 })));
+    function Page() { const navigate = useNavigate(); return <><button onClick={() => navigate('/labs/lab-2/report')}>Другая лабораторная</button><LabReportPage /></>; }
+    const { container } = renderPage(<Page />, '/labs/:labId/report', '/labs/lab-1/report'); const user = userEvent.setup();
+    await screen.findByRole('button', { name: 'Отправить отчет' });
+    await user.upload(container.querySelector<HTMLInputElement>('input[type=file]')!, new File(['old'], 'old.pdf', { type: 'application/pdf' }));
+    await user.click(screen.getByRole('button', { name: 'Другая лабораторная' }));
+    expect(await screen.findByRole('heading', { name: 'Отчёт: Другая работа' })).toBeInTheDocument();
+    expect(screen.queryByText('old.pdf')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Отправить отчет' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'История версий' }));
+    expect(screen.getByText('Отчёты ещё не загружались')).toBeInTheDocument(); expect(screen.queryByText('v1')).not.toBeInTheDocument();
 });

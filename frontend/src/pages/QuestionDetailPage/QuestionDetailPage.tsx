@@ -4,11 +4,12 @@ import axiosInstance from '../../utils/axiosInstance';
 import { Icon } from '../../components/Icon';
 import '../QuestionsPage/QuestionsPage.css';
 
-enum QuestionStatus {
-    Open     = 0,
-    Answered = 1,
-    Closed   = 2,
-}
+const QuestionStatus = {
+    Open: 0,
+    Answered: 1,
+    Closed: 2,
+} as const;
+type QuestionStatus = typeof QuestionStatus[keyof typeof QuestionStatus];
 
 interface QuestionReplyDto {
     id: string;
@@ -150,7 +151,7 @@ export default function QuestionDetailPage() {
     return (
         <div className="qst-page">
             <button className="qst-back" onClick={() => navigate('/questions')}>
-                <Icon name="chevron-left" size={14} />
+                <Icon name="chevronLeft" size={14} />
                 Назад к вопросам
             </button>
 
