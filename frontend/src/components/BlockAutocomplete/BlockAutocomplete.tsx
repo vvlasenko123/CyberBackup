@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { ListSkeleton } from '../Skeleton/Skeleton';
 import './BlockAutocomplete.css';
 
 type Props = {
@@ -7,9 +8,10 @@ type Props = {
     suggestions: string[];
     placeholder?: string;
     inputClassName?: string;
+    loading?: boolean;
 };
 
-const BlockAutocomplete = ({ value, onChange, suggestions, placeholder, inputClassName }: Props) => {
+const BlockAutocomplete = ({ value, onChange, suggestions, placeholder, inputClassName, loading = false }: Props) => {
     const [open, setOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +47,8 @@ const BlockAutocomplete = ({ value, onChange, suggestions, placeholder, inputCla
                 }}
                 onFocus={() => setOpen(true)}
             />
-            {open && filtered.length > 0 && (
+            {open && loading && <div className="blk-dropdown"><ListSkeleton variant="row" rows={3} /></div>}
+            {open && !loading && filtered.length > 0 && (
                 <div className="blk-dropdown">
                     {filtered.map(block => (
                         <div

@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
+import { ListSkeleton } from '../../components/Skeleton/Skeleton';
 import { Icon } from '../../components/Icon';
 import type { AppNotification } from './useNotifications';
 import './Notifications.css';
@@ -20,9 +21,10 @@ interface Props {
     notifications: AppNotification[];
     unreadCount: number;
     onMarkAllRead: () => void;
+    loading?: boolean;
 }
 
-export function NotificationBell({ notifications, unreadCount, onMarkAllRead }: Props) {
+export function NotificationBell({ notifications, unreadCount, onMarkAllRead, loading = false }: Props) {
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -68,7 +70,7 @@ export function NotificationBell({ notifications, unreadCount, onMarkAllRead }: 
                     </div>
 
                     <div className="notif-panel__list">
-                        {notifications.length === 0 ? (
+                        {loading ? <ListSkeleton rows={3} variant="post" /> : notifications.length === 0 ? (
                             <p className="notif-panel__empty">Уведомлений нет</p>
                         ) : (
                             notifications.map(n => (

@@ -55,11 +55,13 @@ const LabCreatePage = () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [existingBlocks, setExistingBlocks] = useState<string[]>([]);
+    const [blocksLoading, setBlocksLoading] = useState(true);
 
     useEffect(() => {
         axiosInstance.get<string[]>('/public/api/v1/teacher/laboratories/blocks')
             .then(res => setExistingBlocks(res.data))
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => setBlocksLoading(false));
     }, []);
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -144,6 +146,7 @@ const LabCreatePage = () => {
                             value={form.block}
                             onChange={v => set('block', v)}
                             suggestions={existingBlocks}
+                            loading={blocksLoading}
                             placeholder="Блок 1: Веб-безопасность"
                             inputClassName="lab-create-input"
                         />

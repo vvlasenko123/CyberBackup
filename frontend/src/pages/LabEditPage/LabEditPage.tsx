@@ -1,3 +1,4 @@
+import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -136,7 +137,7 @@ const LabEditPage = () => {
         }
     };
 
-    if (loading) return <div className="lab-edit-loading">Загрузка...</div>;
+    if (loading) return <DetailSkeleton className="lab-edit-page" panelClassName="lab-edit-section" form />;
     if (!form) return <div className="lab-edit-loading">{error ?? 'Не удалось загрузить'}</div>;
 
     const isValid = form.title.trim() && form.block.trim() && form.maxPoints !== '' && form.description.trim();

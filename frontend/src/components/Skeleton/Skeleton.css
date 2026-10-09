@@ -1,0 +1,126 @@
+.skeleton {
+    display: inline-block;
+    vertical-align: middle;
+    max-width: 100%;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: rgba(148, 163, 184, 0.13);
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.skeleton-region {
+    min-width: 0;
+}
+
+.skeleton-region>[aria-hidden] {
+    min-width: 0;
+}
+
+.skeleton-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.skeleton-stack,
+.skeleton-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.skeleton-panel {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+.skeleton-panel {
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.skeleton-detail-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.skeleton-list-item--card,
+.skeleton-list-item--post {
+    padding: 20px;
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+.skeleton-list--row {
+    gap: 0;
+}
+
+.skeleton-list-item--row {
+    padding: 9px 0;
+}
+
+.skeleton-row-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.skeleton-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.skeleton-table th,
+.skeleton-table td {
+    padding: 18px 20px;
+}
+
+.skeleton-table td {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.skeleton-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.skeleton-region.prog-stats,
+.skeleton-region.stmt-stats {
+    display: block;
+}
+
+.skeleton-region .skeleton-list-item {
+    cursor: default;
+    pointer-events: none;
+}
+
+.skeleton-calendar {
+    grid-column: 1 / -1;
+}
+
+.skeleton-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+@keyframes skeleton-pulse {
+    50% {
+        opacity: 0.45;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
+}

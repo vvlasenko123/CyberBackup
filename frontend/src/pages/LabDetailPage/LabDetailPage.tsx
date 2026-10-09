@@ -1,3 +1,4 @@
+import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -190,7 +191,7 @@ const LabDetailPage = () => {
         }
     };
 
-    if (loading) return <div className="lab-detail-loading">Загрузка...</div>;
+    if (loading) return <DetailSkeleton className="lab-detail-page" layoutClassName="lab-detail-content" sidebarClassName="lab-detail-sidebar" panelClassName="lab-detail-card" sidebarPanelClassName="lab-detail-sidebar-card" />;
     if (error) return <div className="lab-detail-error">{error}</div>;
 
     if (role === 'teacher' && teacherLab) {

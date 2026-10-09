@@ -1,3 +1,4 @@
+import { ProgressSkeleton, ListSkeleton, Skeleton } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './ProgressPage.css';
@@ -91,7 +92,7 @@ const ProgressPage: React.FC = () => {
     return (
         <div className="prog-page">
             {isLoading ? (
-                <div className="prog-loading">Загрузка...</div>
+                <ProgressSkeleton />
             ) : errorProgress ? (
                 <div className="prog-error">{errorProgress}</div>
             ) : !progress ? null : (
@@ -119,7 +120,7 @@ const ProgressPage: React.FC = () => {
                             <div className="prog-stat-card__label">Место в рейтинге</div>
                             <div className="prog-stat-card__value prog-stat-card__value--orange">
                                 {loadingLeaderboard
-                                    ? '...'
+                                    ? <Skeleton width={60} height={35} />
                                     : leaderboard && leaderboard.currentUserRank > 0
                                         ? `#${leaderboard.currentUserRank}`
                                         : '—'
@@ -186,9 +187,7 @@ const ProgressPage: React.FC = () => {
                             <h3 className="prog-leaderboard-card__title">Рейтинг группы</h3>
 
                             {loadingLeaderboard ? (
-                                <div className="prog-loading" style={{ padding: '20px 0' }}>
-                                    Загрузка...
-                                </div>
+                                <ListSkeleton variant="row" />
                             ) : errorLeaderboard ? (
                                 <div className="prog-leaderboard-empty">{errorLeaderboard}</div>
                             ) : !leaderboard || leaderboard.items.length === 0 ? (

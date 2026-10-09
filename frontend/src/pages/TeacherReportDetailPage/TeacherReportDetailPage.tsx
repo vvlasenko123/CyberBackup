@@ -1,3 +1,4 @@
+import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -129,7 +130,7 @@ const TeacherReportDetailPage = () => {
         }
     };
 
-    if (loading) return <div className="trp-loading">Загрузка...</div>;
+    if (loading) return <DetailSkeleton className="trp-page" layoutClassName="trp-layout" sidebarClassName="trp-review-card" panelClassName="trp-version-card" sidebarPanelClassName="" form />;
     if (!report) return <div className="trp-loading">{error ?? 'Отчёт не найден'}</div>;
 
     const latestVersion = report.versions

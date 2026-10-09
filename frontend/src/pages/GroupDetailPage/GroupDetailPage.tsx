@@ -1,3 +1,4 @@
+import { Skeleton, SkeletonRegion, ListSkeleton } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -80,7 +81,7 @@ const GroupDetailPage = () => {
             }
         };
         init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [groupId]);
 
     const handleAddStudent = async (userId: string) => {
@@ -156,7 +157,17 @@ const GroupDetailPage = () => {
         }
     };
 
-    if (loading) return <div className="gdp-loading">Загрузка...</div>;
+    if (loading) return <div className="gdp-page">
+        <SkeletonRegion><Skeleton width="35%" height={20} /></SkeletonRegion>
+        <SkeletonRegion><Skeleton width="45%" height={32} /></SkeletonRegion>
+        <div className="gdp-layout">
+            {['Студенты', 'Преподаватели'].map(title => <section className="gdp-section" key={title}>
+                <h3 className="gdp-section-title">{title}</h3>
+                <ListSkeleton variant="row" rows={4} />
+                <SkeletonRegion><Skeleton height={40} /></SkeletonRegion>
+            </section>)}
+        </div>
+    </div>;
     if (!group) return <div className="gdp-loading">{error ?? 'Группа не найдена'}</div>;
 
     const memberTeacherIds = new Set(group.teachers.map(t => t.userId));

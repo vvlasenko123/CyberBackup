@@ -1,3 +1,4 @@
+import { ListSkeleton, Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -225,7 +226,23 @@ const LabsPage = () => {
         }, {});
 
     if (loading) {
-        return <div className="labs-loading">Загрузка...</div>;
+        return <div className="labs-page">
+            <SkeletonRegion><Skeleton width="35%" height={role === 'teacher' ? 40 : 20} /></SkeletonRegion>
+            <div className="labs-block">
+                <h3 className="labs-block-title"><Skeleton width={180} /></h3>
+                {role === 'teacher' ? <ListSkeleton rows={5} itemClassName="labs-teacher-lab-card" listClassName="labs-teacher-labs-list" /> : (
+                    <SkeletonRegion><div className="labs-block-list">
+                        {Array.from({ length: 5 }, (_, i) => <div className="labs-item" key={i}>
+                            <Skeleton width={24} height={24} />
+                            <div className="labs-item-info">
+                                <Skeleton width={`${260 - i % 3 * 40}px`} height={18} />
+                                <div className="labs-item-meta"><Skeleton width={140} height={16} /></div>
+                            </div>
+                        </div>)}
+                    </div></SkeletonRegion>
+                )}
+            </div>
+        </div>;
     }
 
     const studentGrouped = groupByBlock(labs);

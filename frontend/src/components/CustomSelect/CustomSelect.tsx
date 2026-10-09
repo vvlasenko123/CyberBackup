@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Skeleton } from '../Skeleton/Skeleton';
 import './CustomSelect.css';
 
 export interface SelectOption {
@@ -15,9 +16,10 @@ interface Props {
     placeholder?: string;
     className?: string;
     disabled?: boolean;
+    loading?: boolean;
 }
 
-const CustomSelect = ({ value, onChange, options, placeholder, className, disabled }: Props) => {
+const CustomSelect = ({ value, onChange, options, placeholder, className, disabled, loading = false }: Props) => {
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -47,11 +49,13 @@ const CustomSelect = ({ value, onChange, options, placeholder, className, disabl
             <button
                 type="button"
                 className={`csel-trigger${open ? ' csel-trigger--open' : ''}${disabled ? ' csel-trigger--disabled' : ''}`}
-                onClick={() => !disabled && setOpen(o => !o)}
-                disabled={disabled}
+                onClick={() => !disabled && !loading && setOpen(o => !o)}
+                disabled={disabled || loading}
+                aria-busy={loading}
+                aria-label={loading ? 'Загрузка вариантов' : undefined}
             >
                 <span className={isPlaceholder && !value ? 'csel-placeholder' : ''}>
-                    {selectedLabel}
+                    {loading ? <Skeleton width={140} height={16} /> : selectedLabel}
                 </span>
                 <svg
                     className={`csel-chevron${open ? ' csel-chevron--open' : ''}`}
@@ -62,7 +66,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, className, disabl
                 </svg>
             </button>
 
-            {open && (
+            {open && !loading && (
                 <div className="csel-dropdown">
                     {ungrouped.map(opt => (
                         <div

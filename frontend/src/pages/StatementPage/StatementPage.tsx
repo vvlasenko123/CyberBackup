@@ -1,3 +1,4 @@
+import { StatsSkeleton, TableSkeleton } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './StatementPage.css';
@@ -122,7 +123,7 @@ const StudentGradebook: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    if (loading) return <div className="stmt-loading">Загрузка...</div>;
+    if (loading) return <div className="stmt-page"><StatsSkeleton prefix="stmt" /><TableSkeleton columns={3} tableClassName="stmt-table" cardClassName="stmt-table-card" /></div>;
     if (error)   return <div className="stmt-error">{error}</div>;
     if (!data)   return null;
 
@@ -336,7 +337,7 @@ const TeacherGradebook: React.FC = () => {
             </div>
 
             {loading ? (
-                <div className="stmt-loading">Загрузка...</div>
+                <TableSkeleton columns={7} rows={items.length || 10} tableClassName="stmt-table" cardClassName="stmt-table-card" />
             ) : error ? (
                 <div className="stmt-error">{error}</div>
             ) : (

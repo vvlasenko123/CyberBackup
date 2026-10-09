@@ -1,3 +1,4 @@
+import { ListSkeleton, Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './DashboardPage.css';
@@ -107,9 +108,12 @@ const StudentSidebar: React.FC = () => {
                 <div className="dash-progress-card__label">Мой прогресс</div>
 
                 {loadingP ? (
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, padding: '8px 0' }}>
-                        Загрузка...
-                    </div>
+                    <SkeletonRegion>
+                        <div className="dash-progress-card__pts"><Skeleton width={90} height={35} /></div>
+                        <div className="dash-progress-card__sub"><Skeleton width="80%" height={14} /></div>
+                        <div className="dash-mini-bar-track"><Skeleton height={6} /></div>
+                        <div className="dash-progress-card__rank-row"><Skeleton width="65%" height={14} /></div>
+                    </SkeletonRegion>
                 ) : progress ? (
                     <>
                         <div className="dash-progress-card__pts">
@@ -129,7 +133,7 @@ const StudentSidebar: React.FC = () => {
                             <span className="dash-progress-card__rank-label">Место в рейтинге</span>
                             <span className="dash-progress-card__rank-value">
                                 {loadingL
-                                    ? '...'
+                                    ? <Skeleton width={30} height={16} />
                                     : leaderboard && leaderboard.currentUserRank > 0
                                         ? `#${leaderboard.currentUserRank}`
                                         : '—'
@@ -141,6 +145,10 @@ const StudentSidebar: React.FC = () => {
             </div>
 
             {/* Leaderboard */}
+            {loadingL && <div className="dash-leaderboard-card">
+                <h3 className="dash-leaderboard-card__title">Рейтинг группы</h3>
+                <ListSkeleton variant="row" />
+            </div>}
             {!loadingL && leaderboard && leaderboard.items.length > 0 && (
                 <div className="dash-leaderboard-card">
                     <h3 className="dash-leaderboard-card__title">Рейтинг группы</h3>
@@ -196,7 +204,7 @@ const TeacherSidebar: React.FC = () => {
             <div className="dash-sidebar">
                 <div className="dash-leaderboard-card">
                     <h3 className="dash-leaderboard-card__title">Рейтинг ваших студентов</h3>
-                    <div className="dash-sidebar-note">Загрузка...</div>
+                    <ListSkeleton variant="row" />
                 </div>
             </div>
         );
@@ -368,7 +376,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ isTeacher }) => {
             </div>
 
             {loading ? (
-                <div className="dash-loading">Загрузка...</div>
+                <ListSkeleton variant="post" rows={posts.length || 3} itemClassName="dash-post" listClassName="dash-post-list" />
             ) : error ? (
                 <div className="dash-error">{error}</div>
             ) : posts.length === 0 ? (

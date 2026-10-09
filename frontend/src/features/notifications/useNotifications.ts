@@ -26,6 +26,7 @@ const RECONNECT_DELAYS = [1000, 2000, 5000, 10000, 30000];
 
 export function useNotifications() {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    const [loading, setLoading] = useState(() => Boolean(localStorage.getItem('token')));
     const [latestToast, setLatestToast] = useState<AppNotification | null>(null);
 
     const wsRef = useRef<WebSocket | null>(null);
@@ -153,7 +154,8 @@ export function useNotifications() {
                     return merged.slice(0, 50);
                 });
             })
-            .catch(() => { });
+            .catch(() => { })
+            .finally(() => setLoading(false));
     }, []);
 
     useEffect(() => {
@@ -184,5 +186,5 @@ export function useNotifications() {
 
     const dismissToast = useCallback(() => setLatestToast(null), []);
 
-    return { notifications, unreadCount, markAllRead, latestToast, dismissToast };
+    return { notifications, loading, unreadCount, markAllRead, latestToast, dismissToast };
 }

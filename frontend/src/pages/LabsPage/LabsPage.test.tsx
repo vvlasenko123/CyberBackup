@@ -23,7 +23,7 @@ describe('LabsPage', () => {
             http.get(`${API}/public/api/v1/laboratories/progress/my`, () => HttpResponse.json({ totalLaboratories: 1, completedLaboratories: 0 })),
         );
         renderPage(<LabsPage />, '/labs');
-        expect(screen.getByText('Загрузка...')).toBeInTheDocument();
+        expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
         const button = await screen.findByRole('button', { name: /Основы сетей/ });
         expect(screen.getByText('1 работ · 0 выполнено')).toBeInTheDocument();
         expect(authorization).toBe(`Bearer ${tokenFor()}`);

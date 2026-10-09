@@ -1,3 +1,4 @@
+import { Skeleton, SkeletonRegion, TableSkeleton } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -99,7 +100,10 @@ const GroupsPage = () => {
         }
     };
 
-    if (loading) return <div className="groups-loading">Загрузка...</div>;
+    if (loading) return <div className="groups-page">
+        <SkeletonRegion><div className="groups-header"><Skeleton width={180} height={40} /></div></SkeletonRegion>
+        <TableSkeleton columns={4} tableClassName="groups-table" cardClassName="groups-table-wrap" />
+    </div>;
 
     return (
         <div className="groups-page">

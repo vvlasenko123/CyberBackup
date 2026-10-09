@@ -19,7 +19,7 @@ export const AppLayout: React.FC = () => {
         name: localStorage.getItem('user_name') || '',
     };
 
-    const { notifications, unreadCount, markAllRead, latestToast, dismissToast } =
+    const { notifications, loading: notificationsLoading, unreadCount, markAllRead, latestToast, dismissToast } =
         useNotifications();
 
     const handleRoleChange = (newRole: UserRole) => {
@@ -49,6 +49,7 @@ export const AppLayout: React.FC = () => {
                     notificationBell={
                         <NotificationBell
                             notifications={notifications}
+                            loading={notificationsLoading}
                             unreadCount={unreadCount}
                             onMarkAllRead={markAllRead}
                         />

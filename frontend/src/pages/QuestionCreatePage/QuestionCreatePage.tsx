@@ -99,6 +99,7 @@ export default function QuestionCreatePage() {
                             value={selectedLabId}
                             onChange={setSelectedLabId}
                             disabled={labsLoading}
+                            loading={labsLoading}
                             options={[
                                 { value: '', label: labsLoading ? 'Загрузка…' : '— Не привязывать к лабораторной —' },
                                 ...labs.map(l => ({ value: l.id, label: l.title })),

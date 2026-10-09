@@ -1,3 +1,4 @@
+import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -155,7 +156,7 @@ export default function QuestionDetailPage() {
                 Назад к вопросам
             </button>
 
-            {loading && <div className="qst-loading">Загрузка…</div>}
+            {loading && <DetailSkeleton panelClassName="qst-question-card" form />}
             {!loading && error && <div className="qst-error">{error}</div>}
 
             {!loading && question && (

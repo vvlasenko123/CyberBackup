@@ -1,3 +1,4 @@
+import { ListSkeleton, Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -77,7 +78,7 @@ function StudentQuestionsList() {
             </div>
 
             {error && <div className="qst-error">{error}</div>}
-            {loading && <div className="qst-loading">Загрузка…</div>}
+            {loading && <ListSkeleton rows={items.length || 5} itemClassName="qst-card" listClassName="qst-list" />}
 
             {!loading && !error && items.length === 0 && (
                 <div className="qst-empty">У вас пока нет вопросов</div>
@@ -119,6 +120,7 @@ function TeacherQuestionsList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [labTitles, setLabTitles] = useState<string[]>([]);
+    const [labTitlesLoading, setLabTitlesLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('');
     const [labFilter, setLabFilter] = useState('');
     const [search, setSearch] = useState('');
@@ -126,7 +128,8 @@ function TeacherQuestionsList() {
     useEffect(() => {
         axiosInstance.get<string[]>('/public/api/v1/teacher/questions/lab-titles')
             .then(r => setLabTitles(r.data))
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => setLabTitlesLoading(false));
     }, []);
 
     useEffect(() => {
@@ -155,7 +158,7 @@ function TeacherQuestionsList() {
                     ))}
                 </select>
 
-                {labTitles.length > 0 && (
+                {labTitlesLoading ? <SkeletonRegion className="qst-filter-select"><Skeleton width={150} height={16} /></SkeletonRegion> : (
                     <select
                         className="qst-filter-select"
                         value={labFilter}
@@ -177,7 +180,7 @@ function TeacherQuestionsList() {
             </div>
 
             {error && <div className="qst-error">{error}</div>}
-            {loading && <div className="qst-loading">Загрузка…</div>}
+            {loading && <ListSkeleton rows={items.length || 5} itemClassName="qst-card" listClassName="qst-list" />}
 
             {!loading && !error && items.length === 0 && (
                 <div className="qst-empty">Вопросов не найдено</div>

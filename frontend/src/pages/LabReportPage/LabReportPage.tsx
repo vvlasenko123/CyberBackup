@@ -1,3 +1,4 @@
+import { Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -83,6 +84,7 @@ const LabReportContent = () => {
     const state = location.state as LocationState | null;
 
     const [view, setView] = useState<'upload' | 'history'>('upload');
+    const [titleLoading, setTitleLoading] = useState(!state?.labTitle);
     const [report, setReport] = useState<MyReport | null>(null);
     const [labTitle, setLabTitle] = useState(state?.labTitle ?? '');
     const [loading, setLoading] = useState(true);
@@ -119,6 +121,8 @@ const LabReportContent = () => {
                 if (active) setLabTitle(res.data.title);
             } catch {
                 // ignore
+            } finally {
+                if (active) setTitleLoading(false);
             }
         };
 
@@ -171,7 +175,17 @@ const LabReportContent = () => {
 
     const canUpload = !report || report.allowResubmit;
 
-    if (loading) return <div className="lab-report-loading">Загрузка...</div>;
+    if (loading) return <div className="lab-report-page">
+        <SkeletonRegion><Skeleton width="45%" height={20} /></SkeletonRegion>
+        <SkeletonRegion><div className="lab-report-header">
+            <Skeleton width="50%" height={28} /><Skeleton width={260} height={38} />
+        </div></SkeletonRegion>
+        <SkeletonRegion><div className="lab-report-upload">
+            <Skeleton width={180} height={18} />
+            <Skeleton height={210} />
+            <Skeleton height={44} />
+        </div></SkeletonRegion>
+    </div>;
 
     return (
         <div className="lab-report-page">
@@ -181,14 +195,14 @@ const LabReportContent = () => {
                 </button>
                 <span className="lab-report-breadcrumb-sep">/</span>
                 <button className="lab-report-breadcrumb-link" onClick={() => navigate(`/labs/${labId}`)}>
-                    {labTitle || 'Лабораторная'}
+                    {titleLoading ? <Skeleton width={180} height={18} /> : labTitle || 'Лабораторная'}
                 </button>
                 <span className="lab-report-breadcrumb-sep">/</span>
                 <span className="lab-report-breadcrumb-current">Отчёт</span>
             </div>
 
             <div className="lab-report-header">
-                <h2 className="lab-report-title">Отчёт: {labTitle}</h2>
+                <h2 className="lab-report-title">Отчёт: {titleLoading ? <Skeleton width={280} height={28} /> : labTitle}</h2>
                 <div className="lab-report-tabs">
                     <button
                         className={`lab-report-tab ${view === 'upload' ? 'lab-report-tab--active' : 'lab-report-tab--inactive'}`}

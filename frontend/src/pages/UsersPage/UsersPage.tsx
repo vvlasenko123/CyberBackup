@@ -1,3 +1,4 @@
+import { Skeleton, SkeletonRegion, TableSkeleton } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import CustomSelect from '../../components/CustomSelect/CustomSelect';
@@ -95,6 +96,9 @@ export const UsersPage: React.FC = () => {
 
     // Group selection for import
     const [groups, setGroups] = useState<GroupListItem[]>([]);
+    const [groupsLoading, setGroupsLoading] = useState(true);
+    const [editLoading, setEditLoading] = useState(false);
+    const editRequest = useRef(0);
     const [selectedGroupId, setSelectedGroupId] = useState<string>('');
     const [showNewGroupInput, setShowNewGroupInput] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
@@ -125,7 +129,7 @@ export const UsersPage: React.FC = () => {
     }, []);
 
     useEffect(() => { fetchUsers(); }, [fetchUsers]);
-    useEffect(() => { fetchGroups(); }, [fetchGroups]);
+    useEffect(() => { fetchGroups().finally(() => setGroupsLoading(false)); }, [fetchGroups]);
 
     // Reset to page 1 whenever search changes
     useEffect(() => { setPage(1); }, [search]);
@@ -174,10 +178,14 @@ export const UsersPage: React.FC = () => {
     };
 
     const openEdit = async (u: UserRecord) => {
+        const request = ++editRequest.current;
+        setEditUser(u);
+        setEditLoading(true);
         setEditError(null);
         setEditPassword('');
         try {
             const res = await axiosInstance.get(`/public/api/v1/user/get/${u.id}`);
+            if (request !== editRequest.current) return;
             setEditForm({
                 fullName: res.data.fullName,
                 email: res.data.email,
@@ -185,9 +193,11 @@ export const UsersPage: React.FC = () => {
                 isActive: res.data.isActive ?? true,
             });
         } catch {
+            if (request !== editRequest.current) return;
             setEditForm({ fullName: u.fullName, email: u.email, role: u.role, isActive: u.isActive ?? true });
+        } finally {
+            if (request === editRequest.current) setEditLoading(false);
         }
-        setEditUser(u);
     };
 
     const generatePassword = () => {
@@ -325,7 +335,7 @@ export const UsersPage: React.FC = () => {
             />
 
             {loading ? (
-                <div className="users-loading">Загрузка...</div>
+                <TableSkeleton columns={4} rows={paginated.length || 10} tableClassName="users-table" cardClassName="users-table-card" />
             ) : (
                 <>
                     <div className="users-table-card">
@@ -446,6 +456,12 @@ export const UsersPage: React.FC = () => {
                 <div className="users-modal-overlay" onClick={() => setEditUser(null)}>
                     <div className="users-modal" onClick={e => e.stopPropagation()}>
                         <h3 className="users-modal__title">Редактировать пользователя</h3>
+                        {editLoading ? <SkeletonRegion>
+                            {Array.from({ length: 5 }, (_, i) => <div className="users-modal__field" key={i}>
+                                <div className="users-modal__label"><Skeleton width={100} height={14} /></div>
+                                <Skeleton height={38} />
+                            </div>)}
+                        </SkeletonRegion> : <>
                         <div className="users-modal__field">
                             <label className="users-modal__label">ФИО *</label>
                             <input className="users-modal__input" value={editForm.fullName}
@@ -500,9 +516,10 @@ export const UsersPage: React.FC = () => {
                             )}
                         </div>
                         {editError && <div className="users-modal__error">{editError}</div>}
+                        </>}
                         <div className="users-modal__actions">
                             <button className="users-btn-secondary" onClick={() => setEditUser(null)}>Отмена</button>
-                            <button className="users-btn-primary" onClick={handleSaveEdit} disabled={savingEdit}>
+                            <button className="users-btn-primary" onClick={handleSaveEdit} disabled={savingEdit || editLoading}>
                                 {savingEdit ? 'Сохранение...' : 'Сохранить'}
                             </button>
                         </div>
@@ -521,6 +538,7 @@ export const UsersPage: React.FC = () => {
                 <div className="users-import-group-row">
                     <CustomSelect
                         className="users-import-csel"
+                        loading={groupsLoading}
                         value={showNewGroupInput ? '__new__' : selectedGroupId}
                         onChange={handleGroupSelectChange}
                         options={[

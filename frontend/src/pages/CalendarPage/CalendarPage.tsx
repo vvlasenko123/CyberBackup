@@ -1,3 +1,4 @@
+import { Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './CalendarPage.css';
@@ -195,7 +196,14 @@ export const CalendarPage: React.FC = () => {
                     ))}
 
                     {loading ? (
-                        <div className="cal-loading">Загрузка...</div>
+                        <SkeletonRegion className="skeleton-calendar">
+                            <div className="skeleton-calendar-grid">
+                                {calendarDays.map((day, i) => <div className="cal-day" key={i}>
+                                    <span className="cal-day__num">{day.getDate()}</span>
+                                    <Skeleton height={20} />
+                                </div>)}
+                            </div>
+                        </SkeletonRegion>
                     ) : calendarDays.map((day, i) => {
                         const inMonth = day.getMonth() === currentDate.getMonth();
                         const isToday = isSameDay(day, today);
