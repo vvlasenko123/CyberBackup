@@ -1,3 +1,4 @@
+import { ReportPreview } from '../../components/ReportPreview/ReportPreview';
 import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -210,12 +211,18 @@ const TeacherReportDetailPage = () => {
                                                     <p className="trp-version-comment-text">{version.teacherComment}</p>
                                                 </div>
                                             )}
-                                            <button
-                                                className="trp-download-btn"
-                                                onClick={() => handleDownload(version)}
-                                            >
-                                                Скачать
-                                            </button>
+                                            <div>
+                                                <ReportPreview
+                                                    url={version.fileDownloadUrl ?? `/public/api/v1/teacher/reports/${reportId}/versions/${version.versionId}/file`}
+                                                    filename={version.originalFileName}
+                                                />
+                                                <button
+                                                    className="trp-download-btn"
+                                                    onClick={() => handleDownload(version)}
+                                                >
+                                                    Скачать
+                                                </button>
+                                            </div>
                                         </div>
                                     );
                                 })}

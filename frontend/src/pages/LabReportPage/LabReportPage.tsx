@@ -1,3 +1,4 @@
+import { ReportPreview } from '../../components/ReportPreview/ReportPreview';
 import { Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -336,12 +337,15 @@ const LabReportContent = () => {
                                                 </td>
                                                 <td>
                                                     {version.fileDownloadUrl && (
-                                                        <button
-                                                            className="lab-report-download-btn"
-                                                            onClick={() => downloadFileByUrl(version.fileDownloadUrl!, version.originalFileName, () => setError('Не удалось скачать отчёт. Попробуйте ещё раз.'))}
-                                                        >
-                                                            Скачать
-                                                        </button>
+                                                        <>
+                                                            <ReportPreview url={version.fileDownloadUrl} filename={version.originalFileName} />
+                                                            <button
+                                                                className="lab-report-download-btn"
+                                                                onClick={() => downloadFileByUrl(version.fileDownloadUrl!, version.originalFileName, () => setError('Не удалось скачать отчёт. Попробуйте ещё раз.'))}
+                                                            >
+                                                                Скачать
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </td>
                                             </tr>

@@ -88,6 +88,7 @@ describe('report history and resubmission', () => {
         expect(rows[1]).toHaveTextContent('На проверке');
         expect(rows[2]).toHaveTextContent('Нужны правки');
         expect(within(rows[0]).getByRole('button', { name: 'Скачать' })).toBeInTheDocument();
+        expect(within(rows[0]).getByRole('button', { name: 'Предпросмотр' })).toBeInTheDocument();
         expect(within(rows[1]).queryByRole('button')).not.toBeInTheDocument();
     });
     it('shows the comment from the latest revision request', async () => {

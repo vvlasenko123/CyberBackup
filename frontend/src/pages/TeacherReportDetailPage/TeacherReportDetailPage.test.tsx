@@ -58,5 +58,6 @@ it('downloads the latest version through its fallback URL and releases the blob'
     renderPage(<TeacherReportDetailPage />, '/teacher/reports/:reportId', '/teacher/reports/r1');
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Скачать' }));
     await waitFor(() => expect(revoke).toHaveBeenCalledWith('blob:review'));
+    expect(screen.getByRole('button', { name: 'Предпросмотр' })).toBeInTheDocument();
     expect(create).toHaveBeenCalledOnce(); expect(name).toBe('review.pdf'); expect(screen.getByText('Принято')).toBeInTheDocument();
 });
