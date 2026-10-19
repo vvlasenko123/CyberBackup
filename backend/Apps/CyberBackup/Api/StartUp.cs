@@ -9,6 +9,7 @@ using Infrastructure.Swagger;
 using Security.Host.Cors;
 using Api.Auth;
 using Api.Extensions;
+using Api.Health;
 using Application.Abstractions.Services.Calendar.Hubs;
 using Infrastucture.S3;
 using Api.Services.Laboratories;
@@ -41,7 +42,7 @@ public class StartUp
 
         services.AddCyberCors();
 
-        services.AddHealthChecks();
+        services.AddReadinessChecks();
 
         if (Environment.IsDevelopment())
         {
@@ -106,7 +107,7 @@ public class StartUp
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
-            endpoints.MapHealthChecks("/health");
+            endpoints.MapCyberHealthChecks();
             endpoints.MapHub<NotificationHub>("/notification-hub");
         });
     }
