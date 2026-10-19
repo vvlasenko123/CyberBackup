@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import './Header.css';
-import type { UserRole } from '../../types';
+import type { UserRole } from '../../../utils/types';
 import { navigationByRole } from '../Sidebar/navigation';
 
 type Props = {

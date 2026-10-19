@@ -1,5 +1,5 @@
-import type { IconName } from '../../shared/Icon';
-import type { UserRole } from '../../types';
+import type { IconName } from '../../Icon';
+import type { UserRole } from '../../../utils/types';
 
 export type NavItem = {
     id: string;

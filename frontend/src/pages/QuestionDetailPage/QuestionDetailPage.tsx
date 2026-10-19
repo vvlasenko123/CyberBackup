@@ -1,3 +1,5 @@
+import { ReportPreview } from '../../components/ReportPreview/ReportPreview';
+import { isAxiosError } from 'axios';
 import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -12,7 +14,15 @@ const QuestionStatus = {
 } as const;
 type QuestionStatus = typeof QuestionStatus[keyof typeof QuestionStatus];
 
+interface QuestionAttachmentDto {
+    id: string;
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+}
+
 interface QuestionReplyDto {
+    attachments?: QuestionAttachmentDto[];
     id: string;
     senderFullName: string;
     isFromTeacher: boolean;
@@ -51,12 +61,53 @@ function StatusBadge({ status }: { status: QuestionStatus }) {
 }
 
 
-function Message({ msg, isTeacherRole }: { msg: QuestionReplyDto; isTeacherRole: boolean }) {
+function fileSize(bytes: number) {
+    return bytes < 1024 * 1024 ? `${Math.ceil(bytes / 1024)} КБ` : `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
+}
+
+function Attachment({ file, baseUrl }: { file: QuestionAttachmentDto; baseUrl: string }) {
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState('');
+
+    async function download() {
+        setBusy(true);
+        setError('');
+        try {
+            const response = await axiosInstance.get(`${baseUrl}/attachments/${file.id}`, { responseType: 'blob' });
+            const url = URL.createObjectURL(new Blob([response.data], { type: file.contentType }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = file.fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch {
+            setError('Не удалось загрузить вложение. Попробуйте ещё раз.');
+        } finally { setBusy(false); }
+    }
+
+    return <div className="qst-attachment">
+        <span className="qst-attachment__name">{file.fileName}</span>
+        <span className="qst-attachment__size">{fileSize(file.sizeBytes)}</span>
+        <div className="qst-attachment__actions">
+            {file.contentType.startsWith('image/') && <ReportPreview
+                url={`${baseUrl}/attachments/${file.id}`} filename={file.fileName} />}
+            <button type="button" disabled={busy} onClick={() => void download()}>{busy ? 'Загрузка…' : 'Скачать'}</button>
+        </div>
+        {error && <span role="alert" className="qst-error">{error}</span>}
+    </div>;
+}
+
+function Message({ msg, isTeacherRole, baseUrl }: { msg: QuestionReplyDto; isTeacherRole: boolean; baseUrl: string }) {
     const isMine = isTeacherRole ? msg.isFromTeacher : !msg.isFromTeacher;
     return (
         <div className={`qst-msg ${isMine ? 'qst-msg--mine' : 'qst-msg--theirs'}`}>
             <span className="qst-msg__name">{msg.senderFullName}</span>
-            <div className="qst-msg__bubble">{msg.content}</div>
+            <div className="qst-msg__bubble">
+                {msg.content}
+                {msg.attachments?.map(file => <Attachment key={file.id} file={file} baseUrl={baseUrl} />)}
+            </div>
             <span className="qst-msg__time">{formatTime(msg.createdAtUtc)}</span>
         </div>
     );
@@ -74,10 +125,15 @@ export default function QuestionDetailPage() {
     const [loading, setLoading]   = useState(true);
     const [error, setError]       = useState('');
 
+    const [files, setFiles] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const sendInProgress = useRef(false);
     const [msgText, setMsgText]       = useState('');
     const [sending, setSending]       = useState(false);
     const [closing, setClosing]       = useState(false);
     const [sendError, setSendError]   = useState('');
+
+    const baseUrl = `/public/api/v1/${isTeacher ? 'teacher/' : ''}questions/${questionId}`;
 
     const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -100,21 +156,48 @@ export default function QuestionDetailPage() {
 
     async function handleSend(e: React.FormEvent) {
         e.preventDefault();
-        if (!msgText.trim() || !questionId) return;
+        if ((!msgText.trim() && files.length === 0) || !questionId || sendInProgress.current || closing) return;
+        sendInProgress.current = true;
         setSendError('');
         setSending(true);
         try {
             const url = isTeacher
                 ? `/public/api/v1/teacher/questions/${questionId}/reply`
                 : `/public/api/v1/questions/${questionId}/message`;
-            await axiosInstance.post(url, { content: msgText.trim() });
+            if (files.length) {
+                const body = new FormData();
+                body.append('content', msgText.trim());
+                files.forEach(file => body.append('files', file));
+                await axiosInstance.post(`${url}/attachments`, body, { headers: { 'Content-Type': 'multipart/form-data' } });
+            } else {
+                await axiosInstance.post(url, { content: msgText.trim() });
+            }
+            setFiles([]);
             setMsgText('');
             loadQuestion();
-        } catch {
-            setSendError('Не удалось отправить сообщение');
+        } catch (error) {
+            const message = isAxiosError(error) && error.response?.status === 400
+                ? error.response.data?.message : null;
+            setSendError(typeof message === 'string' ? message : 'Не удалось отправить сообщение');
         } finally {
             setSending(false);
+            sendInProgress.current = false;
         }
+    }
+
+    function selectFiles(event: React.ChangeEvent<HTMLInputElement>) {
+        const selected = Array.from(event.target.files ?? []);
+        event.target.value = '';
+        if (files.length + selected.length > 5) {
+            setSendError('Можно прикрепить до 5 файлов');
+            return;
+        }
+        if (selected.some(file => !/\.(jpe?g|png|gif|pdf|docx)$/i.test(file.name) || file.size === 0 || file.size > 10 * 1024 * 1024)) {
+            setSendError('Выберите непустые JPG, PNG, GIF, PDF или DOCX до 10 МБ');
+            return;
+        }
+        setFiles(current => [...current, ...selected]);
+        setSendError('');
     }
 
     async function handleClose() {
@@ -193,7 +276,7 @@ export default function QuestionDetailPage() {
                     {question.messages.length > 0 ? (
                         <div className="qst-chat">
                             {question.messages.map(m => (
-                                <Message key={m.id} msg={m} isTeacherRole={isTeacher} />
+                                <Message key={m.id} msg={m} isTeacherRole={isTeacher} baseUrl={baseUrl} />
                             ))}
                             <div ref={chatEndRef} />
                         </div>
@@ -210,20 +293,35 @@ export default function QuestionDetailPage() {
                         <p className="qst-closed-notice">Вопрос закрыт — переписка завершена</p>
                     ) : (
                         <form className="qst-chat-bar" onSubmit={handleSend}>
-                            <textarea
-                                className="qst-chat-bar__input"
-                                placeholder="Написать сообщение… (Ctrl+Enter — отправить)"
-                                value={msgText}
-                                onChange={handleTextareaInput}
-                                onKeyDown={handleKeyDown}
-                                maxLength={3000}
-                                rows={1}
-                            />
+                            <div className="qst-chat-bar__compose">
+                                <div className="qst-chat-bar__hint" id="attachment-hint">До 5 файлов по 10 МБ: JPG, PNG, GIF, PDF, DOCX</div>
+                                {files.length > 0 && <ul className="qst-selected-files">
+                                    {files.map((file, index) => <li key={`${file.name}-${index}`}>
+                                        <span>{file.name} · {fileSize(file.size)}</span>
+                                        <button type="button" disabled={sending} aria-label={`Удалить ${file.name}`}
+                                            onClick={() => setFiles(current => current.filter((_, i) => i !== index))}>×</button>
+                                    </li>)}
+                                </ul>}
+                                <input ref={fileInputRef} type="file" multiple hidden accept=".jpg,.jpeg,.png,.gif,.pdf,.docx"
+                                    aria-label="Вложения" onChange={selectFiles} disabled={sending || closing} />
+                                <textarea
+                                    disabled={sending || closing}
+                                    className="qst-chat-bar__input"
+                                    placeholder="Написать сообщение… (Ctrl+Enter — отправить)"
+                                    value={msgText}
+                                    onChange={handleTextareaInput}
+                                    onKeyDown={handleKeyDown}
+                                    maxLength={3000}
+                                    rows={1}
+                                />
+                            </div>
+                            <button type="button" className="qst-chat-bar__close" disabled={sending || closing || files.length >= 5}
+                                aria-describedby="attachment-hint" onClick={() => fileInputRef.current?.click()}>Прикрепить</button>
                             <button
                                 type="button"
                                 className="qst-chat-bar__close"
                                 onClick={handleClose}
-                                disabled={closing}
+                                disabled={closing || sending}
                                 title="Закрыть вопрос"
                             >
                                 {closing ? '…' : 'Закрыть'}
@@ -231,7 +329,7 @@ export default function QuestionDetailPage() {
                             <button
                                 type="submit"
                                 className="qst-chat-bar__send"
-                                disabled={sending || !msgText.trim()}
+                                disabled={sending || closing || (!msgText.trim() && files.length === 0)}
                             >
                                 {sending ? '…' : 'Отправить'}
                             </button>

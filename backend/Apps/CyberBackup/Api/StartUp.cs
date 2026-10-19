@@ -1,3 +1,4 @@
+using Application.Abstractions.Services.Questions;
 using System.Reflection;
 using Application;
 using Infrastructure;
@@ -79,6 +80,8 @@ public class StartUp
 
             ctx.Response.StatusCode = ex switch
             {
+                QuestionException { Code: "question.not_found" or "question.attachment_not_found" } => 404,
+                QuestionException => 400,
                 InvalidOperationException => 400,
                 UnauthorizedAccessException => 403,
                 KeyNotFoundException       => 404,

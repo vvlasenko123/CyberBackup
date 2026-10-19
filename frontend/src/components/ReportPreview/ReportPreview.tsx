@@ -1,9 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import './ReportPreview.css';
 
 type Props = { url: string; filename: string };
-type Preview = { kind: 'pdf'; url: string } | { kind: 'docx'; html: string };
+type Preview = { kind: 'pdf'; url: string } | { kind: 'image'; url: string } | { kind: 'docx'; html: string };
+
+const IMAGE_TYPES: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif' };
 
 const DOCX_POLICY = "default-src 'none'; img-src data:; font-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'";
 
@@ -12,8 +15,10 @@ function PreviewDialog({ url, filename, onClose }: Props & { onClose: () => void
     const titleId = useId();
     const [preview, setPreview] = useState<Preview | null>(null);
     const [error, setError] = useState(false);
+    const [imageReady, setImageReady] = useState(false);
     const extension = filename.split('.').pop()?.toLowerCase();
-    const supported = extension === 'pdf' || extension === 'docx';
+    const imageType = IMAGE_TYPES[extension ?? ''];
+    const supported = extension === 'pdf' || extension === 'docx' || Boolean(imageType);
 
     useEffect(() => {
         dialog.current?.showModal();
@@ -29,7 +34,10 @@ function PreviewDialog({ url, filename, onClose }: Props & { onClose: () => void
                     responseType: 'arraybuffer', signal: controller.signal,
                 });
                 if (controller.signal.aborted) return;
-                if (extension === 'pdf') {
+                if (imageType) {
+                    objectUrl = URL.createObjectURL(new Blob([response.data], { type: imageType }));
+                    setPreview({ kind: 'image', url: objectUrl });
+                } else if (extension === 'pdf') {
                     objectUrl = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
                     setPreview({ kind: 'pdf', url: objectUrl });
                 } else {
@@ -52,20 +60,29 @@ function PreviewDialog({ url, filename, onClose }: Props & { onClose: () => void
             controller.abort();
             if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
-    }, [url, extension, supported]);
+    }, [url, extension, supported, imageType]);
 
-    return <dialog ref={dialog} className="report-preview-dialog" aria-labelledby={titleId} onCancel={onClose}>
+    const loading = supported && !error && (!preview || (preview.kind === 'image' && !imageReady));
+
+    return createPortal(<dialog ref={dialog} className="report-preview-dialog" aria-labelledby={titleId} onCancel={onClose}>
         <header className="report-preview-header">
             <h2 id={titleId}>{filename}</h2>
             <button type="button" onClick={onClose} autoFocus>Закрыть</button>
         </header>
-        {!supported ? <p role="status">Предпросмотр этого формата недоступен. Скачайте файл или загрузите отчёт в формате PDF или DOCX.</p>
-            : error ? <p role="alert">Не удалось открыть документ. Закройте просмотр и попробуйте ещё раз или скачайте файл.</p>
-                : !preview ? <p role="status">Загрузка документа…</p>
-                    : preview.kind === 'pdf' ? <iframe className="report-preview-frame" title={`Предпросмотр: ${filename}`} src={preview.url} />
-                        : <iframe className="report-preview-frame" title={`Предпросмотр: ${filename}`} sandbox="" srcDoc={preview.html} />}
-        {preview && <p className="report-preview-hint">Если документ отображается некорректно, скачайте оригинал.</p>}
-    </dialog>;
+        <div className="report-preview-content" aria-busy={loading}>
+            {loading && <div className="report-preview-loading" role="status">
+                <span className="report-preview-spinner" aria-hidden="true" />
+                <span>Загрузка {imageType ? 'изображения' : 'документа'}…</span>
+            </div>}
+            {!supported ? <p role="status">Предпросмотр этого формата недоступен. Скачайте файл или загрузите отчёт в формате PDF или DOCX.</p>
+                : error ? <p role="alert">Не удалось открыть {imageType ? 'изображение' : 'документ'}. Закройте просмотр и попробуйте ещё раз или скачайте файл.</p>
+                    : preview?.kind === 'image' ? <img className="report-preview-image" src={preview.url} alt={filename}
+                        onLoad={() => setImageReady(true)} onError={() => setError(true)} />
+                        : preview?.kind === 'pdf' ? <iframe className="report-preview-frame" title={`Предпросмотр: ${filename}`} src={preview.url} />
+                            : preview?.kind === 'docx' ? <iframe className="report-preview-frame" title={`Предпросмотр: ${filename}`} sandbox="" srcDoc={preview.html} /> : null}
+        </div>
+        {preview && preview.kind !== 'image' && <p className="report-preview-hint">Если документ отображается некорректно, скачайте оригинал.</p>}
+    </dialog>, document.body);
 }
 
 export function ReportPreview({ url, filename }: Props) {
