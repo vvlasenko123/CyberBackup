@@ -34,12 +34,9 @@ function PreviewDialog({ url, filename, onClose }: Props & { onClose: () => void
                     responseType: 'arraybuffer', signal: controller.signal,
                 });
                 if (controller.signal.aborted) return;
-                if (imageType) {
-                    objectUrl = URL.createObjectURL(new Blob([response.data], { type: imageType }));
-                    setPreview({ kind: 'image', url: objectUrl });
-                } else if (extension === 'pdf') {
-                    objectUrl = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-                    setPreview({ kind: 'pdf', url: objectUrl });
+                if (imageType || extension === 'pdf') {
+                    objectUrl = URL.createObjectURL(new Blob([response.data], { type: imageType || 'application/pdf' }));
+                    setPreview({ kind: imageType ? 'image' : 'pdf', url: objectUrl });
                 } else {
                     const { renderAsync } = await import('docx-preview');
                     if (controller.signal.aborted) return;
