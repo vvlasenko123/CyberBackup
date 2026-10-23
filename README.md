@@ -84,6 +84,27 @@ docker compose -f deploy/docker-compose.dev.yml up --build --force-recreate
 
 ---
 
+### 🖥 Dev-сервер и CI/CD
+
+`.github/workflows/ci.yml` на каждый push и PR собирает backend, запускает тесты и сборку frontend. `.github/workflows/deploy-dev.yml` при push в `main` (или вручную через Run workflow) прогоняет CI, по SSH переключает git-checkout на сервере на нужный коммит, записывает `deploy/.env.dev.local` из окружения GitHub `dev` и поднимает `docker-compose.dev.yml` под именем проекта `cyberbackup-dev`. Домена нет: frontend и API доступны по IP, PostgreSQL и MinIO опубликованы только на loopback сервера.
+
+Настройки задаются в Settings → Environments → `dev`:
+
+* Variables: `DEV_HOST` (внешний IP), `DEV_SSH_USER`, `DEV_SSH_PORT`, `SUPERADMIN_EMAIL`; необязательные `DEV_APP_DIR` (по умолчанию `CyberBackup` от домашнего каталога), `DEV_BACKEND_PORT` (`15000`), `DEV_FRONTEND_PORT` (`5173`).
+* Secrets: `DEV_SSH_PRIVATE_KEY`, `DEV_SSH_KNOWN_HOSTS` (`ssh-keyscan -p <порт> <IP>`), `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `SUPERADMIN_PASSWORD`, `JWT_SIGNING_KEY`, `PASSWORD_HASH_PEPPER` (Base64 от 32 байт).
+
+Смена `POSTGRES_PASSWORD` или pepper после первого запуска не применяется к уже созданным данным. Порты frontend и API должны быть проброшены на сервер с тем же номером снаружи.
+
+Состояние на сервере:
+
+```bash
+cd ~/CyberBackup
+docker compose -p cyberbackup-dev --env-file deploy/.env.dev.local -f deploy/docker-compose.dev.yml ps
+docker compose -p cyberbackup-dev --env-file deploy/.env.dev.local -f deploy/docker-compose.dev.yml logs -f backend
+```
+
+---
+
 ### 📌 Примечание
 
 * В development используется `node` контейнер с hot reload
