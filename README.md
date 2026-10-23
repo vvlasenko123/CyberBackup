@@ -46,6 +46,26 @@ py deploy/manage.py down --environment dev
 
 Для доступа с другого компьютера задайте `DEV_BIND_IP`, `DEV_API_BASE_URL` и `DEV_FRONTEND_ORIGIN`. Последние два значения — адреса, доступные браузеру, со схемой и портом, без завершающего `/`. `localhost` в браузере указывает на компьютер пользователя.
 
+## Dev-сервер и CI/CD
+
+`.github/workflows/ci.yml` на каждый push и PR собирает backend, запускает проверки журналирования, тесты `manage.py`, тесты и сборку frontend. `.github/workflows/deploy-dev.yml` при push в `main` (или вручную через Run workflow) прогоняет CI, по SSH обновляет git-checkout на сервере до нужного коммита, записывает `deploy/.env.dev.local` из окружения GitHub `dev` и выполняет `manage.py up --environment dev`. Домена нет: frontend и API доступны по IP, PostgreSQL и MinIO опубликованы только на loopback сервера.
+
+Настройки задаются в Settings → Environments → `dev`:
+
+| Тип | Имя | Значение |
+| --- | --- | --- |
+| Variable | `DEV_HOST` | публичный IP сервера |
+| Variable | `DEV_SSH_USER` | пользователь SSH из группы `docker` |
+| Variable | `SUPERADMIN_EMAIL` | email администратора |
+| Variable (необязательно) | `DEV_SSH_PORT`, `DEV_APP_DIR`, `DEV_BACKEND_PORT`, `DEV_FRONTEND_PORT`, `SUPERADMIN_FULL_NAME`, `POSTGRES_USER`, `POSTGRES_DB`, `MINIO_BUCKET_NAME` | по умолчанию `22`, `CyberBackup` (от домашнего каталога), `15000`, `5173` и значения dev compose |
+| Secret | `DEV_SSH_PRIVATE_KEY` | приватный ключ, публичная часть которого в `authorized_keys` на сервере |
+| Secret | `DEV_SSH_KNOWN_HOSTS` | вывод `ssh-keyscan -p <порт> <IP>` |
+| Secret | `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `SUPERADMIN_PASSWORD` | `openssl rand -hex 24` (для `MINIO_ROOT_USER` — любое имя от 3 символов) |
+| Secret | `JWT_SIGNING_KEY` | `openssl rand -base64 48` |
+| Secret | `PASSWORD_HASH_PEPPER` | `openssl rand -base64 32` |
+
+Значения секретов не должны содержать кавычек и переводов строк. Как и в prod, смена `POSTGRES_PASSWORD` или pepper после первого запуска не применяется к уже созданным данным. Docker публикует порты в обход `ufw`; если у провайдера есть свой firewall, откройте в нём TCP `15000` и `5173`.
+
 ## Production: новая установка
 
 Для существующей установки сначала выполните раздел о сохранении данных ниже.
