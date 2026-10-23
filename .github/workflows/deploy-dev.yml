@@ -1,0 +1,146 @@
+name: Deploy dev
+
+# Deploys deploy/docker-compose.dev.yml to the dev server over SSH.
+# Settings live in the GitHub environment "dev": secrets for credentials, variables for addresses.
+# The server keeps a git checkout of this repository; the env file is rewritten on every deploy.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy
+    needs: ci
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+      url: http://${{ vars.DEV_HOST }}:${{ vars.DEV_FRONTEND_PORT || '5173' }}
+    env:
+      DEV_HOST: ${{ vars.DEV_HOST }}
+      SSH_USER: ${{ vars.DEV_SSH_USER }}
+      SSH_PORT: ${{ vars.DEV_SSH_PORT || '22' }}
+      APP_DIR: ${{ vars.DEV_APP_DIR || 'CyberBackup' }}
+      BACKEND_PORT: ${{ vars.DEV_BACKEND_PORT || '15000' }}
+      FRONTEND_PORT: ${{ vars.DEV_FRONTEND_PORT || '5173' }}
+    steps:
+      - name: Write env file
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          PASSWORD_HASH_PEPPER: ${{ secrets.PASSWORD_HASH_PEPPER }}
+          SUPERADMIN_PASSWORD: ${{ secrets.SUPERADMIN_PASSWORD }}
+          SUPERADMIN_EMAIL: ${{ vars.SUPERADMIN_EMAIL }}
+          SUPERADMIN_FULL_NAME: ${{ vars.SUPERADMIN_FULL_NAME || 'Суперадминистратор' }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USER || 'postgres' }}
+          POSTGRES_DB: ${{ vars.POSTGRES_DB || 'cyber-backup-api' }}
+          MINIO_BUCKET_NAME: ${{ vars.MINIO_BUCKET_NAME || 'cyberbackup' }}
+        run: |
+          set -euo pipefail
+          DEV_BIND_IP=0.0.0.0
+          DEV_BACKEND_PORT="$BACKEND_PORT"
+          DEV_FRONTEND_PORT="$FRONTEND_PORT"
+          DEV_API_BASE_URL="http://$DEV_HOST:$BACKEND_PORT"
+          DEV_FRONTEND_ORIGIN="http://$DEV_HOST:$FRONTEND_PORT"
+          BUILD_CONFIGURATION=Debug
+
+          names="DEV_HOST SSH_USER BUILD_CONFIGURATION DEV_BIND_IP DEV_BACKEND_PORT DEV_FRONTEND_PORT
+            DEV_API_BASE_URL DEV_FRONTEND_ORIGIN POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB
+            MINIO_ROOT_USER MINIO_ROOT_PASSWORD MINIO_BUCKET_NAME JWT_SIGNING_KEY PASSWORD_HASH_PEPPER
+            SUPERADMIN_EMAIL SUPERADMIN_PASSWORD SUPERADMIN_FULL_NAME"
+          missing=""
+          for name in $names; do
+            value="${!name}"
+            if [ -z "$value" ]; then missing="$missing $name"; fi
+            # Values are written single-quoted, which Compose reads literally.
+            case "$value" in *"'"*|*$'\n'*) echo "::error::$name must not contain quotes or newlines"; exit 1 ;; esac
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Set these in the GitHub environment 'dev':$missing"
+            exit 1
+          fi
+
+          umask 077
+          : > dev.env
+          for name in $names; do
+            case "$name" in DEV_HOST|SSH_USER) continue ;; esac
+            printf "%s='%s'\n" "$name" "${!name}" >> dev.env
+          done
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DEV_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$SSH_KNOWN_HOSTS" ]; then
+            echo "::error::Set DEV_SSH_PRIVATE_KEY and DEV_SSH_KNOWN_HOSTS in the GitHub environment 'dev'"
+            exit 1
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploy ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host dev
+            HostName $DEV_HOST
+            User $SSH_USER
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          EOF
+
+      - name: Upload env file
+        run: scp dev.env "dev:$APP_DIR/deploy/.env.dev.local.new"
+
+      - name: Update and start stack
+        run: |
+          ssh dev bash -s -- "$APP_DIR" "$GITHUB_REF" "$GITHUB_SHA" <<'EOF'
+          set -euo pipefail
+          app_dir=$1 ref=$2 sha=$3
+          cd "$app_dir"
+
+          git fetch --prune origin "+$ref:refs/remotes/origin/deploy-dev"
+          git checkout --force --detach "$sha"
+          mv deploy/.env.dev.local.new deploy/.env.dev.local
+          chmod 600 deploy/.env.dev.local
+
+          python3 deploy/manage.py up --environment dev --wait-timeout 600
+          docker image prune -f >/dev/null
+          python3 deploy/manage.py status --environment dev
+          EOF
+
+      - name: Smoke check from outside
+        run: |
+          for attempt in $(seq 1 12); do
+            if curl -fsS --max-time 5 "http://$DEV_HOST:$BACKEND_PORT/health/ready" >/dev/null \
+              && curl -fsS --max-time 5 "http://$DEV_HOST:$FRONTEND_PORT/" >/dev/null; then
+              echo "Frontend: http://$DEV_HOST:$FRONTEND_PORT"
+              echo "API:      http://$DEV_HOST:$BACKEND_PORT"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Stack is healthy on the server but not reachable from outside. Check the provider firewall for TCP $BACKEND_PORT and $FRONTEND_PORT."
+          exit 1
+
+      - name: Show logs on failure
+        if: failure()
+        run: ssh dev "cd '$APP_DIR' && python3 deploy/manage.py logs --environment dev" || true

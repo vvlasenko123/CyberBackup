@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      # main is checked by deploy-dev.yml, which calls this workflow before deploying.
+      - main
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build backend/Apps/CyberBackup/CyberBackup.sln -c Release
+
+      - name: Logging checks
+        run: dotnet run --project backend/Tests/Infrastructure.Logging.Checks -c Release
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  deploy-config:
+    name: Deploy config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: manage.py tests
+        run: python -m unittest discover -s deploy -p test_manage.py
+
+      - name: Compose files resolve
+        run: |
+          docker compose --env-file deploy/.env.dev.example -f deploy/docker-compose.dev.yml config --quiet
+          docker compose --env-file deploy/.env.prod.example -f deploy/docker-compose.prod.yml config --quiet

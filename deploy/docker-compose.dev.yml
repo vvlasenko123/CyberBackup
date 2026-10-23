@@ -1,57 +1,72 @@
+name: cyberbackup-dev
+
+x-logging: &default-logging
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: postgres
     restart: unless-stopped
+    logging: *default-logging
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-cyber-backup-api}
     ports:
-      - "5432:5432"
+      # PostgreSQL and MinIO stay on loopback even when the API and frontend are public.
+      - "${DEV_INTERNAL_BIND_IP:-127.0.0.1}:${DEV_POSTGRES_PORT:-15432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 5s
       timeout: 5s
       retries: 10
 
   minio:
-    image: cgr.dev/chainguard/minio:latest
-    container_name: minio
+    image: minio/minio:latest
     restart: unless-stopped
-    user: root
+    logging: *default-logging
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${DEV_INTERNAL_BIND_IP:-127.0.0.1}:${DEV_MINIO_API_PORT:-19000}:9000"
+      - "${DEV_INTERNAL_BIND_IP:-127.0.0.1}:${DEV_MINIO_CONSOLE_PORT:-19001}:9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build:
       context: ..
       dockerfile: backend/Apps/CyberBackup/Api/Dockerfile
-    container_name: backend
+      args:
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Debug}
     restart: unless-stopped
+    logging: *default-logging
     ports:
-      - "5000:8080"
+      - "${DEV_BIND_IP:-127.0.0.1}:${DEV_BACKEND_PORT:-15000}:8080"
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Development
     
-      - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=cyber-backup-api;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
+      - PostgresOptions__ConnectionString=Host=postgres;Port=5432;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres};Database=${POSTGRES_DB:-cyber-backup-api};Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
       - PostgresOptions__AutoMigration=true
     
-      - CyberCorsOptions__Origins__0=http://localhost:5173
+      - CyberCorsOptions__Origins__0=${DEV_FRONTEND_ORIGIN:-http://localhost:${DEV_FRONTEND_PORT:-5173}}
     
       - JwtOptions__Issuer=solution
       - JwtOptions__Audience=auth-api
-      - JwtOptions__SigningKey=local-dev-signing-key-change-me-please-32-bytes-minimum
+      - JwtOptions__SigningKey=${JWT_SIGNING_KEY:-local-dev-signing-key-change-me-please-32-bytes-minimum}
       - JwtOptions__AccessTokenLifetimeMinutes=15
     
       - RefreshTokenOptions__LifetimeDays=7
@@ -60,37 +75,48 @@ services:
       - AuthTokenOptions__ClientId=web-client
       - AuthTokenOptions__Scopes__0=identity
     
-      - PasswordHashOptions__Pepper=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      - PasswordHashOptions__Pepper=${PASSWORD_HASH_PEPPER:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
       - PasswordHashOptions__WorkFactor=12
     
-      - SuperAdminOptions__Email=superadmin@example.com
-      - SuperAdminOptions__Password=admin123
-      - SuperAdminOptions__FullName=Суперадминистратор
+      - SuperAdminOptions__Email=${SUPERADMIN_EMAIL:-superadmin@example.com}
+      - SuperAdminOptions__Password=${SUPERADMIN_PASSWORD:-admin123}
+      - SuperAdminOptions__FullName=${SUPERADMIN_FULL_NAME:-Суперадминистратор}
 
       - MinioOptions__Endpoint=minio:9000
-      - MinioOptions__AccessKey=minioadmin
-      - MinioOptions__SecretKey=minioadmin
-      - MinioOptions__BucketName=cyberbackup
+      - MinioOptions__AccessKey=${MINIO_ROOT_USER:-minioadmin}
+      - MinioOptions__SecretKey=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MinioOptions__BucketName=${MINIO_BUCKET_NAME:-cyberbackup}
       - MinioOptions__UseSsl=false
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_healthy
 
   frontend:
     image: node:20-alpine
-    container_name: frontend
     working_dir: /app
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
     restart: unless-stopped
+    logging: *default-logging
     ports:
-      - "5173:5173"
+      - "${DEV_BIND_IP:-127.0.0.1}:${DEV_FRONTEND_PORT:-5173}:5173"
     volumes:
       - ../frontend:/app
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_API_BASE_URL=${DEV_API_BASE_URL:-http://localhost:${DEV_BACKEND_PORT:-15000}}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      # The first `npm ci` on a fresh host is slow; a passing check marks the service healthy earlier.
+      start_period: 300s
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:
