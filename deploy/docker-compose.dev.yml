@@ -18,7 +18,7 @@ services:
       retries: 10
 
   minio:
-    image: cgr.dev/chainguard/minio:latest
+    image: chainguard/minio:latest
     restart: unless-stopped
     user: root
     command: server /data --console-address ":9001"
@@ -30,6 +30,11 @@ services:
       - "${DEV_INTERNAL_BIND_IP:-127.0.0.1}:${DEV_MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build:
@@ -72,6 +77,8 @@ services:
       - MinioOptions__UseSsl=false
     depends_on:
       postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   frontend:
