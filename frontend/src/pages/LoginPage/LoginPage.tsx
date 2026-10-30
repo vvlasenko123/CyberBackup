@@ -77,11 +77,13 @@ const LoginPage: React.FC = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     onKeyDown={handleKeyDown}
+                                    autoComplete="current-password"
                                     className="password-input"
                                 />
                                 <button
                                     type="button"
                                     className="password-toggle"
+                                    aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}

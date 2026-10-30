@@ -17,3 +17,34 @@
     scrollbar-gutter: stable;
     padding: 20px;
 }
+
+.layout__overlay {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .layout {
+        height: 100dvh;
+    }
+
+    .layout__page {
+        padding: 14px 14px max(14px, env(safe-area-inset-bottom));
+        scrollbar-gutter: auto;
+    }
+
+    .layout__overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 240;
+        background: rgba(5, 9, 14, 0.6);
+        backdrop-filter: blur(2px);
+        animation: layout-overlay-in 0.2s ease-out;
+    }
+}
+
+@keyframes layout-overlay-in {
+    from {
+        opacity: 0;
+    }
+}
