@@ -7,9 +7,13 @@ import { Header } from './Header/Header';
 import { useNotifications } from '../../features/notifications/useNotifications';
 import { NotificationBell } from '../../features/notifications/NotificationBell';
 import { NotificationToast } from '../../features/notifications/NotificationToast';
+import { useIsDesktop } from '../../hooks/useIsDesktop';
 
 export const AppLayout: React.FC = () => {
     const navigate = useNavigate();
+
+    const isDesktop = useIsDesktop();
+    const [menuOpen, setMenuOpen] = useState(false);
 
     const [role, setRole] = useState<UserRole>(
         () => (localStorage.getItem('user_role') as UserRole) || 'student'
@@ -40,12 +44,22 @@ export const AppLayout: React.FC = () => {
 
     return (
         <div className="layout">
-            <Sidebar role={role} user={user} onLogout={handleLogout} />
+            <Sidebar
+                role={role}
+                user={user}
+                onLogout={handleLogout}
+                open={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                touchDevice={!isDesktop}
+            />
+
+            {menuOpen && <div className="layout__overlay" onClick={() => setMenuOpen(false)} />}
 
             <div className="layout__content">
                 <Header
                     role={role}
                     onRoleChange={handleRoleChange}
+                    onMenuClick={() => setMenuOpen(true)}
                     notificationBell={
                         <NotificationBell
                             notifications={notifications}

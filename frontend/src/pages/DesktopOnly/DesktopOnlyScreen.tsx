@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './DesktopOnlyScreen.css';
 
 const MonitorIcon: React.FC = () => (
@@ -19,27 +20,37 @@ const MonitorIcon: React.FC = () => (
     </svg>
 );
 
-const DesktopOnlyScreen: React.FC = () => (
-    <div className="desktop-only">
-        <div className="desktop-only__card">
-            <div className="desktop-only__hero animated-gradient">
-                <div className="desktop-only__logo">
-                    Neo<span>Lab</span>
-                </div>
-                <div className="desktop-only__icon">
-                    <MonitorIcon />
-                </div>
-            </div>
+const DesktopOnlyScreen: React.FC = () => {
+    const navigate = useNavigate();
+    const hasSession = !!localStorage.getItem('token');
 
-            <div className="desktop-only__body">
-                <p className="desktop-only__kicker">Образовательная платформа по кибербезопасности</p>
-                <h1 className="desktop-only__title">NeoLab пока работает только на десктопе</h1>
-                <p className="desktop-only__subtitle">
-                    Откройте платформу с ноутбука или компьютера — мобильная версия скоро появится.
-                </p>
+    return (
+        <div className="desktop-only">
+            <div className="desktop-only__card">
+                <div className="desktop-only__hero animated-gradient">
+                    <div className="desktop-only__logo">
+                        Neo<span>Lab</span>
+                    </div>
+                    <div className="desktop-only__icon">
+                        <MonitorIcon />
+                    </div>
+                </div>
+
+                <div className="desktop-only__body">
+                    <p className="desktop-only__kicker">Образовательная платформа по кибербезопасности</p>
+                    <h1 className="desktop-only__title">NeoLab пока работает только на десктопе</h1>
+                    <p className="desktop-only__subtitle">
+                        Откройте платформу с ноутбука или компьютера — мобильная версия скоро появится.
+                    </p>
+                    {hasSession && (
+                        <button className="desktop-only__back" onClick={() => navigate('/dashboard')}>
+                            Вернуться на главную
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 export default DesktopOnlyScreen;
