@@ -14,6 +14,10 @@ public sealed class GroupService : IGroupService
     }
 
     /// <inheritdoc />
+    public Task<IReadOnlyCollection<GetGroupListItemDto>> GetTeacherGroupsAsync(Guid teacherId, bool includeAll, CancellationToken cancellationToken)
+        => _repository.GetTeacherGroupsAsync(teacherId, includeAll, cancellationToken);
+
+    /// <inheritdoc />
     public Task<IReadOnlyCollection<GetGroupListItemDto>> GetGroupsAsync(CancellationToken cancellationToken)
         => _repository.GetGroupsAsync(cancellationToken);
 

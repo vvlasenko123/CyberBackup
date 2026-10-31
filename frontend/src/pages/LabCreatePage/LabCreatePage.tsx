@@ -1,3 +1,4 @@
+import LaboratoryGroups from '../../components/LaboratoryGroups/LaboratoryGroups';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -6,8 +7,9 @@ import './LabCreatePage.css';
 
 type Difficulty = 1 | 2 | 3;
 
-
 type FormState = {
+    groupIds: string[];
+    restrictToGroups: boolean;
     title: string;
     shortDescription: string;
     description: string;
@@ -31,6 +33,8 @@ type CreateLabResponse = {
 };
 
 const INITIAL_FORM: FormState = {
+    groupIds: [],
+    restrictToGroups: false,
     title: '',
     shortDescription: '',
     description: '',
@@ -60,7 +64,7 @@ const LabCreatePage = () => {
     useEffect(() => {
         axiosInstance.get<string[]>('/public/api/v1/teacher/laboratories/blocks')
             .then(res => setExistingBlocks(res.data))
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setBlocksLoading(false));
     }, []);
 
@@ -70,11 +74,14 @@ const LabCreatePage = () => {
     const handleSubmit = async (publish: boolean) => {
         if (!form.title.trim() || !form.block.trim() || form.maxPoints === '' || !form.description.trim()) return;
 
+        if (form.restrictToGroups && form.groupIds.length === 0) return;
+
         setSubmitting(true);
         setError(null);
 
         try {
             const payload = {
+                groupIds: form.restrictToGroups ? form.groupIds : [],
                 title: form.title.trim(),
                 shortDescription: form.shortDescription.trim(),
                 description: form.description.trim(),
@@ -103,7 +110,7 @@ const LabCreatePage = () => {
         }
     };
 
-    const isValid = form.title.trim() && form.block.trim() && form.maxPoints !== '' && form.description.trim();
+    const isValid = (!form.restrictToGroups || form.groupIds.length > 0) && form.title.trim() && form.block.trim() && form.maxPoints !== '' && form.description.trim();
 
     return (
         <div className="lab-create-page">
@@ -184,6 +191,9 @@ const LabCreatePage = () => {
                         />
                     </div>
                 </div>
+                <LaboratoryGroups groupIds={form.groupIds} restricted={form.restrictToGroups}
+                    disabled={submitting} onChange={(groupIds, restrictToGroups) =>
+                        setForm(previous => previous ? { ...previous, groupIds, restrictToGroups } : previous)} />
             </div>
 
             {/* Content */}

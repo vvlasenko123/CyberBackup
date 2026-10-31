@@ -1,5 +1,6 @@
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.Calendar.Contracts;
+using Application.Abstractions.Services.Groups.Contracts;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.Abstractions.Services.Posts.Contracts;
 using Application.DTO.Auth;
@@ -32,6 +33,7 @@ public sealed class LaboratoryService : ILaboratoryService
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     };
 
+    private readonly IGroupRepository _groups;
     private readonly ILaboratoryRepository _repository;
     private readonly ILaboratoryReportFileStorage _fileStorage;
     private readonly ILaboratoryFlagHashService _flagHashService;
@@ -47,8 +49,10 @@ public sealed class LaboratoryService : ILaboratoryService
         IJwtService jwtService,
         INotificationPushService notificationPush,
         INotificationRepository notificationRepository,
-        IPostRepository postRepository)
+        IPostRepository postRepository,
+        IGroupRepository groups)
     {
+        _groups = groups;
         _repository = repository;
         _fileStorage = fileStorage;
         _flagHashService = flagHashService;
@@ -103,6 +107,7 @@ public sealed class LaboratoryService : ILaboratoryService
         CancellationToken cancellationToken)
     {
         var currentUser = GetCurrentUser();
+        await EnsureLaboratoryAccessAsync(currentUser.UserId, laboratoryId, cancellationToken);
         var hint = await _repository.OpenHintAsync(
             currentUser.UserId,
             laboratoryId,
@@ -178,7 +183,9 @@ public sealed class LaboratoryService : ILaboratoryService
         var currentUser = GetCurrentUser();
 
         var labDetails = await _repository.GetStudentLaboratoryDetailsAsync(currentUser.UserId, laboratoryId, cancellationToken);
-        if (labDetails?.DeadlineAtUtc.HasValue == true && DateTimeOffset.UtcNow > labDetails.DeadlineAtUtc.Value)
+        if (labDetails is null)
+            throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
+        if (labDetails.DeadlineAtUtc.HasValue && DateTimeOffset.UtcNow > labDetails.DeadlineAtUtc.Value)
         {
             throw new LaboratoryException(
                 "laboratory_report.deadline_expired",
@@ -232,6 +239,7 @@ public sealed class LaboratoryService : ILaboratoryService
         CancellationToken cancellationToken)
     {
         var currentUser = GetCurrentUser();
+        await EnsureLaboratoryAccessAsync(currentUser.UserId, laboratoryId, cancellationToken);
         var report = await _repository.GetMyReportAsync(
             currentUser.UserId,
             laboratoryId,
@@ -330,6 +338,7 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         var currentUser = GetCurrentUser();
 
+        await ValidateGroupsAsync(request.GroupIds, cancellationToken);
         ValidateLaboratory(request, expectedFlagRequired: request.HasFlag);
         var expectedFlagHash = request.HasFlag ? _flagHashService.HashFlag(request.ExpectedFlag!) : null;
         var id = await _repository.CreateLaboratoryAsync(
@@ -357,7 +366,7 @@ public sealed class LaboratoryService : ILaboratoryService
                 cancellationToken);
 
             // Push-уведомления студентам
-            var studentIds = await _repository.GetStudentIdsForTeacherAsync(currentUser.UserId, cancellationToken);
+            var studentIds = await _repository.GetStudentIdsForLaboratoryAsync(id, currentUser.UserId, cancellationToken);
             var nowUtc = DateTimeOffset.UtcNow;
             var notifTitle = "Новое задание";
             var notifMessage = $"Добавлена новая лабораторная работа: «{request.Title}»";
@@ -390,18 +399,19 @@ public sealed class LaboratoryService : ILaboratoryService
     }
 
     /// <inheritdoc />
-    public Task UpdateLaboratoryAsync(
+    public async Task UpdateLaboratoryAsync(
         Guid laboratoryId,
         UpdateLaboratoryRequest request,
         CancellationToken cancellationToken)
     {
         var currentUser = GetCurrentUser();
 
+        await ValidateGroupsAsync(request.GroupIds, cancellationToken);
         ValidateLaboratory(request, expectedFlagRequired: false);
         var updateFlagHash = request.HasFlag && !string.IsNullOrWhiteSpace(request.ExpectedFlag);
         var expectedFlagHash = updateFlagHash ? _flagHashService.HashFlag(request.ExpectedFlag!) : null;
 
-        var result = _repository.UpdateLaboratoryAsync(
+        await _repository.UpdateLaboratoryAsync(
             laboratoryId,
             request,
             expectedFlagHash,
@@ -409,8 +419,6 @@ public sealed class LaboratoryService : ILaboratoryService
             currentUser.UserId,
             IsAdmin(currentUser),
             cancellationToken);
-
-        return result;
     }
 
     /// <inheritdoc />
@@ -473,6 +481,7 @@ public sealed class LaboratoryService : ILaboratoryService
         CancellationToken cancellationToken)
     {
         var currentUser = GetCurrentUser();
+        await EnsureLaboratoryAccessAsync(currentUser.UserId, laboratoryId, cancellationToken);
         var file = await _repository.GetStudentReportFileAsync(
             currentUser.UserId,
             laboratoryId,
@@ -790,6 +799,22 @@ public sealed class LaboratoryService : ILaboratoryService
         };
 
         return result;
+    }
+
+    private async Task ValidateGroupsAsync(IReadOnlyCollection<Guid>? groupIds, CancellationToken cancellationToken)
+    {
+        if (groupIds is null || groupIds.Count == 0) return;
+        var user = GetCurrentUser();
+        var available = await _groups.GetTeacherGroupsAsync(user.UserId, IsAdmin(user), cancellationToken);
+        var allowedIds = available.Select(g => g.Id).ToHashSet();
+        if (groupIds.Any(id => !allowedIds.Contains(id)))
+            throw new LaboratoryException("laboratory.groups_forbidden", "Можно выбрать только доступные вам группы");
+    }
+
+    private async Task EnsureLaboratoryAccessAsync(Guid studentId, Guid laboratoryId, CancellationToken cancellationToken)
+    {
+        if (!await _repository.CanAccessLaboratoryAsync(studentId, laboratoryId, cancellationToken))
+            throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
     }
 
     private CurrentTokenUserDto GetCurrentUser()
