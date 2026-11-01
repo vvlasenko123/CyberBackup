@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions.Services.Auth.Contracts;
+using Application.Abstractions.Services.Avatars.Contracts;
 using Application.Abstractions.Services.Calendar;
 using Application.Abstractions.Services.Calendar.Contracts;
 using Application.Abstractions.Services.Groups.Contracts;
@@ -54,6 +55,8 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, AddDeadlineToLaboratories_202605310001>();
         services.AddTransient<IDatabaseMigration, AddAttendanceLessons_202606100001>();
         services.AddTransient<IDatabaseMigration, AddQuestionAttachments_202610140001>();
+        services.AddTransient<IDatabaseMigration, AddAvatarToUsers_202610230001>();
+        services.AddTransient<IDatabaseMigration, AddContactsToUsers_202610230002>();
         #endregion
 
         #region repositories
@@ -67,6 +70,7 @@ public static class InfrastructureStartUp
         services.AddScoped<IPostRepository, PostRepository>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();
         services.AddScoped<IQuestionAttachmentStorage, QuestionAttachmentStorage>();
+        services.AddScoped<IUserAvatarStorage, UserAvatarStorage>();
         #endregion
 
         #region auth

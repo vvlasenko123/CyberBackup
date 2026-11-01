@@ -54,6 +54,31 @@ public sealed class UserModel : AggregateRoot<Guid>
     /// </summary>
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    /// <summary>
+    /// Ключ объекта аватара в хранилище, null - аватара нет
+    /// </summary>
+    public string? AvatarPath { get; private set; }
+
+    /// <summary>
+    /// Время последней успешной загрузки аватара, null - аватара нет
+    /// </summary>
+    public DateTimeOffset? AvatarUpdatedAt { get; private set; }
+
+    /// <summary>
+    /// Номер телефона
+    /// </summary>
+    public PhoneNumber? Phone { get; private set; }
+
+    /// <summary>
+    /// Имя пользователя в Telegram без символа @
+    /// </summary>
+    public string? Telegram { get; private set; }
+
+    /// <summary>
+    /// Короткое имя или идентификатор страницы VK
+    /// </summary>
+    public string? Vk { get; private set; }
+
     public UserModel(
         Guid id,
         Email email,
@@ -64,7 +89,12 @@ public sealed class UserModel : AggregateRoot<Guid>
         bool mustChangePassword,
         Guid? createdBy,
         DateTimeOffset createdAt,
-        DateTimeOffset updatedAt) : base(id)
+        DateTimeOffset updatedAt,
+        string? avatarPath,
+        DateTimeOffset? avatarUpdatedAt,
+        PhoneNumber? phone,
+        string? telegram,
+        string? vk) : base(id)
     {
         Email = email;
         FullName = fullName;
@@ -75,5 +105,10 @@ public sealed class UserModel : AggregateRoot<Guid>
         CreatedBy = createdBy;
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
+        AvatarPath = avatarPath;
+        AvatarUpdatedAt = avatarUpdatedAt;
+        Phone = phone;
+        Telegram = telegram;
+        Vk = vk;
     }
 }

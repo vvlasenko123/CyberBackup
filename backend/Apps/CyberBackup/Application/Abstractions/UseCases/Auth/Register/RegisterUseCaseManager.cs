@@ -63,7 +63,12 @@ public sealed class RegisterUseCaseManager : IRegisterUseCaseManager
             mustChangePassword: false,
             createdBy: null,
             createdAt: nowUtc,
-            updatedAt: nowUtc);
+            updatedAt: nowUtc,
+            avatarPath: null,
+            avatarUpdatedAt: null,
+            phone: null,
+            telegram: null,
+            vk: null);
 
         await _userRepository.CreateUserAsync(user, cancellationToken);
 

@@ -47,7 +47,12 @@ public class CreateUserService : ICreateUserService
             mustChangePassword: true,
             createdBy: currentUserId,
             createdAt: DateTimeOffset.UtcNow,
-            updatedAt: DateTimeOffset.UtcNow);
+            updatedAt: DateTimeOffset.UtcNow,
+            avatarPath: null,
+            avatarUpdatedAt: null,
+            phone: null,
+            telegram: null,
+            vk: null);
 
         await _userRepository.CreateUserAsync(user, token);
         return user.Id;

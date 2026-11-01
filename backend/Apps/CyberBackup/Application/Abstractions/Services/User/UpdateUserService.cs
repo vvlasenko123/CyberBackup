@@ -70,7 +70,12 @@ public sealed class UpdateUserService : IUpdateUserService
             mustChangePassword: request.MustChangePassword,
             createdBy: user.CreatedBy,
             createdAt: user.CreatedAt,
-            updatedAt: DateTimeOffset.UtcNow);
+            updatedAt: DateTimeOffset.UtcNow,
+            avatarPath: user.AvatarPath,
+            avatarUpdatedAt: user.AvatarUpdatedAt,
+            phone: user.Phone,
+            telegram: user.Telegram,
+            vk: user.Vk);
 
         await _userRepository.UpdateUserAsync(updatedUser, cancellationToken);
     }

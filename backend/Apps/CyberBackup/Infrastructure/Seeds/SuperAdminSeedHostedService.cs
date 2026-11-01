@@ -76,7 +76,12 @@ public sealed class SuperAdminSeedHostedService : IHostedService
             mustChangePassword: false,
             createdBy: null,
             createdAt: nowUtc,
-            updatedAt: nowUtc);
+            updatedAt: nowUtc,
+            avatarPath: null,
+            avatarUpdatedAt: null,
+            phone: null,
+            telegram: null,
+            vk: null);
 
         await userRepository.CreateUserAsync(user, cancellationToken);
 

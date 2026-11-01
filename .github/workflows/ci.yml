@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: dotnet build backend/Apps/CyberBackup/CyberBackup.sln -c Release
 
+      - name: Test
+        run: dotnet test backend/Apps/CyberBackup/CyberBackup.sln -c Release --no-build
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
