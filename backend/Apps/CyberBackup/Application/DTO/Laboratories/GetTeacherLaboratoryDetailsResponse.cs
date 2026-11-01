@@ -7,6 +7,8 @@ namespace Application.DTO.Laboratories;
 /// </summary>
 public sealed record GetTeacherLaboratoryDetailsResponse
 {
+    public bool RestrictToGroups { get; init; }
+    public IReadOnlyCollection<Guid> GroupIds { get; init; } = [];
     public Guid Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public string ShortDescription { get; init; } = string.Empty;

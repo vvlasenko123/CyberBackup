@@ -1,3 +1,4 @@
+import LaboratoryGroups from '../../components/LaboratoryGroups/LaboratoryGroups';
 import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -7,8 +8,9 @@ import './LabEditPage.css';
 
 type Difficulty = 1 | 2 | 3;
 
-
 type FormState = {
+    groupIds: string[];
+    restrictToGroups: boolean;
     title: string;
     shortDescription: string;
     description: string;
@@ -27,6 +29,8 @@ type FormState = {
 };
 
 type TeacherLabDetail = {
+    groupIds?: string[];
+    restrictToGroups?: boolean;
     id: string;
     title: string;
     shortDescription: string;
@@ -71,6 +75,8 @@ const LabEditPage = () => {
                 ]);
                 const lab = labRes.data;
                 setForm({
+                    groupIds: lab.groupIds ?? [],
+                    restrictToGroups: lab.restrictToGroups ?? false,
                     title: lab.title,
                     shortDescription: lab.shortDescription,
                     description: lab.description,
@@ -104,11 +110,14 @@ const LabEditPage = () => {
         if (!form) return;
         if (!form.title.trim() || !form.block.trim() || form.maxPoints === '' || !form.description.trim()) return;
 
+        if (form.restrictToGroups && form.groupIds.length === 0) return;
+
         setSubmitting(true);
         setError(null);
 
         try {
             const payload = {
+                groupIds: form.restrictToGroups ? form.groupIds : [],
                 title: form.title.trim(),
                 shortDescription: form.shortDescription.trim(),
                 description: form.description.trim(),
@@ -140,7 +149,7 @@ const LabEditPage = () => {
     if (loading) return <DetailSkeleton className="lab-edit-page" panelClassName="lab-edit-section" form />;
     if (!form) return <div className="lab-edit-loading">{error ?? 'Не удалось загрузить'}</div>;
 
-    const isValid = form.title.trim() && form.block.trim() && form.maxPoints !== '' && form.description.trim();
+    const isValid = (!form.restrictToGroups || form.groupIds.length > 0) && form.title.trim() && form.block.trim() && form.maxPoints !== '' && form.description.trim();
 
     return (
         <div className="lab-edit-page">
@@ -216,6 +225,9 @@ const LabEditPage = () => {
                         />
                     </div>
                 </div>
+                <LaboratoryGroups groupIds={form.groupIds} restricted={form.restrictToGroups}
+                    disabled={submitting} onChange={(groupIds, restrictToGroups) =>
+                        setForm(previous => previous ? { ...previous, groupIds, restrictToGroups } : previous)} />
             </div>
 
             <div className="lab-edit-section">
