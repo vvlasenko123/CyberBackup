@@ -531,3 +531,204 @@
     color: rgba(255, 255, 255, 0.65);
     min-width: 80px;
 }
+.stmt-page {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+    .stmt-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .stmt-stat-card {
+        min-width: 0;
+        padding: 14px;
+    }
+
+    .stmt-stat-card:first-child {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .stmt-stat-card:first-child .stmt-stat-card__label {
+        margin-bottom: 0;
+    }
+
+    .stmt-stat-card__label {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .stmt-stat-card__value {
+        font-size: 26px;
+    }
+
+    .stmt-toolbar,
+    .stmt-filters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .stmt-toolbar {
+        margin-bottom: 14px;
+    }
+
+    .stmt-filter-select,
+    .stmt-filter-input {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        min-height: 44px;
+        box-sizing: border-box;
+        font-size: 16px;
+        text-overflow: ellipsis;
+    }
+
+    .stmt-export-btn {
+        justify-content: center;
+        min-height: 44px;
+    }
+
+    .stmt-table-card:has(.stmt-table--responsive) {
+        background: transparent;
+        border: 0;
+        overflow: visible;
+    }
+
+    .stmt-table--responsive,
+    .stmt-table--responsive tbody {
+        display: block;
+    }
+
+    .stmt-table--responsive thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .stmt-table--responsive tbody tr {
+        display: block;
+        margin-bottom: 10px;
+        padding: 14px;
+        background: #20252b;
+        border: 1px solid rgba(255, 255, 255, .08);
+        border-radius: 12px;
+    }
+
+    .stmt-table--responsive tbody tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .stmt-table--responsive td {
+        display: block;
+        padding: 8px 0;
+        border: 0;
+        line-height: 1.5;
+    }
+
+    .stmt-table--responsive td[data-label] {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px 12px;
+    }
+
+    .stmt-table--responsive td[data-label]::before {
+        content: attr(data-label);
+        color: rgba(255, 255, 255, .45);
+        font-size: 12px;
+        margin-right: auto;
+    }
+
+    .stmt-table--responsive .stmt-table__name {
+        padding-top: 0;
+        padding-bottom: 12px;
+        margin-bottom: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255, 255, 255, .07);
+    }
+
+    .stmt-badge {
+        white-space: normal;
+    }
+
+    .stmt-edit-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .stmt-modal {
+        box-sizing: border-box;
+        width: calc(100vw - 32px);
+        max-height: calc(100dvh - 32px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 20px;
+        overflow-wrap: anywhere;
+    }
+
+    .stmt-modal__counters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .stmt-modal__counter {
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .stmt-modal__counter-sep {
+        display: none;
+    }
+
+    .stmt-modal__counter-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    .stmt-modal__counter-input {
+        width: 48px;
+        height: 44px;
+    }
+
+    .stmt-modal__field--toggle {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .stmt-toggle {
+        min-height: 44px;
+    }
+
+    .stmt-modal__actions > button {
+        flex: 1;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 768px) {
+    .stmt-table__value {
+        min-width: 0;
+        text-align: right;
+    }
+
+    .stmt-table-card:not(:has(.stmt-table--responsive)) {
+        overflow-x: auto;
+    }
+}

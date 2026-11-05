@@ -13,6 +13,9 @@ it('marks desktop-only sections on touch devices and keeps mobile-ready ones pla
     expect(within(screen.getByRole('button', { name: /Лабораторные/ })).getByText('ПК')).toBeInTheDocument();
     expect(within(screen.getByRole('button', { name: /Главная/ })).queryByText('ПК')).not.toBeInTheDocument();
     expect(within(screen.getByRole('button', { name: /^Профиль/ })).queryByText('ПК')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('button', { name: /Вопросы/ })).queryByText('ПК')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('button', { name: /Ведомость/ })).queryByText('ПК')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('button', { name: /прогресс/i })).queryByText('ПК')).not.toBeInTheDocument();
 });
 
 it('shows no badges on desktop', () => {

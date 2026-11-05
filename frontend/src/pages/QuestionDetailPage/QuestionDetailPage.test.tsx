@@ -6,6 +6,12 @@ import QuestionDetailPage from './QuestionDetailPage';
 import { API, server } from '../../test/mocks/server';
 import { renderPage } from '../../test/render';
 import { setSession } from '../../test/helpers/session';
+const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'showModal');
+beforeEach(() => Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute('open', ''); } }));
+afterEach(() => {
+    if (originalShowModal) Object.defineProperty(HTMLDialogElement.prototype, 'showModal', originalShowModal);
+    else Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+});
 const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
 beforeEach(() => Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() }));
 afterEach(() => {
@@ -29,9 +35,17 @@ it.each(['student', 'teacher'])('sends, retries and closes a question as %s', as
     expect(await screen.findByText('Не удалось отправить сообщение')).toBeInTheDocument(); expect(input).toHaveValue(' Ответ ');
     await user.click(screen.getByRole('button', { name: /Отправить/ }));
     expect(await screen.findByText('Ответ')).toBeInTheDocument(); expect(body).toEqual({ content: 'Ответ' });
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    await user.click(screen.getByRole('button', { name: 'Закрыть' })); expect(closed).toBe(0);
-    confirm.mockReturnValue(true); await user.click(screen.getByRole('button', { name: 'Закрыть' }));
+    await user.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(screen.getByRole('dialog', { name: 'Закрыть вопрос?' })).toBeInTheDocument();
+    expect(closed).toBe(0);
+    await user.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(closed).toBe(0);
+    await user.click(screen.getByRole('button', { name: 'Закрыть' }));
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Закрыть' }));
+    await user.click(screen.getByRole('button', { name: 'Закрыть вопрос' }));
     await waitFor(() => expect(screen.queryByRole('textbox')).not.toBeInTheDocument()); expect(closed).toBe(1);
 });
 
@@ -47,8 +61,10 @@ it.each(['student', 'teacher'])('sends files without text and preserves them for
             expect(body.get('content')).toBe('');
             names = body.getAll('files').map(file => (file as File).name);
             if (++calls === 1) return new HttpResponse(null, { status: 500 });
-            question.messages = [{ id: 'm1', senderFullName: 'Иван', isFromTeacher: role === 'teacher', content: '', createdAtUtc: '2026-01-01',
-                attachments: [{ id: 'a1', fileName: 'report.pdf', contentType: 'application/pdf', sizeBytes: 10 }] }];
+            question.messages = [{
+                id: 'm1', senderFullName: 'Иван', isFromTeacher: role === 'teacher', content: '', createdAtUtc: '2026-01-01',
+                attachments: [{ id: 'a1', fileName: 'report.pdf', contentType: 'application/pdf', sizeBytes: 10 }]
+            }];
             return new HttpResponse(null, { status: 204 });
         }));
     renderPage(<QuestionDetailPage />, '/questions/:questionId', '/questions/q1');
@@ -94,8 +110,10 @@ it('previews an attachment from a closed chat through the authenticated endpoint
     let downloaded = false;
     server.use(http.get(`${API}/public/api/v1/questions/q1`, () => HttpResponse.json({
         id: 'q1', description: 'Вопрос', status: 2, createdAtUtc: '2026-01-01', messages: [
-            { id: 'm1', senderFullName: 'Иван', content: '', isFromTeacher: false, createdAtUtc: '2026-01-01',
-                attachments: [{ id: 'a1', fileName: 'image.png', contentType: 'image/png', sizeBytes: 12 }] },
+            {
+                id: 'm1', senderFullName: 'Иван', content: '', isFromTeacher: false, createdAtUtc: '2026-01-01',
+                attachments: [{ id: 'a1', fileName: 'image.png', contentType: 'image/png', sizeBytes: 12 }]
+            },
         ],
     })), http.get(`${API}/public/api/v1/questions/q1/attachments/a1`, ({ request }) => {
         expect(request.headers.get('Authorization')).toMatch(/^Bearer /);

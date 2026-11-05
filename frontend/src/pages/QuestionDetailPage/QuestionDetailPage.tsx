@@ -130,12 +130,43 @@ export default function QuestionDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const [actionsOpen, setActionsOpen] = useState(false);
+    const actionsRef = useRef<HTMLDivElement>(null);
+    const actionsToggleRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (!actionsOpen) return;
+        const dismiss = (event: PointerEvent) => {
+            if (!actionsRef.current?.contains(event.target as Node)) setActionsOpen(false);
+        };
+        const escape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setActionsOpen(false);
+                actionsToggleRef.current?.focus();
+            }
+        };
+        document.addEventListener('pointerdown', dismiss);
+        document.addEventListener('keydown', escape);
+        return () => {
+            document.removeEventListener('pointerdown', dismiss);
+            document.removeEventListener('keydown', escape);
+        };
+    }, [actionsOpen]);
+
     const [files, setFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const sendInProgress = useRef(false);
     const [msgText, setMsgText] = useState('');
     const [sending, setSending] = useState(false);
     const [closing, setClosing] = useState(false);
+    const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+    const [closeError, setCloseError] = useState('');
+    const closeDialogRef = useRef<HTMLDialogElement>(null);
+    const closeInProgress = useRef(false);
+
+    useEffect(() => {
+        if (closeConfirmOpen) closeDialogRef.current?.showModal();
+    }, [closeConfirmOpen]);
     const [sendError, setSendError] = useState('');
 
     const baseUrl = `/public/api/v1/${isTeacher ? 'teacher/' : ''}questions/${questionId}`;
@@ -205,14 +236,19 @@ export default function QuestionDetailPage() {
     }
 
     async function handleClose() {
-        if (!questionId || !window.confirm('Закрыть вопрос? Новые сообщения будут недоступны.')) return;
+        if (!questionId || closeInProgress.current || sending) return;
+        closeInProgress.current = true;
+        setCloseError('');
         setClosing(true);
         try {
             await axiosInstance.post(`${baseUrl}/close`);
+            setQuestion(current => current ? { ...current, status: QuestionStatus.Closed } : current);
+            setCloseConfirmOpen(false);
             loadQuestion();
         } catch {
-            setSendError('Не удалось закрыть вопрос');
+            setCloseError('Не удалось закрыть вопрос. Попробуйте ещё раз.');
         } finally {
+            closeInProgress.current = false;
             setClosing(false);
         }
     }
@@ -240,6 +276,23 @@ export default function QuestionDetailPage() {
                 Назад к вопросам
             </button>
 
+            {closeConfirmOpen && <dialog ref={closeDialogRef} className="qst-close-dialog"
+                aria-labelledby="close-question-title" aria-describedby="close-question-description"
+                onCancel={event => {
+                    event.preventDefault();
+                    if (!closeInProgress.current) setCloseConfirmOpen(false);
+                }}>
+                <h2 id="close-question-title">Закрыть вопрос?</h2>
+                <p id="close-question-description">Переписка сохранится, но отправлять новые сообщения и файлы будет нельзя.</p>
+                {closeError && <div className="qst-error" role="alert">{closeError}</div>}
+                <div className="qst-form-actions">
+                    <button type="button" className="qst-btn-secondary" autoFocus disabled={closing}
+                        onClick={() => setCloseConfirmOpen(false)}>Отмена</button>
+                    <button type="button" className="qst-btn-primary" disabled={closing}
+                        onClick={() => void handleClose()}>{closing ? 'Закрываем…' : 'Закрыть вопрос'}</button>
+                </div>
+            </dialog>}
+
             {loading && <DetailSkeleton panelClassName="qst-question-card" form />}
             {!loading && error && <div className="qst-error">{error}</div>}
 
@@ -256,7 +309,7 @@ export default function QuestionDetailPage() {
                     </div>
 
                     {question.laboratoryTitle && (
-                        <p style={{ fontSize: 12, color: '#027ef2', margin: '0 0 16px', fontWeight: 600 }}>
+                        <p className="qst-detail-lab">
                             {question.laboratoryTitle}
                         </p>
                     )}
@@ -308,7 +361,9 @@ export default function QuestionDetailPage() {
                                 <textarea
                                     disabled={isBusy}
                                     className="qst-chat-bar__input"
-                                    placeholder="Написать сообщение… (Ctrl+Enter — отправить)"
+                                    placeholder="Сообщение…"
+                                    aria-label="Сообщение"
+                                    title="Ctrl+Enter — отправить"
                                     value={msgText}
                                     onChange={handleTextareaInput}
                                     onKeyDown={handleKeyDown}
@@ -316,23 +371,46 @@ export default function QuestionDetailPage() {
                                     rows={1}
                                 />
                             </div>
-                            <button type="button" className="qst-chat-bar__close" disabled={isBusy || files.length >= MAX_ATTACHMENTS}
-                                aria-describedby="attachment-hint" onClick={() => fileInputRef.current?.click()}>Прикрепить</button>
-                            <button
-                                type="button"
-                                className="qst-chat-bar__close"
-                                onClick={handleClose}
-                                disabled={isBusy}
-                                title="Закрыть вопрос"
-                            >
-                                {closing ? '…' : 'Закрыть'}
-                            </button>
+                            <div className="qst-chat-actions" ref={actionsRef}
+                                onBlur={event => {
+                                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setActionsOpen(false);
+                                }}>
+                                <button ref={actionsToggleRef} type="button" className="qst-chat-actions__toggle"
+                                    aria-label="Действия с вопросом" aria-expanded={actionsOpen}
+                                    aria-controls="question-actions" disabled={isBusy}
+                                    onClick={() => setActionsOpen(open => !open)}>
+                                    <Icon name={actionsOpen ? 'x' : 'plus'} size={22} />
+                                </button>
+                                <div id="question-actions" className={`qst-chat-actions__panel${actionsOpen ? ' qst-chat-actions__panel--open' : ''}`}>
+                                    <button type="button" className="qst-chat-bar__close" disabled={isBusy || files.length >= MAX_ATTACHMENTS}
+                                        aria-describedby="attachment-hint" onClick={() => {
+                                            fileInputRef.current?.click();
+                                            setActionsOpen(false);
+                                            actionsToggleRef.current?.focus();
+                                        }}>Прикрепить</button>
+                                    <button type="button" className="qst-chat-bar__close" disabled={isBusy}
+                                        title="Закрыть вопрос" onClick={() => {
+                                            setActionsOpen(false);
+                                            actionsToggleRef.current?.focus();
+                                            setCloseError('');
+                                            setCloseConfirmOpen(true);
+                                        }}>
+                                        {closing ? '…' : 'Закрыть'}
+                                    </button>
+                                </div>
+                            </div>
                             <button
                                 type="submit"
                                 className="qst-chat-bar__send"
+                                aria-label={sending ? 'Отправка…' : 'Отправить'}
                                 disabled={isBusy || !hasMessage}
                             >
-                                {sending ? '…' : 'Отправить'}
+                                <span className="qst-chat-bar__send-label">{sending ? '…' : 'Отправить'}</span>
+                                <span className="qst-chat-bar__send-icon" aria-hidden="true">
+                                    {sending ? '…' : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="m5 12 7-7 7 7M12 5v14" />
+                                    </svg>}
+                                </span>
                             </button>
                         </form>
                     )}

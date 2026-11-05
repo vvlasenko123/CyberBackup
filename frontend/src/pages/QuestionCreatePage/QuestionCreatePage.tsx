@@ -119,7 +119,7 @@ export default function QuestionCreatePage() {
                         />
                     </div>
 
-                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                    <div className="qst-form-actions">
                         <button
                             type="button"
                             className="qst-btn-secondary"

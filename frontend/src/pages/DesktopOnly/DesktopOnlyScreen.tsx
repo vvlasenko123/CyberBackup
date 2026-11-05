@@ -38,9 +38,9 @@ const DesktopOnlyScreen: React.FC = () => {
 
                 <div className="desktop-only__body">
                     <p className="desktop-only__kicker">Образовательная платформа по кибербезопасности</p>
-                    <h1 className="desktop-only__title">NeoLab пока работает только на десктопе</h1>
+                    <h1 className="desktop-only__title">NeoLab частично только на десктопе</h1>
                     <p className="desktop-only__subtitle">
-                        Откройте платформу с ноутбука или компьютера — мобильная версия скоро появится.
+                        Откройте платформу с ноутбука или компьютера - мобильная версия скоро появится.
                     </p>
                     {hasSession && (
                         <button className="desktop-only__back" onClick={() => navigate('/dashboard')}>
