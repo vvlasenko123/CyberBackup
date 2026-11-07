@@ -1,4 +1,5 @@
 using Api.Controllers.Models.Request.Laboratories;
+using Api.Extensions;
 using Api.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
@@ -121,17 +122,18 @@ public sealed class LaboratoriesController : PublicController
     }
 
     /// <summary>
-    /// Скачать файл версии своего отчета
+    /// Скачать файл версии своего отчета или открыть его в браузере
     /// </summary>
     [HttpGet("{laboratoryId:guid}/reports/my/versions/{versionId:guid}/file")]
     public async Task<IActionResult> DownloadMyReportFile(
         Guid laboratoryId,
         Guid versionId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] bool inline = false)
     {
         var file = await _laboratoryService.GetStudentReportFileAsync(laboratoryId, versionId, cancellationToken);
-        var stream = await _fileStorage.OpenReadAsync(file.StoragePath, cancellationToken);
-        var result = File(stream, file.ContentType, file.OriginalFileName);
+        var result = this.ProtectedFile(file.ContentType, file.OriginalFileName, file.FileSizeBytes, inline,
+            (destination, offset, length, ct) => _fileStorage.CopyToAsync(file.StoragePath, destination, offset, length, ct));
 
         return result;
     }

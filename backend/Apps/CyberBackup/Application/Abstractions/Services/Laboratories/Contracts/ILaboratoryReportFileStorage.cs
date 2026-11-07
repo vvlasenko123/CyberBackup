@@ -15,7 +15,7 @@ public interface ILaboratoryReportFileStorage
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Открыть файл отчета для чтения
+    /// Передать диапазон файла отчета непосредственно в целевой поток
     /// </summary>
-    Task<Stream> OpenReadAsync(string storagePath, CancellationToken cancellationToken);
+    Task CopyToAsync(string storagePath, Stream destination, long offset, long length, CancellationToken cancellationToken);
 }
