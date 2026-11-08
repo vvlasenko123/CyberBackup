@@ -18,10 +18,22 @@ function renderReport() {
     return renderPage(<LabReportPage />, '/labs/:labId/report', '/labs/lab-1/report');
 }
 
+async function openUploadTab() {
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Загрузить' }));
+}
+
 describe('LabReportPage', () => {
+    it('opens history by default before the first upload', async () => {
+        setupReport();
+        renderReport();
+        expect(await screen.findByText('Отчёты ещё не загружались')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'История версий' })).toHaveClass('lab-report-tab--active');
+        expect(screen.queryByRole('button', { name: 'Отправить отчет' })).not.toBeInTheDocument();
+    });
     it('disables submission until a file is selected', async () => {
         setupReport();
         renderReport();
+        await openUploadTab();
         expect(await screen.findByRole('button', { name: 'Отправить отчет' })).toBeDisabled();
     });
     it.each([true, false])('uploads a file (success: %s)', async success => {
@@ -43,7 +55,7 @@ describe('LabReportPage', () => {
             }),
         );
         const { container } = renderReport();
-        await screen.findByRole('button', { name: 'Отправить отчет' });
+        await openUploadTab();
         const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
         const user = userEvent.setup();
         await user.upload(input, new File(['report contents'], 'report.pdf', { type: 'application/pdf' }));
@@ -80,8 +92,7 @@ describe('report history and resubmission', () => {
     it('shows versions newest first with their statuses and download availability', async () => {
         existingReport([version(1, 3), { ...version(3, 4), fileDownloadUrl: `${API}/download` }, version(2, 2)]);
         renderReport();
-        const user = userEvent.setup();
-        await user.click(await screen.findByRole('button', { name: 'История версий' }));
+        expect(await screen.findByRole('button', { name: 'История версий' })).toHaveClass('lab-report-tab--active');
         const rows = screen.getAllByRole('row').slice(1);
         expect(rows.map(row => within(row).getAllByRole('cell')[0].textContent)).toEqual(['v3', 'v2', 'v1']);
         expect(rows[0]).toHaveTextContent('Принята');
@@ -98,6 +109,7 @@ describe('report history and resubmission', () => {
             version(3, 1),
         ]);
         renderReport();
+        await openUploadTab();
         expect(await screen.findByText('Добавьте выводы')).toBeInTheDocument();
         expect(screen.getByText('Версия 2 · Нужны правки')).toBeInTheDocument();
         expect(screen.queryByText('Старый комментарий')).not.toBeInTheDocument();
@@ -106,6 +118,7 @@ describe('report history and resubmission', () => {
     it('hides upload controls when resubmission is forbidden but retains history', async () => {
         existingReport([version(1, 4)], false);
         const { container } = renderReport();
+        await openUploadTab();
         expect(await screen.findByText('Повторная загрузка отчёта сейчас недоступна')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Отправить отчет' })).not.toBeInTheDocument();
         expect(container.querySelector('input[type="file"]')).toBeNull();
@@ -115,7 +128,7 @@ describe('report history and resubmission', () => {
     it('accepts a dropped file and ignores an empty drop', async () => {
         setupReport();
         const { container } = renderReport();
-        await screen.findByRole('button', { name: 'Отправить отчет' });
+        await openUploadTab();
         const zone = container.querySelector('input[type="file"]')!.parentElement!;
         fireEvent.drop(zone, { dataTransfer: { files: [] } });
         expect(screen.getByRole('button', { name: 'Отправить отчет' })).toBeDisabled();
@@ -137,7 +150,7 @@ describe('report history and resubmission', () => {
         );
         const { container } = renderReport();
         const user = userEvent.setup();
-        await screen.findByRole('button', { name: 'Отправить отчет' });
+        await openUploadTab();
         await user.upload(container.querySelector<HTMLInputElement>('input[type="file"]')!, new File(['test'], 'retry.pdf', { type: 'application/pdf' }));
         await user.click(screen.getByRole('button', { name: 'Отправить отчет' }));
         expect(await screen.findByText('Не удалось загрузить отчёт. Попробуйте ещё раз.')).toBeInTheDocument();
@@ -198,7 +211,7 @@ it('prevents duplicate submission while the upload is pending', async () => {
     }));
     const { container } = renderReport();
     const user = userEvent.setup();
-    await screen.findByRole('button', { name: 'Отправить отчет' });
+    await openUploadTab();
     await user.upload(container.querySelector<HTMLInputElement>('input[type="file"]')!, new File(['test'], 'pending.pdf', { type: 'application/pdf' }));
     try {
         await user.click(screen.getByRole('button', { name: 'Отправить отчет' }));
@@ -225,7 +238,7 @@ it('reports history refresh failure separately after a successful upload', async
     existingReport([version(1)]); let uploaded = false;
     server.use(http.post(`${endpoint}/reports`, () => { uploaded = true; return new HttpResponse(null, { status: 201 }); }),
         http.get(`${endpoint}/reports/my`, () => uploaded ? HttpResponse.error() : HttpResponse.json({ allowResubmit: true, versions: [version(1)] })));
-    const { container } = renderReport(); const user = userEvent.setup(); await screen.findByRole('button', { name: 'Отправить отчет' });
+    const { container } = renderReport(); const user = userEvent.setup(); await openUploadTab();
     await user.upload(container.querySelector<HTMLInputElement>('input[type=file]')!, new File(['test'], 'report.pdf', { type: 'application/pdf' }));
     await user.click(screen.getByRole('button', { name: 'Отправить отчет' }));
     expect(await screen.findByText('Не удалось обновить историю отчётов. Попробуйте обновить страницу.')).toBeInTheDocument();
@@ -240,12 +253,11 @@ it('clears the previous title, report and selected file when labId changes witho
         http.get(`${API}/public/api/v1/laboratories/lab-2/reports/my`, () => new HttpResponse(null, { status: 404 })));
     function Page() { const navigate = useNavigate(); return <><button onClick={() => navigate('/labs/lab-2/report')}>Другая лабораторная</button><LabReportPage /></>; }
     const { container } = renderPage(<Page />, '/labs/:labId/report', '/labs/lab-1/report'); const user = userEvent.setup();
-    await screen.findByRole('button', { name: 'Отправить отчет' });
+    await openUploadTab();
     await user.upload(container.querySelector<HTMLInputElement>('input[type=file]')!, new File(['old'], 'old.pdf', { type: 'application/pdf' }));
     await user.click(screen.getByRole('button', { name: 'Другая лабораторная' }));
     expect(await screen.findByRole('heading', { name: 'Отчёт: Другая работа' })).toBeInTheDocument();
     expect(screen.queryByText('old.pdf')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Отправить отчет' })).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: 'История версий' }));
+    expect(screen.getByRole('button', { name: 'История версий' })).toHaveClass('lab-report-tab--active');
     expect(screen.getByText('Отчёты ещё не загружались')).toBeInTheDocument(); expect(screen.queryByText('v1')).not.toBeInTheDocument();
 });
