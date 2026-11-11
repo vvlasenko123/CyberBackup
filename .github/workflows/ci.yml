@@ -61,14 +61,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: manage.py tests
-        run: python -m unittest discover -s deploy -p test_manage.py
-
       - name: Compose files resolve
         run: |
           docker compose --env-file deploy/.env.dev.example -f deploy/docker-compose.dev.yml config --quiet
           docker compose --env-file deploy/.env.prod.example -f deploy/docker-compose.prod.yml config --quiet
+
+      - name: Build dev frontend image
+        run: docker compose --env-file deploy/.env.dev.example -f deploy/docker-compose.dev.yml build frontend

@@ -54,11 +54,15 @@ jobs:
           DEV_BIND_IP=0.0.0.0
           DEV_BACKEND_PORT="$BACKEND_PORT"
           DEV_FRONTEND_PORT="$FRONTEND_PORT"
+          DEV_POSTGRES_PORT=15432
+          DEV_MINIO_API_PORT=19000
+          DEV_MINIO_CONSOLE_PORT=19001
           DEV_API_BASE_URL="http://$DEV_HOST:$BACKEND_PORT"
           DEV_FRONTEND_ORIGIN="http://$DEV_HOST:$FRONTEND_PORT"
           BUILD_CONFIGURATION=Debug
 
           names="DEV_HOST SSH_USER BUILD_CONFIGURATION DEV_BIND_IP DEV_BACKEND_PORT DEV_FRONTEND_PORT
+            DEV_POSTGRES_PORT DEV_MINIO_API_PORT DEV_MINIO_CONSOLE_PORT
             DEV_API_BASE_URL DEV_FRONTEND_ORIGIN POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB
             MINIO_ROOT_USER MINIO_ROOT_PASSWORD MINIO_BUCKET_NAME JWT_SIGNING_KEY PASSWORD_HASH_PEPPER
             SUPERADMIN_EMAIL SUPERADMIN_PASSWORD SUPERADMIN_FULL_NAME"
@@ -122,9 +126,10 @@ jobs:
           mv deploy/.env.dev.local.new deploy/.env.dev.local
           chmod 600 deploy/.env.dev.local
 
-          python3 deploy/manage.py up --environment dev --wait-timeout 600
+          compose=(docker compose -p cyberbackup-dev --env-file deploy/.env.dev.local -f deploy/docker-compose.dev.yml)
+          "${compose[@]}" up --build -d --wait --wait-timeout 600
           docker image prune -f >/dev/null
-          python3 deploy/manage.py status --environment dev
+          "${compose[@]}" ps
           EOF
 
       - name: Smoke check from outside
@@ -143,4 +148,4 @@ jobs:
 
       - name: Show logs on failure
         if: failure()
-        run: ssh dev "cd '$APP_DIR' && python3 deploy/manage.py logs --environment dev" || true
+        run: ssh dev "cd '$APP_DIR' && docker compose -p cyberbackup-dev --env-file deploy/.env.dev.local -f deploy/docker-compose.dev.yml logs --tail 100" || true

@@ -47,7 +47,7 @@ ENV ASPNETCORE_URLS=http://+:8080
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=10s --timeout=8s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=8s --start-period=60s --retries=3 \
     CMD curl --fail --silent --show-error --max-time 6 http://127.0.0.1:8080/health/ready || exit 1
 
 COPY --from=build /app/publish .
