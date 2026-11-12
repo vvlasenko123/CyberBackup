@@ -11,9 +11,11 @@ it.each(['student', 'teacher'])('loads role-specific detail and navigates as %s'
     setSession(role); server.use(http.get(`${API}/public/api/v1/${role === 'teacher' ? 'teacher/' : ''}laboratories/lab-1`, () => HttpResponse.json(labDetail)));
     renderPage(<LabDetailPage />, '/labs/:labId', '/labs/lab-1');
     expect(await screen.findByText('Изучите сеть')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Удалить лабораторную' })).not.toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole('button', { name: role === 'teacher' ? /Редактировать/ : 'Загрузить отчет' }));
     expect(screen.getByLabelText('Current route')).toHaveTextContent(role === 'teacher' ? '/labs/lab-1/edit' : '/labs/lab-1/report');
 });
+
 it('blocks upload after deadline', async () => {
     setSession(); server.use(http.get(`${API}/public/api/v1/laboratories/lab-1`, () => HttpResponse.json({ ...labDetail, deadlineAtUtc: '2000-01-01' })));
     renderPage(<LabDetailPage />, '/labs/:labId', '/labs/lab-1');

@@ -166,6 +166,7 @@ const LabsPage = () => {
     const [progress, setProgress] = useState<ProgressSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [groupFilter, setGroupFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [searchFilter, setSearchFilter] = useState('');
 
@@ -247,7 +248,11 @@ const LabsPage = () => {
 
     const studentGrouped = groupByBlock(labs);
 
+    const reportGroups = [...new Set(teacherReports.map(report => report.groupName)
+        .filter((name): name is string => typeof name === 'string' && name.length > 0))].sort((a, b) => a.localeCompare(b, 'ru'));
+
     const filteredReports = teacherReports.filter(r => {
+        if (groupFilter && r.groupName !== groupFilter) return false;
         if (statusFilter && String(r.status) !== statusFilter) return false;
         if (searchFilter) {
             const q = searchFilter.toLowerCase();
@@ -390,6 +395,7 @@ const LabsPage = () => {
                                 />
                                 <select
                                     className="labs-reports-status-select"
+                                    aria-label="Статус отчёта"
                                     value={statusFilter}
                                     onChange={e => setStatusFilter(e.target.value)}
                                 >
@@ -398,6 +404,15 @@ const LabsPage = () => {
                                     <option value="2">На проверке</option>
                                     <option value="3">Нужны правки</option>
                                     <option value="4">Принята</option>
+                                </select>
+                                <select
+                                    className="labs-reports-status-select"
+                                    aria-label="Группа"
+                                    value={groupFilter}
+                                    onChange={e => setGroupFilter(e.target.value)}
+                                >
+                                    <option value="">Все группы</option>
+                                    {reportGroups.map(name => <option key={name} value={name}>{name}</option>)}
                                 </select>
                             </div>
 

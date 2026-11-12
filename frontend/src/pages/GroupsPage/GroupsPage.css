@@ -38,7 +38,9 @@
     transition: background 0.15s;
 }
 
-.groups-create-btn:hover { background: #1a8cd8; }
+.groups-create-btn:hover {
+    background: #1a8cd8;
+}
 
 .groups-error {
     background: rgba(239, 68, 68, 0.1);
@@ -67,10 +69,11 @@
 
 .groups-table th {
     padding: 12px 20px;
-    font-size: 12px;
+    font-size: 14px;
+    line-height: 1.5;
     font-weight: 600;
-    color: #8A94A6;
-    letter-spacing: 0.05em;
+    color: #AAB4C4;
+    letter-spacing: 0.02em;
 }
 
 .groups-th--name {
@@ -83,7 +86,9 @@
 
 .groups-table td {
     padding: 16px 20px;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
     color: #E2E8F0;
     border-bottom: 1px solid #1A2232;
 }
@@ -93,11 +98,16 @@
     transition: background 0.15s;
 }
 
-.groups-row:hover { background: #162030; }
-.groups-row:last-child td { border-bottom: none; }
+.groups-row:hover {
+    background: #162030;
+}
+
+.groups-row:last-child td {
+    border-bottom: none;
+}
 
 .groups-cell--name {
-    font-weight: 500;
+    font-weight: 600;
     color: #fff;
 }
 
@@ -110,9 +120,11 @@
     background: none;
     border: 1px solid #374151;
     border-radius: 7px;
-    padding: 5px 12px;
-    color: #EF4444;
-    font-size: 12px;
+    padding: 6px 14px;
+    color: #F87171;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
     font-family: inherit;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
@@ -133,9 +145,11 @@
     background: none;
     border: 1px solid #374151;
     border-radius: 7px;
-    padding: 5px 12px;
-    color: #9CA3AF;
-    font-size: 12px;
+    padding: 6px 14px;
+    color: #CBD5E1;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
     font-family: inherit;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
@@ -152,7 +166,9 @@
     border-radius: 7px;
     padding: 6px 10px;
     color: #E5E7EB;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
     font-family: inherit;
     width: 100%;
     max-width: 240px;
@@ -199,8 +215,13 @@
     transition: border-color 0.15s;
 }
 
-.groups-modal-input::placeholder { color: #4B5563; }
-.groups-modal-input:focus { border-color: #1D9BF0; }
+.groups-modal-input::placeholder {
+    color: #4B5563;
+}
+
+.groups-modal-input:focus {
+    border-color: #1D9BF0;
+}
 
 .groups-modal-error {
     font-size: 13px;
@@ -230,7 +251,10 @@
     color: #E2E8F0;
 }
 
-.groups-modal-cancel:disabled { opacity: 0.4; cursor: not-allowed; }
+.groups-modal-cancel:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
 
 .groups-modal-confirm {
     padding: 9px 18px;
@@ -245,5 +269,11 @@
     transition: background 0.15s;
 }
 
-.groups-modal-confirm:hover:not(:disabled) { background: #1a8cd8; }
-.groups-modal-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+.groups-modal-confirm:hover:not(:disabled) {
+    background: #1a8cd8;
+}
+
+.groups-modal-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
