@@ -12,4 +12,4 @@ public sealed record QuestionAttachmentDto
 }
 
 public sealed record UploadQuestionAttachmentDto(Stream Content, string FileName, long Length);
-public sealed record QuestionAttachmentDownloadDto(Stream Content, string FileName, string ContentType);
+public sealed record QuestionAttachmentDownloadDto(string StoragePath, string FileName, string ContentType, long FileSizeBytes);

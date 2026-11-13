@@ -1,3 +1,4 @@
+using Api.Extensions;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
 using Infrastructure.Core.Controllers.Public;
@@ -55,17 +56,18 @@ public sealed class TeacherReportsController : PublicController
     }
 
     /// <summary>
-    /// Скачать файл версии отчета
+    /// Скачать файл версии отчета или открыть его в браузере
     /// </summary>
     [HttpGet("{reportId:guid}/versions/{versionId:guid}/file")]
     public async Task<IActionResult> DownloadReportFile(
         Guid reportId,
         Guid versionId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] bool inline = false)
     {
         var file = await _laboratoryService.GetReportFileAsync(reportId, versionId, cancellationToken);
-        var stream = await _fileStorage.OpenReadAsync(file.StoragePath, cancellationToken);
-        var result = File(stream, file.ContentType, file.OriginalFileName);
+        var result = this.ProtectedFile(file.ContentType, file.OriginalFileName, file.FileSizeBytes, inline,
+            (destination, offset, length, ct) => _fileStorage.CopyToAsync(file.StoragePath, destination, offset, length, ct));
 
         return result;
     }

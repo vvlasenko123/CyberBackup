@@ -1,4 +1,5 @@
 using Application.Abstractions.Services.Questions;
+using Application.Abstractions.Services.Laboratories;
 using System.Reflection;
 using Application;
 using Infrastructure;
@@ -80,6 +81,7 @@ public class StartUp
 
             ctx.Response.StatusCode = ex switch
             {
+                LaboratoryException { Code: "laboratory_report_version.not_found" } => 404,
                 QuestionException { Code: "question.not_found" or "question.attachment_not_found" } => 404,
                 QuestionException => 400,
                 InvalidOperationException => 400,
