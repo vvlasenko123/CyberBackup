@@ -110,3 +110,19 @@ docker compose -p cyberbackup-dev --env-file deploy/.env.dev.local -f deploy/doc
 * В development используется `node` контейнер с hot reload
 * В production frontend собирается и отдается через `nginx`
 * База данных инициализируется автоматически
+
+### Интеграционные тесты backend
+
+Из корня репозитория запустите:
+
+```sh
+docker compose -f deploy/docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from tests
+```
+
+Команда поднимает отдельные PostgreSQL и MinIO, дожидается их готовности и возвращает код завершения тестов. Данные хранятся во временных файловых системах, порты на хосте не публикуются. Тест запускает штатные миграции PostgreSQL и проверяет запись и чтение файла отчёта через MinIO.
+
+После прогона удалите тестовые контейнеры и сеть:
+
+```sh
+docker compose -f deploy/docker-compose.test.yml down
+```

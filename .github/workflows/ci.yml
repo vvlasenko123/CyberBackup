@@ -29,6 +29,13 @@ jobs:
       - name: Build
         run: dotnet build backend/Apps/CyberBackup/CyberBackup.sln -c Release
 
+      - name: Backend integration tests
+        run: docker compose -f deploy/docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from tests
+
+      - name: Remove integration test containers
+        if: always()
+        run: docker compose -f deploy/docker-compose.test.yml down
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
