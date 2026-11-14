@@ -55,6 +55,7 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, AddAttendanceLessons_202606100001>();
         services.AddTransient<IDatabaseMigration, AddQuestionAttachments_202610140001>();
         services.AddTransient<IDatabaseMigration, AddLaboratoryGroups_202610310001>();
+        services.AddTransient<IDatabaseMigration, AddLaboratoryReadIndexes_202611140001>();
         #endregion
 
         #region repositories
