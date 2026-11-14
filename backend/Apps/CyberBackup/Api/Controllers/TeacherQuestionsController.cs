@@ -1,3 +1,5 @@
+using Application.Abstractions.Services.Questions;
+using Infrastructure.Exceptions;
 using Api.Controllers.Models.Request.Questions;
 using Application.Abstractions.Services.Questions.Contracts;
 using Application.DTO.Questions;
@@ -67,7 +69,7 @@ public sealed class TeacherQuestionsController : PublicController
         [FromForm] QuestionMessageUploadRequest request, CancellationToken ct)
     {
         if (request.Files.Count > 5 || request.Files.Any(f => f.Length == 0 || f.Length > 10 * 1024 * 1024))
-            return BadRequest(new { message = "Допустимо до 5 непустых файлов по 10 МБ" });
+            throw new QuestionException(ErrorCodes.QuestionInvalidFile, "Допустимо до 5 непустых файлов по 10 МБ");
         var files = new List<UploadQuestionAttachmentDto>();
         try
         {

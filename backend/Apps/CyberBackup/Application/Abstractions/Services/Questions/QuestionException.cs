@@ -1,14 +1,6 @@
+using Infrastructure.Exceptions.Base;
+
 namespace Application.Abstractions.Services.Questions;
 
-/// <summary>
-/// Исключение домена вопросов
-/// </summary>
-public sealed class QuestionException : Exception
-{
-    public string Code { get; }
-
-    public QuestionException(string code, string message) : base(message)
-    {
-        Code = code;
-    }
-}
+/// <summary>Бизнес-ошибка вопросов.</summary>
+public sealed class QuestionException(string code, string message) : BaseException(message, code);

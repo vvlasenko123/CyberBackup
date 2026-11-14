@@ -1,4 +1,3 @@
-using Application.Abstractions.Services.Questions;
 using System.Reflection;
 using Application;
 using Infrastructure;
@@ -9,12 +8,13 @@ using Infrastructure.Database;
 using Infrastructure.Swagger;
 using Security.Host.Cors;
 using Api.Auth;
+using Api.Errors;
 using Api.Extensions;
 using Application.Abstractions.Services.Calendar.Hubs;
 using Infrastucture.S3;
 using Api.Services.Laboratories;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Api;
 
@@ -39,6 +39,12 @@ public class StartUp
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddCyberControllers();
+        services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.SuppressMapClientErrors = true;
+            options.InvalidModelStateResponseFactory = _ =>
+                new BadRequestObjectResult(ApiErrors.FromStatus(StatusCodes.Status400BadRequest));
+        });
 
         services.AddCyberCors();
 
@@ -70,33 +76,20 @@ public class StartUp
     /// </summary>
     public void Configure(IApplicationBuilder app)
     {
-        // Глобальный JSON-обработчик ошибок — должен быть ПЕРВЫМ в пайплайне
-        app.UseExceptionHandler(errorApp => errorApp.Run(async ctx =>
+        app.UseExceptionHandler(new ExceptionHandlerOptions
         {
-            var feature = ctx.Features.Get<IExceptionHandlerFeature>();
-            var ex = feature?.Error;
-
-            ctx.Response.ContentType = "application/json; charset=utf-8";
-
-            ctx.Response.StatusCode = ex switch
-            {
-                QuestionException { Code: "question.not_found" or "question.attachment_not_found" } => 404,
-                QuestionException => 400,
-                InvalidOperationException => 400,
-                UnauthorizedAccessException => 403,
-                KeyNotFoundException       => 404,
-                _                          => 500
-            };
-
-            var message = ctx.Response.StatusCode == 500
-                ? "Внутренняя ошибка сервера"
-                : ex?.Message ?? "Ошибка запроса";
-
-            await ctx.Response.WriteAsJsonAsync(new { message });
-        }));
+            ExceptionHandler = ApiErrors.HandleExceptionAsync,
+            AllowStatusCode404Response = true,
+            SuppressDiagnosticsCallback = context => ApiErrors.FromException(context.Exception).Status < 500
+        });
 
         app.UseRouting();
         app.UseCyberCors();
+        app.UseStatusCodePages(context =>
+        {
+            var response = context.HttpContext.Response;
+            return response.WriteAsJsonAsync(ApiErrors.FromStatus(response.StatusCode), context.HttpContext.RequestAborted);
+        });
 
         if (Environment.IsDevelopment())
         {

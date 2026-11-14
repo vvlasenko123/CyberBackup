@@ -7,12 +7,7 @@ namespace Infrastructure.Exceptions.User;
 /// </summary>
 public sealed class InvalidIdentifierException : BaseException
 {
-    /// <summary>
-    /// Код ошибки
-    /// </summary>
-    private const string ErrorCode = "identifier.invalid";
-
-    public InvalidIdentifierException(string message) : base(message, ErrorCode)
+    public InvalidIdentifierException(string message) : base(message, ErrorCodes.IdentifierInvalid)
     {
     }
 }

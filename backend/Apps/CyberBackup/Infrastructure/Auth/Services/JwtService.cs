@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using Infrastructure.Exceptions;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Application.Abstractions.Services.Auth.Contracts;
@@ -81,31 +82,31 @@ public sealed class JwtService : IJwtService
 
         if (user is null)
         {
-            throw new InvalidOperationException("Контекст пользователя отсутствует");
+            throw new BusinessException(ErrorCodes.AuthInvalidToken, "Недействительный токен доступа");
         }
 
         var userIdText = user.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
         if (string.IsNullOrWhiteSpace(userIdText))
         {
-            throw new InvalidOperationException("В токене отсутствует идентификатор пользователя");
+            throw new BusinessException(ErrorCodes.AuthInvalidToken, "Недействительный токен доступа");
         }
 
-        if (!Guid.TryParse(userIdText, out var userId))
+        if (!Guid.TryParse(userIdText, out var userId) || userId == Guid.Empty)
         {
-            throw new InvalidOperationException("В токене некорректный идентификатор пользователя");
+            throw new BusinessException(ErrorCodes.AuthInvalidToken, "Недействительный токен доступа");
         }
         
         var roleText = user.FindFirstValue(ClaimTypes.Role) ?? user.FindFirstValue(AuthClaimNames.Role);
 
         if (string.IsNullOrWhiteSpace(roleText))
         {
-            throw new InvalidOperationException("В токене отсутствует роль пользователя");
+            throw new BusinessException(ErrorCodes.AuthInvalidToken, "Недействительный токен доступа");
         }
 
-        if (!Enum.TryParse<UserRole>(roleText, true, out var role))
+        if (!Enum.TryParse<UserRole>(roleText, true, out var role) || !Enum.IsDefined(role))
         {
-            throw new InvalidOperationException("В токене некорректная роль пользователя");
+            throw new BusinessException(ErrorCodes.AuthInvalidToken, "Недействительный токен доступа");
         }
 
         return new CurrentTokenUserDto(UserId: userId, Role: role);

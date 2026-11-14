@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Microsoft.Extensions.Logging;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.Calendar.Contracts;
@@ -47,12 +48,15 @@ public sealed class QuestionService : IQuestionService
     {
         var user = _jwtService.GetCurrentUser();
         var detail = await _repository.GetQuestionDetailAsync(questionId, user.UserId, ct);
-        if (detail is null) throw new QuestionException("question.not_found", "Вопрос не найден");
+        if (detail is null) throw new QuestionException(ErrorCodes.QuestionNotFound, "Вопрос не найден");
         return detail;
     }
 
     public async Task<Guid> CreateQuestionAsync(CreateQuestionRequest request, CancellationToken ct)
     {
+        if (request.LaboratoryTitle?.Length > 255 || request.Description.Length > 3000)
+            throw new QuestionException(ErrorCodes.QuestionInvalid, "Тема должна содержать до 255 символов, описание — до 3000 символов");
+
         var user = _jwtService.GetCurrentUser();
         var questionId = await _repository.CreateQuestionAsync(user.UserId, request, ct);
 
@@ -70,7 +74,7 @@ public sealed class QuestionService : IQuestionService
     {
         var user = _jwtService.GetCurrentUser();
         var ok = await _repository.CloseQuestionAsync(questionId, user.UserId, ct);
-        if (!ok) throw new QuestionException("question.not_found", "Вопрос не найден");
+        if (!ok) throw new QuestionException(ErrorCodes.QuestionNotFound, "Вопрос не найден");
     }
 
     public Task<PagedResultDto<TeacherQuestionListItemDto>> GetTeacherQuestionsAsync(
@@ -89,7 +93,7 @@ public sealed class QuestionService : IQuestionService
     {
         var user = _jwtService.GetCurrentUser();
         var detail = await _repository.GetQuestionDetailForTeacherAsync(questionId, user.UserId, IsAdmin(user), ct);
-        if (detail is null) throw new QuestionException("question.not_found", "Вопрос не найден");
+        if (detail is null) throw new QuestionException(ErrorCodes.QuestionNotFound, "Вопрос не найден");
         return detail;
     }
 
@@ -101,7 +105,7 @@ public sealed class QuestionService : IQuestionService
         try
         {
             var result = await _repository.ReplyToQuestionAsync(questionId, user.UserId, IsAdmin(user), request, ct);
-            if (!result.Success) throw new QuestionException("question.not_found", "Вопрос не найден или уже закрыт");
+            if (!result.Success) throw new QuestionException(ErrorCodes.QuestionNotFound, "Вопрос не найден или уже закрыт");
             studentId = result.StudentId;
         }
         catch
@@ -140,7 +144,7 @@ public sealed class QuestionService : IQuestionService
         try
         {
             var ok = await _repository.SendStudentMessageAsync(questionId, user.UserId, request, ct);
-            if (!ok) throw new QuestionException("question.not_found", "Вопрос не найден или уже закрыт");
+            if (!ok) throw new QuestionException(ErrorCodes.QuestionNotFound, "Вопрос не найден или уже закрыт");
         }
         catch
         {
@@ -160,7 +164,7 @@ public sealed class QuestionService : IQuestionService
     {
         var user = _jwtService.GetCurrentUser();
         var ok = await _repository.CloseQuestionByTeacherAsync(questionId, user.UserId, IsAdmin(user), ct);
-        if (!ok) throw new QuestionException("question.not_found", "Вопрос не найден");
+        if (!ok) throw new QuestionException(ErrorCodes.QuestionNotFound, "Вопрос не найден");
     }
 
     public Task<IReadOnlyCollection<string>> GetLaboratoryTitlesAsync(CancellationToken ct)
@@ -173,7 +177,7 @@ public sealed class QuestionService : IQuestionService
     {
         var detail = await GetAccessibleQuestionAsync(questionId, ct);
         var attachment = detail.Messages.SelectMany(m => m.Attachments).FirstOrDefault(a => a.Id == attachmentId)
-            ?? throw new QuestionException("question.attachment_not_found", "Вложение не найдено");
+            ?? throw new QuestionException(ErrorCodes.QuestionAttachmentNotFound, "Вложение не найдено");
         var stream = await _attachmentStorage.OpenReadAsync(attachment.StoragePath, ct);
         return new(stream, attachment.FileName, attachment.ContentType);
     }
@@ -189,10 +193,10 @@ public sealed class QuestionService : IQuestionService
         files ??= [];
         var content = request.Content?.Trim() ?? string.Empty;
         if ((content.Length == 0 && files.Count == 0) || content.Length > 3000 || files.Count > 5)
-            throw new QuestionException("question.invalid_message", "Добавьте текст до 3000 символов или до 5 файлов");
+            throw new QuestionException(ErrorCodes.QuestionInvalidMessage, "Добавьте текст до 3000 символов или до 5 файлов");
         var detail = await GetAccessibleQuestionAsync(questionId, ct);
         if (detail.Status == Domain.Questions.Enums.QuestionStatus.Closed)
-            throw new QuestionException("question.closed", "Вопрос уже закрыт");
+            throw new QuestionException(ErrorCodes.QuestionClosed, "Вопрос уже закрыт");
 
         var validated = new List<QuestionAttachmentDto>();
         foreach (var file in files)
@@ -204,10 +208,10 @@ public sealed class QuestionService : IQuestionService
                 ".jpg" or ".jpeg" => "image/jpeg", ".png" => "image/png",
                 ".gif" => "image/gif", ".pdf" => "application/pdf",
                 ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                _ => throw new QuestionException("question.invalid_file", "Допустимы JPG, PNG, GIF, PDF и DOCX")
+                _ => throw new QuestionException(ErrorCodes.QuestionInvalidFile, "Допустимы JPG, PNG, GIF, PDF и DOCX")
             };
             if (file.Length <= 0 || file.Length > 10 * 1024 * 1024 || name.Length > 255 || !file.Content.CanSeek)
-                throw new QuestionException("question.invalid_file", "Файл должен быть непустым, до 10 МБ, имя — до 255 символов");
+                throw new QuestionException(ErrorCodes.QuestionInvalidFile, "Файл должен быть непустым, до 10 МБ, имя — до 255 символов");
             var header = new byte[12];
             file.Content.Position = 0;
             var count = await file.Content.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, cancellationToken: ct);
@@ -222,7 +226,7 @@ public sealed class QuestionService : IQuestionService
                 _ => false
             };
             file.Content.Position = 0;
-            if (!valid) throw new QuestionException("question.invalid_file", "Содержимое файла не соответствует его формату");
+            if (!valid) throw new QuestionException(ErrorCodes.QuestionInvalidFile, "Содержимое файла не соответствует его формату");
             var id = UUIDNext.Uuid.NewSequential();
             validated.Add(new QuestionAttachmentDto { Id = id, FileName = name, ContentType = mime,
                 SizeBytes = file.Length, StoragePath = $"question-attachments/{questionId:N}/{id:N}{ext}" });

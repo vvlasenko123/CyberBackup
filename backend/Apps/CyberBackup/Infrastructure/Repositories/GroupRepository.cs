@@ -1,7 +1,10 @@
+using Application.Abstractions.Services.Groups;
 using Application.Abstractions.Services.Groups.Contracts;
 using Application.DTO.Groups;
 using Dapper;
 using Infrastructure.Database.Connection.Contracts;
+using Infrastructure.Exceptions;
+using Npgsql;
 
 namespace Infrastructure.Repositories;
 
@@ -121,10 +124,13 @@ public sealed class GroupRepository : IGroupRepository
     /// <inheritdoc />
     public async Task RenameGroupAsync(Guid groupId, string name, CancellationToken cancellationToken)
     {
-        await _connection.ExecuteAsync(
+        var affected = await _connection.ExecuteAsync(
             "UPDATE groups SET name = @Name WHERE id = @GroupId;",
             new { GroupId = groupId, Name = name },
             cancellationToken);
+
+        if (affected == 0)
+            throw new GroupException(ErrorCodes.GroupNotFound, "Группа не найдена");
     }
 
     /// <inheritdoc />
@@ -230,29 +236,35 @@ public sealed class GroupRepository : IGroupRepository
 
     /// <inheritdoc />
     public Task AddTeacherToGroupAsync(Guid groupId, Guid userId, CancellationToken cancellationToken)
-        => _connection.ExecuteAsync(
-            """
-            INSERT INTO teacher_groups (teacher_id, group_id, added_at_utc)
-            VALUES (@UserId, @GroupId, @AddedAt)
-            ON CONFLICT (teacher_id, group_id) DO NOTHING;
-            """,
-            new { UserId = userId, GroupId = groupId, AddedAt = DateTimeOffset.UtcNow },
-            cancellationToken);
+        => AddTeachersToGroupAsync(groupId, [userId], cancellationToken);
 
     /// <inheritdoc />
-    public Task AddTeachersToGroupAsync(Guid groupId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+    public async Task AddTeachersToGroupAsync(Guid groupId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
     {
         if (userIds.Count == 0)
-            return Task.CompletedTask;
+            return;
 
-        return _connection.ExecuteAsync(
-            """
-            INSERT INTO teacher_groups (teacher_id, group_id, added_at_utc)
-            SELECT unnest(@UserIds), @GroupId, @AddedAt
-            ON CONFLICT (teacher_id, group_id) DO NOTHING;
-            """,
-            new { UserIds = userIds.ToArray(), GroupId = groupId, AddedAt = DateTimeOffset.UtcNow },
-            cancellationToken);
+        try
+        {
+            await _connection.ExecuteAsync(
+                """
+                INSERT INTO teacher_groups (teacher_id, group_id, added_at_utc)
+                SELECT unnest(@UserIds), @GroupId, @AddedAt
+                ON CONFLICT (teacher_id, group_id) DO NOTHING;
+                """,
+                new { UserIds = userIds.ToArray(), GroupId = groupId, AddedAt = DateTimeOffset.UtcNow },
+                cancellationToken);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.ForeignKeyViolation &&
+                                           ex.ConstraintName == "teacher_groups_group_id_fkey")
+        {
+            throw new GroupException(ErrorCodes.GroupNotFound, "Группа не найдена");
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.ForeignKeyViolation &&
+                                           ex.ConstraintName == "teacher_groups_teacher_id_fkey")
+        {
+            throw new GroupException(ErrorCodes.GroupMemberNotFound, "Преподаватель не найден");
+        }
     }
 
     /// <inheritdoc />

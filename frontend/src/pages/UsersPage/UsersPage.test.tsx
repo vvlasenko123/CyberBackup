@@ -57,7 +57,7 @@ it('imports the actual RTF file and displays partial success and errors', async 
         return HttpResponse.json({
             imported: [
                 { fullName: 'Анна', email: 'anna@example.com', success: true, password: 'generated' },
-                { fullName: 'Ошибка', email: 'bad@example.com', success: false, error: 'Email занят' },
+                { fullName: 'Ошибка', email: 'bad@example.com', success: false, error: { code: 'user.email_taken', message: 'Email занят' } },
             ]
         });
     }));
