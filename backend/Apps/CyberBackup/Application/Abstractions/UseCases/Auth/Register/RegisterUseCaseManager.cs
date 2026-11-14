@@ -1,11 +1,11 @@
-﻿using Application.Abstractions.Services.Auth.Contracts;
+using Infrastructure.Exceptions;
+using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.DTO.Auth;
 using Domain.Repositories;
 using Domain.User;
 using Domain.User.Enums;
 using Domain.User.ValueObjects;
-using Infrastructure.Exceptions.User;
 
 namespace Application.Abstractions.UseCases.Auth.Register;
 
@@ -45,7 +45,7 @@ public sealed class RegisterUseCaseManager : IRegisterUseCaseManager
 
         if (exists)
         {
-            throw new InvalidEmailException("Неверный логин или пароль");
+            throw new BusinessException(ErrorCodes.UserEmailTaken, "Неверный логин или пароль");
         }
 
         var nowUtc = DateTimeOffset.UtcNow;

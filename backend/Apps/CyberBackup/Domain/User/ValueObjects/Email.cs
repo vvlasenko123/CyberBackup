@@ -24,7 +24,7 @@ public sealed class Email : ValueObject<Email>
         var email = value.Trim();
         var emailAddressAttribute = new EmailAddressAttribute();
 
-        if (!emailAddressAttribute.IsValid(email))
+        if (email.Length > 255 || !emailAddressAttribute.IsValid(email))
         {
             throw new InvalidEmailException("Email имеет некорректный формат");
         }

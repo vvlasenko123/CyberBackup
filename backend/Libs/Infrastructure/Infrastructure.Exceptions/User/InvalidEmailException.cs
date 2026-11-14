@@ -8,15 +8,10 @@ namespace Infrastructure.Exceptions.User;
 public sealed class InvalidEmailException : BaseException
 {
     /// <summary>
-    /// Код ошибки
-    /// </summary>
-    private const string ErrorCode = "email.invalid";
-
-    /// <summary>
     /// Создает исключение с сообщением и кодом ошибки
     /// </summary>
     public InvalidEmailException(string message)
-        : base(message, ErrorCode)
+        : base(message, ErrorCodes.EmailInvalid)
     {
     }
 }
