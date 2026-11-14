@@ -61,143 +61,80 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         GetLaboratoryListRequest request,
         CancellationToken cancellationToken)
     {
-        const string sql = """
-                           WITH penalties AS (
-                               SELECT sh.laboratory_work_id, COALESCE(SUM(h.penalty_points), 0)::int AS penalty_points
-                               FROM student_laboratory_hints sh
-                               JOIN laboratory_hints h ON h.id = sh.laboratory_hint_id
-                               WHERE sh.student_id = @StudentId
-                               GROUP BY sh.laboratory_work_id
-                           ),
-                           flags AS (
-                               SELECT fa.laboratory_work_id, BOOL_OR(fa.is_correct) AS is_correct
-                               FROM laboratory_flag_attempts fa
-                               WHERE fa.student_id = @StudentId
-                               GROUP BY fa.laboratory_work_id
-                           ),
-                           source AS (
-                               SELECT
-                                   lw.id AS "Id",
-                                   lw.title AS "Title",
-                                   lw.short_description AS "ShortDescription",
-                                   lw.difficulty AS "Difficulty",
-                                   lw.block AS "Block",
-                                   lw.max_points AS "MaxPoints",
-                                   GREATEST(COALESCE(r.points, CASE WHEN COALESCE(f.is_correct, false) THEN lw.max_points - COALESCE(p.penalty_points, 0) ELSE 0 END), 0)::int AS "EarnedPoints",
-                                   CASE
-                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN 3
-                                       WHEN r.status IN (1, 2) THEN 2
-                                       WHEN r.status = 3 THEN 4
-                                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 1
-                                       ELSE 0
-                                   END AS "Status",
-                                   CASE
-                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN true
-                                       ELSE false
-                                   END AS "IsCompleted",
-                                   CASE
-                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN 100
-                                       WHEN r.status IN (1, 2) THEN 50
-                                       WHEN r.status = 3 THEN 25
-                                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 10
-                                       ELSE 0
-                                   END AS "ProgressPercent",
-                                   lw.sort_order AS "SortOrder"
-                               FROM laboratory_works lw
-                               LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
-                               LEFT JOIN laboratory_progress lp ON lp.laboratory_work_id = lw.id AND lp.student_id = @StudentId
-                               LEFT JOIN penalties p ON p.laboratory_work_id = lw.id
-                               LEFT JOIN flags f ON f.laboratory_work_id = lw.id
-                               WHERE lw.is_published = true
-                                 AND lw.delete_date_utc IS NULL
-                                 AND (NOT lw.restrict_to_groups OR EXISTS (
-                                     SELECT 1 FROM laboratory_groups lg
-                                     JOIN user_groups assigned_ug ON assigned_ug.group_id = lg.group_id
-                                     WHERE lg.laboratory_work_id = lw.id AND assigned_ug.user_id = @StudentId
-                                 ))
-                                 AND (@Block IS NULL OR lw.block = @Block)
-                                 AND (@Difficulty IS NULL OR lw.difficulty = @Difficulty)
-                                 AND (@Search IS NULL OR LOWER(lw.title) LIKE LOWER('%' || @Search || '%'))
-                                 AND (lw.restrict_to_groups OR lw.created_by_teacher_id IN (
-                                     SELECT DISTINCT tg.teacher_id
-                                     FROM user_groups ug
-                                     JOIN teacher_groups tg ON tg.group_id = ug.group_id
-                                     WHERE ug.user_id = @StudentId
-                                 ))
-                           )
-                           SELECT COUNT(*) FROM source WHERE (@Status IS NULL OR "Status" = @Status);
+        const string visibleLaboratories = """
+            SELECT lw.id, lw.title, lw.short_description, lw.difficulty, lw.block, lw.max_points, lw.sort_order
+            FROM laboratory_works lw
+            WHERE lw.is_published = true
+              AND lw.delete_date_utc IS NULL
+              AND (NOT lw.restrict_to_groups OR EXISTS (
+                  SELECT 1 FROM laboratory_groups lg
+                  JOIN user_groups assigned_ug ON assigned_ug.group_id = lg.group_id
+                  WHERE lg.laboratory_work_id = lw.id AND assigned_ug.user_id = @StudentId
+              ))
+              AND (@Block IS NULL OR lw.block = @Block)
+              AND (@Difficulty IS NULL OR lw.difficulty = @Difficulty)
+              AND (@Search IS NULL OR LOWER(lw.title) LIKE LOWER('%' || @Search || '%'))
+              AND (lw.restrict_to_groups OR lw.created_by_teacher_id IN (
+                  SELECT tg.teacher_id
+                  FROM user_groups ug
+                  JOIN teacher_groups tg ON tg.group_id = ug.group_id
+                  WHERE ug.user_id = @StudentId
+              ))
+            """;
 
-                           WITH penalties AS (
-                               SELECT sh.laboratory_work_id, COALESCE(SUM(h.penalty_points), 0)::int AS penalty_points
-                               FROM student_laboratory_hints sh
-                               JOIN laboratory_hints h ON h.id = sh.laboratory_hint_id
-                               WHERE sh.student_id = @StudentId
-                               GROUP BY sh.laboratory_work_id
-                           ),
-                           flags AS (
-                               SELECT fa.laboratory_work_id, BOOL_OR(fa.is_correct) AS is_correct
-                               FROM laboratory_flag_attempts fa
-                               WHERE fa.student_id = @StudentId
-                               GROUP BY fa.laboratory_work_id
-                           ),
-                           source AS (
-                               SELECT
-                                   lw.id AS "Id",
-                                   lw.title AS "Title",
-                                   lw.short_description AS "ShortDescription",
-                                   lw.difficulty AS "Difficulty",
-                                   lw.block AS "Block",
-                                   lw.max_points AS "MaxPoints",
-                                   GREATEST(COALESCE(r.points, CASE WHEN COALESCE(f.is_correct, false) THEN lw.max_points - COALESCE(p.penalty_points, 0) ELSE 0 END), 0)::int AS "EarnedPoints",
-                                   CASE
-                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN 3
-                                       WHEN r.status IN (1, 2) THEN 2
-                                       WHEN r.status = 3 THEN 4
-                                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 1
-                                       ELSE 0
-                                   END AS "Status",
-                                   CASE
-                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN true
-                                       ELSE false
-                                   END AS "IsCompleted",
-                                   CASE
-                                       WHEN r.status = 4 OR COALESCE(f.is_correct, false) THEN 100
-                                       WHEN r.status IN (1, 2) THEN 50
-                                       WHEN r.status = 3 THEN 25
-                                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR COALESCE(p.penalty_points, 0) > 0 THEN 10
-                                       ELSE 0
-                                   END AS "ProgressPercent",
-                                   lw.sort_order AS "SortOrder"
-                               FROM laboratory_works lw
-                               LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
-                               LEFT JOIN laboratory_progress lp ON lp.laboratory_work_id = lw.id AND lp.student_id = @StudentId
-                               LEFT JOIN penalties p ON p.laboratory_work_id = lw.id
-                               LEFT JOIN flags f ON f.laboratory_work_id = lw.id
-                               WHERE lw.is_published = true
-                                 AND lw.delete_date_utc IS NULL
-                                 AND (NOT lw.restrict_to_groups OR EXISTS (
-                                     SELECT 1 FROM laboratory_groups lg
-                                     JOIN user_groups assigned_ug ON assigned_ug.group_id = lg.group_id
-                                     WHERE lg.laboratory_work_id = lw.id AND assigned_ug.user_id = @StudentId
-                                 ))
-                                 AND (@Block IS NULL OR lw.block = @Block)
-                                 AND (@Difficulty IS NULL OR lw.difficulty = @Difficulty)
-                                 AND (@Search IS NULL OR LOWER(lw.title) LIKE LOWER('%' || @Search || '%'))
-                                 AND (lw.restrict_to_groups OR lw.created_by_teacher_id IN (
-                                     SELECT DISTINCT tg.teacher_id
-                                     FROM user_groups ug
-                                     JOIN teacher_groups tg ON tg.group_id = ug.group_id
-                                     WHERE ug.user_id = @StudentId
-                                 ))
-                           )
-                           SELECT * FROM source
-                           WHERE (@Status IS NULL OR "Status" = @Status)
-                           ORDER BY "SortOrder", "Title"
-                           OFFSET @Offset LIMIT @PageSize;
-                           """;
+        const string laboratoryProgress = """
+            SELECT lw.*,
+                   GREATEST(COALESCE(r.points, CASE WHEN flag.laboratory_work_id IS NOT NULL THEN lw.max_points - hints.penalty_points ELSE 0 END), 0)::int AS earned_points,
+                   CASE
+                       WHEN r.status = 4 OR flag.laboratory_work_id IS NOT NULL THEN 3
+                       WHEN r.status IN (1, 2) THEN 2
+                       WHEN r.status = 3 THEN 4
+                       WHEN lp.id IS NOT NULL OR r.id IS NOT NULL OR hints.penalty_points > 0 THEN 1
+                       ELSE 0
+                   END AS status
+            FROM candidates lw
+            LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
+            LEFT JOIN laboratory_progress lp ON lp.laboratory_work_id = lw.id AND lp.student_id = @StudentId
+            CROSS JOIN LATERAL (
+                SELECT COALESCE(SUM(h.penalty_points), 0)::int AS penalty_points
+                FROM student_laboratory_hints sh
+                JOIN laboratory_hints h ON h.id = sh.laboratory_hint_id
+                WHERE sh.student_id = @StudentId AND sh.laboratory_work_id = lw.id
+            ) hints
+            LEFT JOIN (
+                SELECT DISTINCT laboratory_work_id
+                FROM laboratory_flag_attempts
+                WHERE student_id = @StudentId AND is_correct
+            ) flag ON flag.laboratory_work_id = lw.id
+            """;
+
+        const string page = "ORDER BY sort_order, title, id OFFSET @Offset LIMIT @PageSize";
+        const string itemColumns = """
+            id AS "Id", title AS "Title", short_description AS "ShortDescription", difficulty AS "Difficulty",
+            block AS "Block", max_points AS "MaxPoints", earned_points AS "EarnedPoints", status AS "Status",
+            status = 3 AS "IsCompleted",
+            CASE status WHEN 3 THEN 100 WHEN 2 THEN 50 WHEN 4 THEN 25 WHEN 1 THEN 10 ELSE 0 END AS "ProgressPercent",
+            sort_order AS "SortOrder"
+            """;
+
+        var sql = request.Status is null
+            ? $"""
+               SELECT COUNT(*) FROM ({visibleLaboratories}) visible;
+               WITH candidates AS ({visibleLaboratories} {page}),
+                    progress AS ({laboratoryProgress})
+               SELECT {itemColumns} FROM progress ORDER BY sort_order, title, id;
+               """
+            : $"""
+               WITH candidates AS ({visibleLaboratories}),
+                    progress AS ({laboratoryProgress})
+               SELECT COUNT(*) FROM progress WHERE status = @Status;
+               WITH candidates AS ({visibleLaboratories}),
+                    progress AS ({laboratoryProgress})
+               SELECT {itemColumns} FROM progress WHERE status = @Status {page};
+               """;
 
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
-        using var grid = await connection.QueryMultipleAsync(sql, new
+        using var grid = await connection.QueryMultipleAsync(new CommandDefinition(sql, new
         {
             StudentId = studentId,
             request.Block,
@@ -206,7 +143,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             request.Search,
             Offset = (request.Page - 1) * request.PageSize,
             request.PageSize
-        });
+        }, cancellationToken: cancellationToken));
 
         var totalCount = await grid.ReadSingleAsync<int>();
         var items = (await grid.ReadAsync<GetLaboratoryListItemDto>())
@@ -1603,84 +1540,68 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         bool includeAll,
         CancellationToken cancellationToken)
     {
-        const string sql = """
-                           SELECT COUNT(*)
-                           FROM users u
-                           LEFT JOIN user_groups ug ON ug.user_id = u.id
-                           LEFT JOIN groups g ON g.id = ug.group_id
-                           LEFT JOIN student_gradebook_records sgr ON sgr.student_id = u.id
-                           WHERE u.role = @StudentRole
-                             AND (
-                                 @IncludeAll = true
-                                 OR EXISTS (
-                                     SELECT 1
-                                     FROM teacher_groups tg
-                                     WHERE tg.teacher_id = @TeacherId
-                                       AND tg.group_id = ug.group_id
-                                 )
-                             )
-                             AND (@GroupName IS NULL OR g.name = @GroupName)
-                             AND (@IsExamAllowed IS NULL OR COALESCE(sgr.is_exam_allowed, false) = @IsExamAllowed)
-                             AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'));
+        const string eligibleStudents = """
+            SELECT u.id, u.full_name, g.name AS group_name, sgr.attendance_percent,
+                   sgr.lessons_attended, sgr.total_lessons, sgr.is_exam_allowed, sgr.has_automatic_grade
+            FROM users u
+            LEFT JOIN user_groups ug ON ug.user_id = u.id
+            LEFT JOIN groups g ON g.id = ug.group_id
+            LEFT JOIN student_gradebook_records sgr ON sgr.student_id = u.id
+            WHERE u.role = @StudentRole
+              AND (@IncludeAll = true OR EXISTS (
+                  SELECT 1 FROM teacher_groups tg
+                  WHERE tg.teacher_id = @TeacherId AND tg.group_id = ug.group_id
+              ))
+              AND (@GroupName IS NULL OR g.name = @GroupName)
+              AND (@IsExamAllowed IS NULL OR COALESCE(sgr.is_exam_allowed, false) = @IsExamAllowed)
+              AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
+            """;
 
-                           SELECT
-                               u.id AS "StudentId",
-                               u.full_name AS "FullName",
-                               g.name AS "GroupName",
-                               COALESCE(sgr.attendance_percent, 0) AS "AttendancePercent",
-                               COALESCE(sgr.lessons_attended, 0) AS "LessonsAttended",
-                               COALESCE(sgr.total_lessons, 0) AS "TotalLessons",
-                               COALESCE(sgr.is_exam_allowed, false) AS "IsExamAllowed",
-                               COALESCE(sgr.has_automatic_grade, false) AS "HasAutomaticGrade",
-                               COALESCE(SUM(CASE WHEN r.status = 4 THEN r.points ELSE 0 END), 0)::int AS "TotalPoints",
-                               COUNT(CASE WHEN r.status = 4 THEN 1 END)::int AS "CompletedLaboratories",
-                               (
-                                   SELECT COUNT(*)::int
-                                   FROM laboratory_works total_lw
-                                   WHERE is_published = true AND delete_date_utc IS NULL
-                                     AND (NOT total_lw.restrict_to_groups OR EXISTS (
-                                         SELECT 1 FROM laboratory_groups lg JOIN user_groups aug ON aug.group_id = lg.group_id
-                                         WHERE lg.laboratory_work_id = total_lw.id AND aug.user_id = u.id
-                                     ))
-                                     AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
-                               ) AS "TotalLaboratories"
-                           FROM users u
-                           LEFT JOIN user_groups ug ON ug.user_id = u.id
-                           LEFT JOIN groups g ON g.id = ug.group_id
-                           LEFT JOIN student_gradebook_records sgr ON sgr.student_id = u.id
-                           LEFT JOIN laboratory_reports r ON r.student_id = u.id
-                               AND EXISTS (
-                                   SELECT 1
-                                   FROM laboratory_works lw
-                                   WHERE lw.id = r.laboratory_work_id
-                                     AND lw.is_published = true
-                                     AND lw.delete_date_utc IS NULL
-                                     AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
-                                     AND (NOT lw.restrict_to_groups OR EXISTS (
-                                         SELECT 1 FROM laboratory_groups lg JOIN user_groups aug ON aug.group_id = lg.group_id
-                                         WHERE lg.laboratory_work_id = lw.id AND aug.user_id = u.id
-                                     ))
-                               )
-                           WHERE u.role = @StudentRole
-                             AND (
-                                 @IncludeAll = true
-                                 OR EXISTS (
-                                     SELECT 1
-                                     FROM teacher_groups tg
-                                     WHERE tg.teacher_id = @TeacherId
-                                       AND tg.group_id = ug.group_id
-                                 )
-                             )
-                             AND (@GroupName IS NULL OR g.name = @GroupName)
-                             AND (@IsExamAllowed IS NULL OR COALESCE(sgr.is_exam_allowed, false) = @IsExamAllowed)
-                             AND (@Search IS NULL OR LOWER(u.full_name) LIKE LOWER('%' || @Search || '%'))
-                           GROUP BY u.id, u.full_name, g.name, sgr.attendance_percent, sgr.lessons_attended, sgr.total_lessons, sgr.is_exam_allowed, sgr.has_automatic_grade
-                           ORDER BY g.name, u.full_name
-                           OFFSET @Offset LIMIT @PageSize;
-                           """;
+        const string sql = $"""
+            SELECT COUNT(*) FROM ({eligibleStudents}) eligible;
+
+            WITH eligible AS ({eligibleStudents}),
+            page AS (
+                -- Preserve the existing aggregation for repeated group memberships.
+                SELECT eligible.*, COUNT(*) AS membership_count
+                FROM eligible
+                GROUP BY id, full_name, group_name, attendance_percent, lessons_attended,
+                         total_lessons, is_exam_allowed, has_automatic_grade
+                ORDER BY group_name, full_name, id
+                OFFSET @Offset LIMIT @PageSize
+            )
+            SELECT
+                p.id AS "StudentId",
+                p.full_name AS "FullName",
+                p.group_name AS "GroupName",
+                COALESCE(p.attendance_percent, 0) AS "AttendancePercent",
+                COALESCE(p.lessons_attended, 0) AS "LessonsAttended",
+                COALESCE(p.total_lessons, 0) AS "TotalLessons",
+                COALESCE(p.is_exam_allowed, false) AS "IsExamAllowed",
+                COALESCE(p.has_automatic_grade, false) AS "HasAutomaticGrade",
+                COALESCE(totals.points * p.membership_count, 0)::int AS "TotalPoints",
+                (totals.completed * p.membership_count)::int AS "CompletedLaboratories",
+                totals.available AS "TotalLaboratories"
+            FROM page p
+            CROSS JOIN LATERAL (
+                SELECT SUM(r.points) AS points, COUNT(r.student_id) AS completed, COUNT(*)::int AS available
+                FROM laboratory_works lw
+                LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id
+                    AND r.student_id = p.id AND r.status = 4
+                WHERE lw.is_published = true AND lw.delete_date_utc IS NULL
+                  AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
+                  AND (NOT lw.restrict_to_groups OR lw.id IN (
+                      SELECT lg.laboratory_work_id
+                      FROM user_groups aug
+                      JOIN laboratory_groups lg ON lg.group_id = aug.group_id
+                      WHERE aug.user_id = p.id
+                  ))
+            ) totals
+            ORDER BY p.group_name, p.full_name, p.id;
+            """;
 
         await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
-        using var grid = await connection.QueryMultipleAsync(sql, new
+        using var grid = await connection.QueryMultipleAsync(new CommandDefinition(sql, new
         {
             StudentRole = (int)UserRole.Student,
             request.GroupName,
@@ -1690,7 +1611,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             IncludeAll = includeAll,
             Offset = (request.Page - 1) * request.PageSize,
             request.PageSize
-        });
+        }, cancellationToken: cancellationToken));
 
         var totalCount = await grid.ReadSingleAsync<int>();
         var items = (await grid.ReadAsync<TeacherGradebookItemDto>()).ToList();
