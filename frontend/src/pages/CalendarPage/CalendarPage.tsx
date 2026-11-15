@@ -1,9 +1,9 @@
-import { Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './CalendarPage.css';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
 import { MobileCalendar } from './MobileCalendar';
+import { DesktopCalendar } from './DesktopCalendar';
 
 type EventType = 0 | 1 | 2 | 3 | 4;
 
@@ -19,13 +19,6 @@ export interface CalendarEvent {
     createdAtUtc: string;
     updatedAtUtc: string;
 }
-
-const MONTHS_RU = [
-    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-];
-
-const WEEKDAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
     0: 'Лекция',
@@ -43,26 +36,6 @@ const EVENT_TYPE_COLORS: Record<EventType, string> = {
     4: '#8b5cf6', // Другое — фиолетовый
 };
 
-const getCalendarDays = (year: number, month: number): Date[] => {
-    const firstDay = new Date(year, month, 1);
-    const dow = firstDay.getDay();
-    const offset = dow === 0 ? -6 : 1 - dow;
-    const start = new Date(year, month, 1 + offset);
-    return Array.from({ length: 42 }, (_, i) =>
-        new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
-    );
-};
-
-const isSameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-
-const formatTime = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-};
-
 const toLocalInput = (d: Date) => {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -70,15 +43,11 @@ const toLocalInput = (d: Date) => {
 
 export const CalendarPage: React.FC = () => {
     const isDesktop = useIsDesktop();
-    const today = new Date();
     const role = localStorage.getItem('user_role') || 'student';
     const currentUserId = localStorage.getItem('user_id') || '';
     const canCreate = role === 'admin' || role === 'teacher';
     const isAdmin = role === 'admin';
 
-    const [currentDate, setCurrentDate] = useState(
-        new Date(today.getFullYear(), today.getMonth(), 1)
-    );
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -91,8 +60,6 @@ export const CalendarPage: React.FC = () => {
         endsAtUtc: '',
         notifyAtUtc: '',
     });
-
-    const calendarDays = getCalendarDays(currentDate.getFullYear(), currentDate.getMonth());
 
     useEffect(() => {
         fetchEvents();
@@ -191,68 +158,15 @@ export const CalendarPage: React.FC = () => {
                     labels={EVENT_TYPE_LABELS}
                     colors={EVENT_TYPE_COLORS}
                 />
-            ) : <div className="cal-card">
-                <div className="cal-nav">
-                    <button className="cal-nav__arrow" onClick={() =>
-                        setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-                    }>‹</button>
-                    <span className="cal-nav__label">
-                        {MONTHS_RU[currentDate.getMonth()]} {currentDate.getFullYear()}
-                    </span>
-                    <button className="cal-nav__arrow" onClick={() =>
-                        setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-                    }>›</button>
-                </div>
-
-                <div className="cal-grid">
-                    {WEEKDAYS.map(d => (
-                        <div key={d} className="cal-weekday">{d}</div>
-                    ))}
-
-                    {loading ? (
-                        <SkeletonRegion className="skeleton-calendar">
-                            <div className="skeleton-calendar-grid">
-                                {calendarDays.map((day, i) => <div className="cal-day" key={i}>
-                                    <span className="cal-day__num">{day.getDate()}</span>
-                                    <Skeleton height={20} />
-                                </div>)}
-                            </div>
-                        </SkeletonRegion>
-                    ) : calendarDays.map((day, i) => {
-                        const inMonth = day.getMonth() === currentDate.getMonth();
-                        const isToday = isSameDay(day, today);
-                        const dayEvents = events.filter(e => isSameDay(new Date(e.startsAtUtc), day));
-
-                        return (
-                            <div key={i} className={[
-                                'cal-day',
-                                !inMonth && 'cal-day--out',
-                                isToday && 'cal-day--today',
-                            ].filter(Boolean).join(' ')}>
-                                <span className="cal-day__num">{day.getDate()}</span>
-                                <div className="cal-day__events">
-                                    {dayEvents.map(ev => (
-                                        <div
-                                            key={ev.id}
-                                            className="cal-event"
-                                            style={{ borderLeftColor: EVENT_TYPE_COLORS[ev.eventType], display: 'flex', alignItems: 'center' }}
-                                        >
-                                            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatTime(ev.startsAtUtc)} {ev.title}</span>
-                                            {(isAdmin || (canCreate && ev.userId === currentUserId)) && (
-                                                <button
-                                                    onClick={e => handleDeleteEvent(ev.id, e)}
-                                                    style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '0 2px', fontSize: 12, opacity: 0.8, flexShrink: 0 }}
-                                                    title="Удалить"
-                                                >×</button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>}
+            ) : (
+                <DesktopCalendar
+                    events={events}
+                    loading={loading}
+                    canDelete={event => isAdmin || (canCreate && event.userId === currentUserId)}
+                    onDelete={handleDeleteEvent}
+                    colors={EVENT_TYPE_COLORS}
+                />
+            )}
 
             {showModal && (
                 <div className="cal-modal-overlay" onClick={() => setShowModal(false)}>

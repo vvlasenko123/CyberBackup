@@ -1,4 +1,4 @@
-import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { it, expect, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
@@ -64,9 +64,8 @@ it('phone teacher creates an event for the selected hour through the existing AP
         }),
     );
     const { container } = renderPage(<CalendarPage />);
-    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText('Загружаем события…')).not.toBeInTheDocument());
     const user = userEvent.setup();
-    // Choose a date in the next month, rather than today's default date.
     const target = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 12);
     const label = target.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
     await user.click(screen.getByRole('button', { name: label }));
@@ -106,4 +105,43 @@ it('teacher creates an event with UTC dates and deletes their own event', async 
     expect(body).toMatchObject({ title: 'Практика', startsAtUtc: new Date(`${local}T10:00`).toISOString(), endsAtUtc: new Date(`${local}T11:00`).toISOString() });
     vi.spyOn(window, 'confirm').mockReturnValue(true); await user.click(screen.getByTitle('Удалить'));
     await waitFor(() => expect(screen.queryByText(/Практика/)).not.toBeInTheDocument()); expect(deleted).toBe(1);
+});
+
+it('desktop navigates library months without refetching and places events on their local start date', async () => {
+    setSession();
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() + 1, 12, 23, 30);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 14, 1);
+    let requests = 0;
+    server.use(http.get(`${API}/public/calendar/events`, () => {
+        requests++;
+        return HttpResponse.json([{ id: 'next', userId: 'other', title: 'Ночная лабораторная', eventType: 3, startsAtUtc: start.toISOString(), endsAtUtc: end.toISOString() }]);
+    }));
+    const { container } = renderPage(<CalendarPage />);
+    await waitFor(() => expect(container.querySelector('[aria-busy=true]')).not.toBeInTheDocument());
+    expect(screen.getAllByRole('gridcell')).toHaveLength(42);
+    expect(container.querySelector('thead th')).toHaveTextContent('пн');
+    expect(screen.queryByText(/Ночная лабораторная/)).not.toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Следующий месяц' }));
+    const cell = screen.getByText(/Ночная лабораторная/).closest('td')!;
+    expect(cell.querySelector('.cal-day__num')).toHaveTextContent('12');
+    expect(within(cell).getByText(/23:30 Ночная лабораторная/)).toBeInTheDocument();
+    expect(container.querySelector('.cal-event')).toHaveStyle({ borderLeftColor: '#f97316' });
+    expect(screen.getAllByText(/Ночная лабораторная/)).toHaveLength(1);
+    await user.click(screen.getByRole('button', { name: 'Предыдущий месяц' }));
+    expect(screen.queryByText(/Ночная лабораторная/)).not.toBeInTheDocument();
+    expect(requests).toBe(1);
+});
+
+it.each(['teacher', 'admin'] as const)('desktop keeps deletion permissions for %s', async role => {
+    setSession(role);
+    const start = new Date().toISOString();
+    server.use(http.get(`${API}/public/calendar/events`, () => HttpResponse.json([
+        { id: 'own', userId: 'user-1', title: 'Своя лекция', eventType: 0, startsAtUtc: start, endsAtUtc: start },
+        { id: 'other', userId: 'other-user', title: 'Чужая лекция', eventType: 0, startsAtUtc: start, endsAtUtc: start },
+    ])));
+    renderPage(<CalendarPage />);
+    expect(await screen.findByRole('button', { name: 'Удалить Своя лекция' })).toBeInTheDocument();
+    expect(Boolean(screen.queryByRole('button', { name: 'Удалить Чужая лекция' }))).toBe(role === 'admin');
 });
