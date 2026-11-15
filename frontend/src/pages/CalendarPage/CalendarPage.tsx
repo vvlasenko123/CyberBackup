@@ -2,10 +2,12 @@ import { Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import './CalendarPage.css';
+import { useIsDesktop } from '../../hooks/useIsDesktop';
+import { MobileCalendar } from './MobileCalendar';
 
 type EventType = 0 | 1 | 2 | 3 | 4;
 
-interface CalendarEvent {
+export interface CalendarEvent {
     id: string;
     userId: string;
     title: string;
@@ -67,6 +69,7 @@ const toLocalInput = (d: Date) => {
 };
 
 export const CalendarPage: React.FC = () => {
+    const isDesktop = useIsDesktop();
     const today = new Date();
     const role = localStorage.getItem('user_role') || 'student';
     const currentUserId = localStorage.getItem('user_id') || '';
@@ -107,8 +110,8 @@ export const CalendarPage: React.FC = () => {
         }
     };
 
-    const openModal = () => {
-        const now = new Date();
+    const openModal = (date?: Date) => {
+        const now = date ?? new Date();
         const later = new Date(now.getTime() + 60 * 60 * 1000);
         setForm({
             title: '',
@@ -154,11 +157,11 @@ export const CalendarPage: React.FC = () => {
     };
 
     return (
-        <div className="cal-page">
+        <div className={`cal-page${!isDesktop ? ' cal-page--mobile' : ''}`}>
             <div className="cal-page__header">
                 <h2 className="cal-page__title">Расписание</h2>
                 {canCreate && (
-                    <button className="cal-page__add-btn" onClick={openModal}>
+                    <button className="cal-page__add-btn" onClick={() => openModal()}>
                         + Добавить событие
                     </button>
                 )}
@@ -177,7 +180,18 @@ export const CalendarPage: React.FC = () => {
                 ))}
             </div>
 
-            <div className="cal-card">
+            {!isDesktop ? (
+                <MobileCalendar
+                    events={events}
+                    loading={loading}
+                    canCreate={canCreate}
+                    canDelete={event => isAdmin || (canCreate && event.userId === currentUserId)}
+                    onCreate={openModal}
+                    onDelete={handleDeleteEvent}
+                    labels={EVENT_TYPE_LABELS}
+                    colors={EVENT_TYPE_COLORS}
+                />
+            ) : <div className="cal-card">
                 <div className="cal-nav">
                     <button className="cal-nav__arrow" onClick={() =>
                         setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
@@ -238,7 +252,7 @@ export const CalendarPage: React.FC = () => {
                         );
                     })}
                 </div>
-            </div>
+            </div>}
 
             {showModal && (
                 <div className="cal-modal-overlay" onClick={() => setShowModal(false)}>
