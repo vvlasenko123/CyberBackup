@@ -26,9 +26,9 @@ it('keeps all calendar cells mounted while events are loading', async () => {
     const { container } = renderPage(<CalendarPage />);
     const cells = container.querySelectorAll('.cal-day').length;
     expect(cells).toBeGreaterThanOrEqual(28);
-    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('status', { name: 'Загрузка расписания' })).toHaveAttribute('aria-busy', 'true');
     await act(async () => request.release());
-    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('status', { name: 'Загрузка расписания' })).not.toBeInTheDocument());
     expect(container.querySelectorAll('.cal-day')).toHaveLength(cells);
 });
 

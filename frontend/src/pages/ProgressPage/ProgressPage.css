@@ -44,8 +44,13 @@
     line-height: 1.1;
 }
 
-.prog-stat-card__value--blue   { color: #027ef2; }
-.prog-stat-card__value--orange { color: #f97316; }
+.prog-stat-card__value--blue {
+    color: #027ef2;
+}
+
+.prog-stat-card__value--orange {
+    color: #f97316;
+}
 
 /* ── Overall progress card ──────────────────────────────── */
 .prog-overall-card {
@@ -91,10 +96,21 @@
     transition: width 0.4s ease;
 }
 
-.prog-bar-fill--green  { background: #22c55e; }
-.prog-bar-fill--orange { background: #f97316; }
-.prog-bar-fill--red    { background: #ef4444; }
-.prog-bar-fill--gray   { background: rgba(255, 255, 255, 0.15); }
+.prog-bar-fill--green {
+    background: #22c55e;
+}
+
+.prog-bar-fill--orange {
+    background: #f97316;
+}
+
+.prog-bar-fill--red {
+    background: #ef4444;
+}
+
+.prog-bar-fill--gray {
+    background: rgba(255, 255, 255, 0.15);
+}
 
 .prog-overall-card__subtitle {
     font-size: 12px;
@@ -287,5 +303,87 @@
 @media (max-width: 900px) {
     .prog-columns {
         grid-template-columns: 1fr;
+    }
+}
+
+.prog-page,
+.prog-columns > * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+    .prog-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .prog-stat-card {
+        padding: 14px;
+        min-width: 0;
+    }
+
+    .prog-stat-card:last-child {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .prog-stat-card:last-child .prog-stat-card__label {
+        margin-bottom: 0;
+    }
+
+    .prog-stat-card__label {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .prog-stat-card__value {
+        font-size: 26px;
+    }
+
+    .prog-overall-card,
+    .prog-labs-card,
+    .prog-leaderboard-card {
+        padding: 16px;
+    }
+
+    .prog-overall-card {
+        margin-bottom: 14px;
+    }
+
+    .prog-overall-card__header {
+        gap: 12px;
+    }
+
+    .prog-overall-card__percent {
+        flex-shrink: 0;
+    }
+
+    .prog-columns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .prog-lab-item__header {
+        align-items: flex-start;
+    }
+
+    .prog-lab-item__name,
+    .prog-leader-item__name {
+        white-space: normal;
+        line-height: 1.5;
+    }
+
+    .prog-leader-item {
+        padding: 10px 8px;
+        gap: 8px;
+    }
+
+    .prog-leader-item__rank {
+        width: auto;
+        min-width: 22px;
     }
 }

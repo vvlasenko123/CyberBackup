@@ -1,0 +1,239 @@
+.mobile-calendar {
+    color: #fff;
+    min-width: 0;
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.mobile-calendar button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.mobile-calendar button:focus-visible {
+    outline: 2px solid #68b6ff;
+    outline-offset: 2px;
+}
+
+.mobile-calendar__toolbar,
+.mobile-calendar__day-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mobile-calendar__toolbar h3,
+.mobile-calendar__day-heading h3 {
+    font-size: 15px;
+    margin: 8px 0;
+}
+
+.mobile-calendar__day-heading h3 {
+    text-align: center;
+}
+
+.mobile-calendar__toolbar button,
+.mobile-calendar__day-heading button {
+    background: transparent;
+    border: none;
+    min-height: 44px;
+    min-width: 44px;
+    color: #83c3ff;
+}
+
+.mobile-calendar__more,
+.mobile-calendar__create {
+    min-height: 44px;
+    width: 100%;
+    padding: 10px;
+    background: rgba(2, 126, 242, 0.13);
+    border: 1px solid rgba(104, 182, 255, 0.3);
+    border-radius: 8px;
+}
+
+.mobile-calendar .rdp-root {
+    --rdp-accent-color: #83c3ff;
+    --rdp-accent-background-color: #027ef2;
+    --rdp-day-height: 46px;
+    --rdp-day-width: auto;
+    --rdp-day_button-height: 44px;
+    --rdp-day_button-width: 100%;
+    width: 100%;
+}
+
+.mobile-calendar .rdp-months {
+    display: flex;
+    flex-direction: column;
+    max-width: none;
+    gap: 20px;
+    padding: 16px 0;
+}
+
+.mobile-calendar .rdp-month {
+    width: 100%;
+}
+
+.mobile-calendar .rdp-month_grid {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.mobile-calendar .rdp-month_caption {
+    height: auto;
+    margin-bottom: 12px;
+    text-transform: capitalize;
+    font-size: 17px;
+}
+
+.mobile-calendar .rdp-weekday {
+    color: #a4afbd;
+    font-size: 11px;
+}
+
+.mobile-calendar .rdp-day {
+    position: relative;
+}
+
+.mobile-calendar .rdp-selected .rdp-day_button {
+    background: #027ef2;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+}
+
+.mobile-calendar__scheduled::after {
+    content: '';
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #83c3ff;
+    bottom: 4px;
+    left: calc(50% - 2.5px);
+    pointer-events: none;
+}
+
+.mobile-calendar .rdp-selected.mobile-calendar__scheduled::after {
+    background: #fff;
+}
+
+.mobile-calendar__empty {
+    color: #a4afbd;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.mobile-calendar__hours {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+}
+
+.mobile-calendar__hour {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 8px;
+    min-height: 54px;
+}
+
+.mobile-calendar__time {
+    color: #a4afbd;
+    font-size: 11px;
+    padding-top: 10px;
+}
+
+.mobile-calendar__hour-content {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 4px 0;
+    min-width: 0;
+}
+
+.mobile-calendar__event {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 4px;
+    border-left: 3px solid;
+    border-radius: 5px;
+    padding: 8px;
+    margin-bottom: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow-wrap: anywhere;
+}
+
+.mobile-calendar__event strong,
+.mobile-calendar__event small,
+.mobile-calendar__event time {
+    display: block;
+}
+
+.mobile-calendar__event strong {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.mobile-calendar__event small,
+.mobile-calendar__event time {
+    font-size: 12px;
+    color: #bbc5d1;
+}
+
+.mobile-calendar__event button {
+    flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+}
+
+.mobile-calendar__add-hour {
+    width: 100%;
+    min-height: 44px;
+    background: transparent;
+    border: none;
+    text-align: right;
+    padding-right: 12px;
+    opacity: 0.6;
+}
+
+.cal-page--mobile .cal-page__header {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.cal-page--mobile .cal-page__add-btn {
+    min-height: 44px;
+}
+
+.cal-page--mobile .cal-modal-overlay {
+    padding: 12px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.cal-page--mobile .cal-modal {
+    width: 400px;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 20px;
+}
+
+.cal-page--mobile .cal-modal__input {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-size: 16px;
+    min-height: 44px;
+}
+
+.cal-page--mobile .cal-modal__actions button {
+    min-height: 44px;
+}

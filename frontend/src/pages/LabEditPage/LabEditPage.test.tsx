@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { it, expect } from 'vitest';
+import { beforeEach, it, expect } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import LabEditPage from './LabEditPage';
 import { API, server } from '../../test/mocks/server';
@@ -37,4 +37,25 @@ it('preserves values on save failure and publishes on retry with an unchanged de
     await user.click(screen.getByRole('button', { name: /опубликовать/i }));
     expect(await screen.findByLabelText('Current route')).toHaveTextContent('/labs/lab-1');
     expect(body).toMatchObject({ isPublished: true, deadlineAtUtc: '2027-03-10T12:30:00.000Z' });
+});
+
+beforeEach(() => {
+    server.use(http.get(`${API}/public/api/v1/teacher/groups`, () => HttpResponse.json([
+        { id: 'group-a', name: 'Группа А' }, { id: 'group-b', name: 'Группа Б' }
+    ])));
+});
+
+it.each([false, true])('preserves selected groups or explicitly restores all groups (all=%s)', async all => {
+    let body: unknown;
+    server.use(http.get(`${API}/public/api/v1/teacher/laboratories/lab-1`, () => HttpResponse.json({ ...labDetail, restrictToGroups: true, groupIds: ['group-a'] })),
+        http.get(`${API}/public/api/v1/teacher/laboratories/blocks`, () => HttpResponse.json([])),
+        http.put(`${API}/public/api/v1/teacher/laboratories/lab-1`, async ({ request }) => { body = await request.json(); return new HttpResponse(null, { status: 204 }); }));
+    renderPage(<LabEditPage />, '/labs/:labId/edit', '/labs/lab-1/edit');
+    const user = userEvent.setup();
+    await user.click(await screen.findByText('Группа А', { selector: 'summary span' }));
+    expect(screen.getByRole('checkbox', { name: 'Группа А' })).toBeChecked();
+    if (all) await user.click(screen.getByRole('checkbox', { name: 'Все группы' }));
+    await user.click(screen.getByRole('button', { name: /опубликовать/i }));
+    expect(await screen.findByLabelText('Current route')).toHaveTextContent('/labs/lab-1');
+    expect(body).toMatchObject({ groupIds: all ? [] : ['group-a'] });
 });

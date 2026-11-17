@@ -1,6 +1,6 @@
 import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import { Icon } from '../../components/Icon';
 import './LabDetailPage.css';
@@ -253,10 +253,15 @@ const LabDetailPage = () => {
                         )}
 
                         {lab.description && (
-                            <div className="lab-detail-card">
+                            <Link
+                                className="lab-detail-card lab-detail-card--report-link"
+                                to={`/labs/${lab.id}/report`}
+                                state={{ labTitle: lab.title }}
+                                aria-label="Описание — перейти к отчёту"
+                            >
                                 <h3 className="lab-detail-card-title">Описание</h3>
                                 <p className="lab-detail-task-description">{lab.description}</p>
-                            </div>
+                            </Link>
                         )}
 
                         {(lab.goal || lab.environmentUrl || lab.credentials) && (
