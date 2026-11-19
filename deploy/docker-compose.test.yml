@@ -41,6 +41,9 @@ services:
       CYBERBACKUP_TEST_MinioOptions__AccessKey: integration-minio
       CYBERBACKUP_TEST_MinioOptions__SecretKey: integration-minio-password
       CYBERBACKUP_TEST_MinioOptions__BucketName: cyberbackup-test
+      CYBERBACKUP_TEST_SuperAdminOptions__Email: integration@example.com
+      CYBERBACKUP_TEST_SuperAdminOptions__Password: integration-admin-password
+      CYBERBACKUP_TEST_SuperAdminOptions__FullName: Integration Test Admin
     depends_on:
       postgres:
         condition: service_healthy
