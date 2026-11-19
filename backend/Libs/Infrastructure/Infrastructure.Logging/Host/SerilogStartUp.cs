@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Infrastructure.Logging.Host.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Infrastructure.Logging.Redaction;
 [assembly: InternalsVisibleTo("Infrastructure.Hosting")]
 
 namespace Infrastructure.Logging.Host;
@@ -18,7 +19,8 @@ internal static class SerilogStartUp
     {
         // bootstrap для раннего лога ошибок, потом используем финальный логгер
         Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console()
+            .Enrich.With<TokenRedactingEnricher>()
+            .WriteTo.Console(new TokenRedactingTextFormatter())
             .CreateBootstrapLogger();
 
         builder.UseSerilog(configureLogger: (context, provider, config) =>

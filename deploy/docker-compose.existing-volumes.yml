@@ -1,0 +1,9 @@
+# Explicit opt-in for an existing installation. Both volumes must already exist.
+# Use only after recording the old deployment's mounts and verifying backups.
+volumes:
+  postgres_data:
+    external: true
+    name: ${POSTGRES_VOLUME_NAME:?Set POSTGRES_VOLUME_NAME to the existing database volume}
+  minio_data:
+    external: true
+    name: ${MINIO_VOLUME_NAME:?Set MINIO_VOLUME_NAME to the existing object storage volume}

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Infrastructure.Logging.Redaction;
 
 namespace Infrastructure.Logging.Host.Configuration;
 
@@ -16,6 +17,7 @@ internal static class SerilogConfigure
         loggerConfiguration.ReadFrom.Configuration(context.Configuration)
             .ReadFrom.Services(provider)
             .Enrich.FromLogContext()
-            .WriteTo.Console();
+            .Enrich.With<TokenRedactingEnricher>()
+            .WriteTo.Console(new TokenRedactingTextFormatter());
     }
 }

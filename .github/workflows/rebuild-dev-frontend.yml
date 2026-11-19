@@ -77,12 +77,18 @@ jobs:
             exit "$result"
           }
           trap cleanup EXIT
-          # Also works when the deployed checkout still uses npm install.
-          cat > "$override" <<'YAML'
+          printf '{}\n' > "$override"
+          if grep -Eq '^[[:space:]]*target:[[:space:]]*dev[[:space:]]*$' deploy/docker-compose.dev.yml; then
+            # Dependencies belong to the image in the current dev stack.
+            compose build --no-cache frontend
+          else
+            # Older deployed checkouts install dependencies at container startup.
+            cat > "$override" <<'YAML'
           services:
             frontend:
               command: sh -c "npm ci --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port 5173"
           YAML
+          fi
           compose config --quiet
           compose up -d --no-deps --force-recreate --renew-anon-volumes frontend
 

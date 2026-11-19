@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: dotnet build backend/Apps/CyberBackup/CyberBackup.sln -c Release
 
+      - name: Logging checks
+        run: dotnet run --project backend/Tests/Infrastructure.Logging.Checks -c Release
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
@@ -52,13 +55,16 @@ jobs:
       - name: Build
         run: npm run build
 
-  compose:
-    name: Compose config
+  deploy-config:
+    name: Deploy config
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Compose files resolve
         run: |
-          docker compose -f deploy/docker-compose.dev.yml config --quiet
+          docker compose --env-file deploy/.env.dev.example -f deploy/docker-compose.dev.yml config --quiet
           docker compose --env-file deploy/.env.prod.example -f deploy/docker-compose.prod.yml config --quiet
+
+      - name: Build dev frontend image
+        run: docker compose --env-file deploy/.env.dev.example -f deploy/docker-compose.dev.yml build frontend
