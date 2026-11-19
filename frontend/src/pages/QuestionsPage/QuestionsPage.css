@@ -1,4 +1,3 @@
-
 .qst-page {
     font-family: var(--font-body);
 }
@@ -40,7 +39,9 @@
     text-decoration: none;
 }
 
-.qst-new-btn:hover { background: #0267c4; }
+.qst-new-btn:hover {
+    background: #0267c4;
+}
 
 .qst-back {
     display: inline-flex;
@@ -57,7 +58,9 @@
     padding: 0;
 }
 
-.qst-back:hover { color: rgba(255, 255, 255, 0.85); }
+.qst-back:hover {
+    color: rgba(255, 255, 255, 0.85);
+}
 
 .qst-badge {
     display: inline-flex;
@@ -69,9 +72,20 @@
     white-space: nowrap;
 }
 
-.qst-badge--open     { background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.55); }
-.qst-badge--answered { background: rgba(2, 126, 242, 0.15);   color: #027ef2; }
-.qst-badge--closed   { background: rgba(34, 197, 94, 0.12);   color: #22c55e; }
+.qst-badge--open {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.qst-badge--answered {
+    background: rgba(2, 126, 242, 0.15);
+    color: #027ef2;
+}
+
+.qst-badge--closed {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+}
 
 .qst-list {
     display: flex;
@@ -113,7 +127,7 @@
 .qst-card__date {
     font-size: 12px;
     font-weight: 500;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255, 255, 255, 0.35);
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -128,7 +142,7 @@
 .qst-card__desc {
     font-size: 12px;
     font-weight: 400;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -142,8 +156,8 @@
     border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
-    background: rgba(255,255,255,0.07);
-    color: rgba(255,255,255,0.5);
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.5);
     white-space: nowrap;
 }
 
@@ -185,10 +199,24 @@
     background-position: right 9px center;
 }
 
-.qst-filter-select option { background: #20252b; }
-.qst-filter-input { flex: 1; min-width: 180px; max-width: 280px; }
-.qst-filter-select:focus, .qst-filter-input:focus { border-color: #027ef2; }
-.qst-filter-input::placeholder { color: rgba(255,255,255,0.3); }
+.qst-filter-select option {
+    background: #20252b;
+}
+
+.qst-filter-input {
+    flex: 1;
+    min-width: 180px;
+    max-width: 280px;
+}
+
+.qst-filter-select:focus,
+.qst-filter-input:focus {
+    border-color: #027ef2;
+}
+
+.qst-filter-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
 
 .qst-detail-title {
     font-size: 18px;
@@ -199,7 +227,7 @@
 
 .qst-question-card {
     background: #20252b;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 20px 24px;
     margin-bottom: 14px;
@@ -207,14 +235,14 @@
 
 .qst-question-card__meta {
     font-size: 12px;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255, 255, 255, 0.35);
     margin-bottom: 10px;
 }
 
 .qst-question-card__label {
     font-size: 11px;
     font-weight: 700;
-    color: rgba(255,255,255,0.4);
+    color: rgba(255, 255, 255, 0.4);
     letter-spacing: 0.06em;
     margin-bottom: 8px;
 }
@@ -222,14 +250,14 @@
 .qst-question-card__text {
     font-size: 14px;
     font-weight: 400;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.85);
     line-height: 1.6;
     margin: 0;
 }
 
 .qst-reply-card {
     background: #20252b;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 18px 24px;
     margin-bottom: 14px;
@@ -259,25 +287,25 @@
 .qst-reply-card__name {
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .qst-reply-card__date {
     font-size: 11px;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255, 255, 255, 0.35);
     margin-top: 1px;
 }
 
 .qst-reply-card__text {
     font-size: 13px;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255, 255, 255, 0.75);
     line-height: 1.6;
     margin: 0;
 }
 
 .qst-reply-form {
     background: #20252b;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 20px 24px;
     margin-bottom: 14px;
@@ -286,15 +314,15 @@
 .qst-reply-form__title {
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.7);
     margin: 0 0 12px;
 }
 
 .qst-reply-form__textarea {
     width: 100%;
     min-height: 100px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: #ffffff;
     font-family: var(--font-body);
@@ -307,8 +335,13 @@
     color-scheme: dark;
 }
 
-.qst-reply-form__textarea:focus { border-color: #027ef2; }
-.qst-reply-form__textarea::placeholder { color: rgba(255,255,255,0.3); }
+.qst-reply-form__textarea:focus {
+    border-color: #027ef2;
+}
+
+.qst-reply-form__textarea::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
 
 .qst-reply-form__actions {
     display: flex;
@@ -319,7 +352,7 @@
 
 .qst-create-card {
     background: #20252b;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     padding: 28px 32px;
     max-width: 600px;
@@ -340,15 +373,15 @@
     display: block;
     font-size: 12px;
     font-weight: 500;
-    color: rgba(255,255,255,0.45);
+    color: rgba(255, 255, 255, 0.45);
     margin-bottom: 6px;
 }
 
 .qst-form-input,
 .qst-form-textarea {
     width: 100%;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: #ffffff;
     font-family: var(--font-body);
@@ -361,10 +394,14 @@
 }
 
 .qst-form-input:focus,
-.qst-form-textarea:focus { border-color: #027ef2; }
+.qst-form-textarea:focus {
+    border-color: #027ef2;
+}
 
 .qst-form-input::placeholder,
-.qst-form-textarea::placeholder { color: rgba(255,255,255,0.3); }
+.qst-form-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
 
 .qst-form-input:read-only {
     opacity: 0.55;
@@ -373,8 +410,8 @@
 
 .qst-form-select {
     width: 100%;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: #ffffff;
     font-family: var(--font-body);
@@ -392,8 +429,13 @@
     background-position: right 10px center;
 }
 
-.qst-form-select:focus { border-color: #027ef2; }
-.qst-form-select option { background: #20252b; }
+.qst-form-select:focus {
+    border-color: #027ef2;
+}
+
+.qst-form-select option {
+    background: #20252b;
+}
 
 .qst-form-textarea {
     min-height: 130px;
@@ -414,14 +456,20 @@
     white-space: nowrap;
 }
 
-.qst-btn-primary:hover:not(:disabled) { background: #0267c4; }
-.qst-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.qst-btn-primary:hover:not(:disabled) {
+    background: #0267c4;
+}
+
+.qst-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
 .qst-btn-secondary {
-    background: rgba(255,255,255,0.07);
+    background: rgba(255, 255, 255, 0.07);
     border: none;
     border-radius: 8px;
-    color: rgba(255,255,255,0.65);
+    color: rgba(255, 255, 255, 0.65);
     font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
@@ -430,19 +478,22 @@
     transition: background 0.18s;
 }
 
-.qst-btn-secondary:hover { background: rgba(255,255,255,0.11); }
+.qst-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.11);
+}
 
-.qst-loading, .qst-empty {
+.qst-loading,
+.qst-empty {
     padding: 48px 0;
     text-align: center;
     font-size: 13px;
-    color: rgba(255,255,255,0.3);
+    color: rgba(255, 255, 255, 0.3);
 }
 
 .qst-error {
     padding: 14px 18px;
-    background: rgba(239,68,68,0.1);
-    border: 1px solid rgba(239,68,68,0.25);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
     border-radius: 10px;
     color: #ef4444;
     font-size: 13px;
@@ -452,8 +503,8 @@
 
 .qst-success {
     padding: 14px 18px;
-    background: rgba(34,197,94,0.1);
-    border: 1px solid rgba(34,197,94,0.2);
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
     border-radius: 10px;
     color: #22c55e;
     font-size: 13px;
@@ -464,7 +515,7 @@
 .qst-subtitle {
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255, 255, 255, 0.6);
     margin: 0 0 16px;
 }
 
@@ -478,7 +529,7 @@
 .qst-chat-empty {
     text-align: center;
     font-size: 12px;
-    color: rgba(255,255,255,0.25);
+    color: rgba(255, 255, 255, 0.25);
     padding: 20px 0;
 }
 
@@ -489,13 +540,20 @@
     gap: 3px;
 }
 
-.qst-msg--mine  { align-self: flex-end;  align-items: flex-end; }
-.qst-msg--theirs { align-self: flex-start; align-items: flex-start; }
+.qst-msg--mine {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.qst-msg--theirs {
+    align-self: flex-start;
+    align-items: flex-start;
+}
 
 .qst-msg__name {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255, 255, 255, 0.35);
     padding: 0 4px;
 }
 
@@ -504,32 +562,32 @@
     border-radius: 14px;
     font-size: 13px;
     line-height: 1.55;
-    color: rgba(255,255,255,0.88);
+    color: rgba(255, 255, 255, 0.88);
     word-break: break-word;
     white-space: pre-wrap;
 }
 
-.qst-msg--mine  .qst-msg__bubble {
-    background: rgba(2,126,242,0.28);
-    border: 1px solid rgba(2,126,242,0.35);
+.qst-msg--mine .qst-msg__bubble {
+    background: rgba(2, 126, 242, 0.28);
+    border: 1px solid rgba(2, 126, 242, 0.35);
     border-bottom-right-radius: 4px;
 }
 
 .qst-msg--theirs .qst-msg__bubble {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.09);
     border-bottom-left-radius: 4px;
 }
 
 .qst-msg__time {
     font-size: 10px;
-    color: rgba(255,255,255,0.22);
+    color: rgba(255, 255, 255, 0.22);
     padding: 0 4px;
 }
 
 .qst-chat-bar {
     background: #20252b;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 12px 16px;
     display: flex;
@@ -539,8 +597,8 @@
 
 .qst-chat-bar__input {
     flex: 1;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: #ffffff;
     font-family: var(--font-body);
@@ -556,8 +614,13 @@
     line-height: 1.5;
 }
 
-.qst-chat-bar__input:focus  { border-color: #027ef2; }
-.qst-chat-bar__input::placeholder { color: rgba(255,255,255,0.28); }
+.qst-chat-bar__input:focus {
+    border-color: #027ef2;
+}
+
+.qst-chat-bar__input::placeholder {
+    color: rgba(255, 255, 255, 0.28);
+}
 
 .qst-chat-bar__send {
     background: #027ef2;
@@ -575,14 +638,20 @@
     height: 40px;
 }
 
-.qst-chat-bar__send:hover:not(:disabled) { background: #0267c4; }
-.qst-chat-bar__send:disabled { opacity: 0.5; cursor: not-allowed; }
+.qst-chat-bar__send:hover:not(:disabled) {
+    background: #0267c4;
+}
+
+.qst-chat-bar__send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
 .qst-chat-bar__close {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     padding: 0 14px;
     font-family: var(--font-body);
     font-size: 12px;
@@ -595,15 +664,464 @@
 }
 
 .qst-chat-bar__close:hover:not(:disabled) {
-    background: rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.75);
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.75);
 }
 
-.qst-chat-bar__close:disabled { opacity: 0.5; cursor: not-allowed; }
+.qst-chat-bar__close:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
 .qst-closed-notice {
     text-align: center;
     font-size: 12px;
-    color: rgba(255,255,255,0.25);
+    color: rgba(255, 255, 255, 0.25);
     padding: 10px 0 2px;
+}
+
+/* Вложения в обсуждениях */
+.qst-chat-bar__compose {
+    flex: 1;
+    min-width: 0;
+}
+
+.qst-chat-bar__compose .qst-chat-bar__input {
+    width: 100%;
+}
+
+.qst-chat-bar__hint {
+    font-size: 11px;
+    color: rgba(255, 255, 255, .45);
+    margin-bottom: 8px;
+}
+
+.qst-selected-files {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 8px;
+    display: grid;
+    gap: 6px;
+}
+
+.qst-selected-files li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(2, 126, 242, .12);
+    font-size: 12px;
+    color: rgba(255, 255, 255, .85);
+}
+
+.qst-selected-files li span {
+    flex: 1;
+    overflow-wrap: anywhere;
+}
+
+.qst-selected-files button,
+.qst-attachment__actions>button {
+    border: 0;
+    background: transparent;
+    color: #80bdff;
+    cursor: pointer;
+    font: inherit;
+    padding: 4px;
+}
+
+.qst-selected-files button:disabled,
+.qst-attachment__actions>button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.qst-attachment {
+    display: grid;
+    gap: 4px;
+    min-width: 160px;
+    margin-top: 6px;
+    padding: 10px;
+    background: rgba(0, 0, 0, .15);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 8px;
+    white-space: normal;
+}
+
+.qst-attachment__name {
+    overflow-wrap: anywhere;
+    font-weight: 600;
+}
+
+.qst-attachment__size {
+    font-size: 11px;
+    color: rgba(255, 255, 255, .5);
+}
+
+.qst-attachment__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+
+.qst-page {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.qst-card__title,
+.qst-lab-link,
+.qst-detail-title,
+.qst-msg,
+.qst-selected-files li span {
+    min-width: 0;
+}
+
+.qst-msg__bubble {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.qst-form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.qst-detail-lab {
+    font-size: 12px;
+    color: #027ef2;
+    margin: 0 0 16px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .qst-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .qst-new-btn {
+        width: 100%;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+
+    .qst-back,
+    .qst-new-btn,
+    .qst-btn-primary,
+    .qst-btn-secondary,
+    .qst-chat-bar__close,
+    .qst-chat-bar__send {
+        min-height: 44px;
+    }
+
+    .qst-filters {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .qst-filter-select,
+    .qst-filter-input {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        min-height: 44px;
+        box-sizing: border-box;
+        text-overflow: ellipsis;
+    }
+
+    .qst-filter-select,
+    .qst-filter-input,
+    .qst-form-input,
+    .qst-form-textarea,
+    .qst-chat-bar__input,
+    .qst-page .csel-trigger {
+        font-size: 16px;
+    }
+
+    .qst-card {
+        padding: 14px;
+    }
+
+    .qst-card__header {
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .qst-card__title {
+        line-height: 1.5;
+    }
+
+    .qst-card__meta {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .qst-group-badge {
+        max-width: 100%;
+        box-sizing: border-box;
+        white-space: normal;
+    }
+
+    .qst-card__meta .qst-lab-link {
+        flex-basis: 100%;
+        line-height: 1.5;
+    }
+
+    .qst-card__desc {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        white-space: normal;
+        line-height: 1.5;
+    }
+
+    .qst-detail-title {
+        font-size: 16px;
+        line-height: 1.5;
+        flex: 1 1 180px;
+    }
+
+    .qst-question-card,
+    .qst-create-card {
+        padding: 16px;
+    }
+
+    .qst-question-card__meta {
+        line-height: 1.5;
+    }
+
+    .qst-create-title {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .qst-form-actions>button {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .qst-page .csel-trigger {
+        min-height: 44px;
+    }
+
+    .qst-page .csel-trigger span {
+        min-width: 0;
+    }
+
+    .qst-page .csel-item {
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
+    }
+
+    .qst-chat-bar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .qst-chat-bar__compose,
+    .qst-chat-bar__send {
+        grid-column: 1 / -1;
+    }
+
+    .qst-chat-bar__input {
+        min-height: 48px;
+    }
+
+    .qst-chat-bar__hint {
+        line-height: 1.5;
+    }
+
+    .qst-chat-bar__close,
+    .qst-chat-bar__send {
+        padding-inline: 10px;
+        white-space: normal;
+        height: auto;
+    }
+
+    .qst-msg {
+        max-width: 92%;
+    }
+
+    .qst-msg__bubble {
+        padding: 10px 12px;
+    }
+
+    .qst-attachment {
+        min-width: 0;
+    }
+
+    .qst-attachment__actions {
+        gap: 4px 12px;
+    }
+
+    .qst-attachment__actions>button,
+    .qst-selected-files button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+.qst-chat-actions__panel {
+    display: flex;
+    gap: 10px;
+}
+
+.qst-chat-actions__toggle,
+.qst-chat-bar__send-icon {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .qst-chat-bar {
+        grid-template-columns: 44px minmax(0, 1fr) 44px;
+        align-items: end;
+        padding: 8px;
+        gap: 6px;
+        border-radius: 20px;
+    }
+
+    .qst-chat-bar__compose {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .qst-chat-bar__compose>.qst-chat-bar__hint {
+        display: none;
+    }
+
+    .qst-chat-bar__input {
+        display: block;
+        min-height: 44px;
+        padding: 9px 10px;
+        border-radius: 14px;
+    }
+
+    .qst-chat-actions {
+        position: relative;
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .qst-chat-actions__toggle,
+    .qst-chat-bar__send {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border-radius: 50%;
+    }
+
+    .qst-chat-actions__toggle {
+        border: 1px solid rgba(255, 255, 255, .1);
+        background: rgba(255, 255, 255, .06);
+        color: rgba(255, 255, 255, .75);
+        cursor: pointer;
+    }
+
+    .qst-chat-actions__toggle:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .qst-chat-actions__panel {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 12px);
+        left: 0;
+        width: min(260px, calc(100vw - 64px));
+        box-sizing: border-box;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, .12);
+        border-radius: 14px;
+        background: #20252b;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+        z-index: 10;
+    }
+
+    .qst-chat-actions__panel--open {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .qst-chat-actions__panel .qst-chat-bar__close {
+        text-align: left;
+        border: 0;
+        background: transparent;
+        color: rgba(255, 255, 255, .85);
+    }
+
+    .qst-chat-actions__panel .qst-chat-bar__close:hover:not(:disabled) {
+        background: rgba(255, 255, 255, .06);
+    }
+
+    .qst-chat-bar__send {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .qst-chat-bar__send-label {
+        display: none;
+    }
+
+    .qst-chat-bar__send-icon {
+        display: flex;
+    }
+}
+
+.qst-close-dialog {
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    box-sizing: border-box;
+    overflow-y: auto;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 16px;
+    background: #20252b;
+    color: #ffffff;
+    font-family: var(--font-body);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+}
+
+.qst-close-dialog::backdrop {
+    background: rgba(5, 9, 14, .65);
+    backdrop-filter: blur(3px);
+}
+
+.qst-close-dialog h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+.qst-close-dialog>p {
+    margin: 0 0 24px;
+    color: rgba(255, 255, 255, .65);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.qst-close-dialog button:focus-visible {
+    outline: 2px solid #80bdff;
+    outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+    .qst-close-dialog {
+        padding: 20px;
+    }
+
+    .qst-close-dialog .qst-form-actions {
+        flex-direction: column-reverse;
+    }
 }

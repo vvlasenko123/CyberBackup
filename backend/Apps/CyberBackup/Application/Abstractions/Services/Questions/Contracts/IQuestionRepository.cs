@@ -30,7 +30,7 @@ public interface IQuestionRepository
     Task<(bool Success, Guid StudentId)> ReplyToQuestionAsync(Guid questionId, Guid teacherId, bool includeAll, ReplyToQuestionRequest request, CancellationToken ct);
 
     /// <summary>Студент отправляет сообщение в открытый вопрос</summary>
-    Task<bool> SendStudentMessageAsync(Guid questionId, Guid studentId, string content, CancellationToken ct);
+    Task<bool> SendStudentMessageAsync(Guid questionId, Guid studentId, ReplyToQuestionRequest request, CancellationToken ct);
 
     /// <summary>Закрыть вопрос (преподаватель)</summary>
     Task<bool> CloseQuestionByTeacherAsync(Guid questionId, Guid teacherId, bool includeAll, CancellationToken ct);

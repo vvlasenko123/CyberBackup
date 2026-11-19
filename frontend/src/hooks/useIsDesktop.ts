@@ -14,6 +14,7 @@ export const useIsDesktop = (): boolean => {
     const [isDesktop, setIsDesktop] = useState<boolean>(evaluateIsDesktop);
 
     useEffect(() => {
+        if (typeof window.matchMedia !== 'function') return;
         const pointerQuery = window.matchMedia(COARSE_POINTER_QUERY);
         const update = () => setIsDesktop(evaluateIsDesktop());
 

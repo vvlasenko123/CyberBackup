@@ -195,12 +195,14 @@
 /* Teacher reports table */
 .labs-reports-filters {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     align-items: center;
 }
 
 .labs-reports-search {
     flex: 1;
+    min-width: 0;
     background: #111827;
     border: 1px solid #1F2937;
     border-radius: 10px;
@@ -221,6 +223,7 @@
 }
 
 .labs-reports-status-select {
+    max-width: 100%;
     background: #111827;
     border: 1px solid #1F2937;
     border-radius: 10px;

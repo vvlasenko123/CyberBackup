@@ -1,5 +1,5 @@
-import type { IconName } from '../../shared/Icon';
-import type { UserRole } from '../../types';
+import type { IconName } from '../../Icon';
+import type { UserRole } from '../../../utils/types';
 
 export type NavItem = {
     id: string;
@@ -16,6 +16,7 @@ export const navigationByRole: Record<UserRole, NavItem[]> = {
         { id: 'statement', label: 'Ведомость', icon: 'table', path: '/statement' },
         { id: 'questions', label: 'Вопросы', icon: 'messageSquare', path: '/questions' },
         { id: 'calendar', label: 'Календарь', icon: 'calendar', path: '/calendar' },
+        { id: 'profile', label: 'Профиль', icon: 'user', path: '/profile' },
     ],
 
     teacher: [
@@ -24,6 +25,7 @@ export const navigationByRole: Record<UserRole, NavItem[]> = {
         { id: 'questions', label: 'Вопросы студентов', icon: 'messageSquare', path: '/questions' },
         { id: 'calendar', label: 'Календарь', icon: 'calendar', path: '/calendar' },
         { id: 'statement', label: 'Ведомость', icon: 'table', path: '/statement' },
+        { id: 'profile', label: 'Профиль', icon: 'user', path: '/profile' },
     ],
 
     admin: [
@@ -31,5 +33,6 @@ export const navigationByRole: Record<UserRole, NavItem[]> = {
         { id: 'users', label: 'Пользователи', icon: 'users', path: '/users' },
         { id: 'groups', label: 'Группы', icon: 'users', path: '/groups' },
         { id: 'calendar', label: 'Календарь', icon: 'calendar', path: '/calendar' },
+        { id: 'profile', label: 'Профиль', icon: 'user', path: '/profile' },
     ],
 };

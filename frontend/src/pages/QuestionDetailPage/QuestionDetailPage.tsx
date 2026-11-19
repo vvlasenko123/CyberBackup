@@ -1,9 +1,15 @@
+import { ReportPreview } from '../../components/ReportPreview/ReportPreview';
+import { isAxiosError } from 'axios';
 import { DetailSkeleton } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import { Icon } from '../../components/Icon';
 import '../QuestionsPage/QuestionsPage.css';
+
+const MAX_ATTACHMENTS = 5;
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+const ATTACHMENT_EXTENSION = /\.(jpe?g|png|gif|pdf|docx)$/i;
 
 const QuestionStatus = {
     Open: 0,
@@ -12,7 +18,15 @@ const QuestionStatus = {
 } as const;
 type QuestionStatus = typeof QuestionStatus[keyof typeof QuestionStatus];
 
+interface QuestionAttachmentDto {
+    id: string;
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+}
+
 interface QuestionReplyDto {
+    attachments?: QuestionAttachmentDto[];
     id: string;
     senderFullName: string;
     isFromTeacher: boolean;
@@ -42,21 +56,63 @@ function formatTime(iso: string): string {
 
 function StatusBadge({ status }: { status: QuestionStatus }) {
     const map: Record<QuestionStatus, { cls: string; label: string }> = {
-        [QuestionStatus.Open]:     { cls: 'qst-badge--open',     label: 'Открыт' },
+        [QuestionStatus.Open]: { cls: 'qst-badge--open', label: 'Открыт' },
         [QuestionStatus.Answered]: { cls: 'qst-badge--answered', label: 'Отвечен' },
-        [QuestionStatus.Closed]:   { cls: 'qst-badge--closed',   label: 'Закрыт' },
+        [QuestionStatus.Closed]: { cls: 'qst-badge--closed', label: 'Закрыт' },
     };
     const { cls, label } = map[status] ?? { cls: 'qst-badge--open', label: '—' };
     return <span className={`qst-badge ${cls}`}>{label}</span>;
 }
 
 
-function Message({ msg, isTeacherRole }: { msg: QuestionReplyDto; isTeacherRole: boolean }) {
+function fileSize(bytes: number) {
+    return bytes < 1024 * 1024 ? `${Math.ceil(bytes / 1024)} КБ` : `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
+}
+
+function Attachment({ file, baseUrl }: { file: QuestionAttachmentDto; baseUrl: string }) {
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState('');
+    const attachmentUrl = `${baseUrl}/attachments/${file.id}`;
+
+    async function download() {
+        setBusy(true);
+        setError('');
+        try {
+            const response = await axiosInstance.get(attachmentUrl, { responseType: 'blob' });
+            const url = URL.createObjectURL(new Blob([response.data], { type: file.contentType }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = file.fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch {
+            setError('Не удалось загрузить вложение. Попробуйте ещё раз.');
+        } finally { setBusy(false); }
+    }
+
+    return <div className="qst-attachment">
+        <span className="qst-attachment__name">{file.fileName}</span>
+        <span className="qst-attachment__size">{fileSize(file.sizeBytes)}</span>
+        <div className="qst-attachment__actions">
+            {file.contentType.startsWith('image/') && <ReportPreview
+                url={attachmentUrl} filename={file.fileName} />}
+            <button type="button" disabled={busy} onClick={() => void download()}>{busy ? 'Загрузка…' : 'Скачать'}</button>
+        </div>
+        {error && <span role="alert" className="qst-error">{error}</span>}
+    </div>;
+}
+
+function Message({ msg, isTeacherRole, baseUrl }: { msg: QuestionReplyDto; isTeacherRole: boolean; baseUrl: string }) {
     const isMine = isTeacherRole ? msg.isFromTeacher : !msg.isFromTeacher;
     return (
         <div className={`qst-msg ${isMine ? 'qst-msg--mine' : 'qst-msg--theirs'}`}>
             <span className="qst-msg__name">{msg.senderFullName}</span>
-            <div className="qst-msg__bubble">{msg.content}</div>
+            <div className="qst-msg__bubble">
+                {msg.content}
+                {msg.attachments?.map(file => <Attachment key={file.id} file={file} baseUrl={baseUrl} />)}
+            </div>
             <span className="qst-msg__time">{formatTime(msg.createdAtUtc)}</span>
         </div>
     );
@@ -71,26 +127,63 @@ export default function QuestionDetailPage() {
     const isTeacher = role === 'teacher' || role === 'admin' || role === 'superAdmin';
 
     const [question, setQuestion] = useState<QuestionDetailDto | null>(null);
-    const [loading, setLoading]   = useState(true);
-    const [error, setError]       = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    const [msgText, setMsgText]       = useState('');
-    const [sending, setSending]       = useState(false);
-    const [closing, setClosing]       = useState(false);
-    const [sendError, setSendError]   = useState('');
+    const [actionsOpen, setActionsOpen] = useState(false);
+    const actionsRef = useRef<HTMLDivElement>(null);
+    const actionsToggleRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (!actionsOpen) return;
+        const dismiss = (event: PointerEvent) => {
+            if (!actionsRef.current?.contains(event.target as Node)) setActionsOpen(false);
+        };
+        const escape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setActionsOpen(false);
+                actionsToggleRef.current?.focus();
+            }
+        };
+        document.addEventListener('pointerdown', dismiss);
+        document.addEventListener('keydown', escape);
+        return () => {
+            document.removeEventListener('pointerdown', dismiss);
+            document.removeEventListener('keydown', escape);
+        };
+    }, [actionsOpen]);
+
+    const [files, setFiles] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const sendInProgress = useRef(false);
+    const [msgText, setMsgText] = useState('');
+    const [sending, setSending] = useState(false);
+    const [closing, setClosing] = useState(false);
+    const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+    const [closeError, setCloseError] = useState('');
+    const closeDialogRef = useRef<HTMLDialogElement>(null);
+    const closeInProgress = useRef(false);
+
+    useEffect(() => {
+        if (closeConfirmOpen) closeDialogRef.current?.showModal();
+    }, [closeConfirmOpen]);
+    const [sendError, setSendError] = useState('');
+
+    const baseUrl = `/public/api/v1/${isTeacher ? 'teacher/' : ''}questions/${questionId}`;
+
+    const content = msgText.trim();
+    const hasMessage = Boolean(content) || files.length > 0;
+    const isBusy = sending || closing;
 
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const loadQuestion = useCallback(() => {
         if (!questionId) return;
-        const url = isTeacher
-            ? `/public/api/v1/teacher/questions/${questionId}`
-            : `/public/api/v1/questions/${questionId}`;
-        axiosInstance.get<QuestionDetailDto>(url)
+        axiosInstance.get<QuestionDetailDto>(baseUrl)
             .then(r => { setQuestion(r.data); setError(''); })
             .catch(() => setError('Не удалось загрузить вопрос'))
             .finally(() => setLoading(false));
-    }, [questionId, isTeacher]);
+    }, [questionId, baseUrl]);
 
     useEffect(() => { loadQuestion(); }, [loadQuestion]);
 
@@ -100,35 +193,62 @@ export default function QuestionDetailPage() {
 
     async function handleSend(e: React.FormEvent) {
         e.preventDefault();
-        if (!msgText.trim() || !questionId) return;
+        if (!hasMessage || !questionId || sendInProgress.current || closing) return;
+        sendInProgress.current = true;
         setSendError('');
         setSending(true);
         try {
-            const url = isTeacher
-                ? `/public/api/v1/teacher/questions/${questionId}/reply`
-                : `/public/api/v1/questions/${questionId}/message`;
-            await axiosInstance.post(url, { content: msgText.trim() });
+            const url = `${baseUrl}/${isTeacher ? 'reply' : 'message'}`;
+            if (files.length) {
+                const body = new FormData();
+                body.append('content', content);
+                files.forEach(file => body.append('files', file));
+                await axiosInstance.post(`${url}/attachments`, body, { headers: { 'Content-Type': 'multipart/form-data' } });
+            } else {
+                await axiosInstance.post(url, { content });
+            }
+            setFiles([]);
             setMsgText('');
             loadQuestion();
-        } catch {
-            setSendError('Не удалось отправить сообщение');
+        } catch (error) {
+            const message = isAxiosError(error) && error.response?.status === 400
+                ? error.response.data?.message : null;
+            setSendError(typeof message === 'string' ? message : 'Не удалось отправить сообщение');
         } finally {
             setSending(false);
+            sendInProgress.current = false;
         }
     }
 
+    function selectFiles(event: React.ChangeEvent<HTMLInputElement>) {
+        const selected = Array.from(event.target.files ?? []);
+        event.target.value = '';
+        if (files.length + selected.length > MAX_ATTACHMENTS) {
+            setSendError('Можно прикрепить до 5 файлов');
+            return;
+        }
+        if (selected.some(file => !ATTACHMENT_EXTENSION.test(file.name) || file.size === 0 || file.size > MAX_ATTACHMENT_SIZE)) {
+            setSendError('Выберите непустые JPG, PNG, GIF, PDF или DOCX до 10 МБ');
+            return;
+        }
+        setFiles(current => [...current, ...selected]);
+        setSendError('');
+    }
+
     async function handleClose() {
-        if (!questionId || !window.confirm('Закрыть вопрос? Новые сообщения будут недоступны.')) return;
+        if (!questionId || closeInProgress.current || sending) return;
+        closeInProgress.current = true;
+        setCloseError('');
         setClosing(true);
         try {
-            const url = isTeacher
-                ? `/public/api/v1/teacher/questions/${questionId}/close`
-                : `/public/api/v1/questions/${questionId}/close`;
-            await axiosInstance.post(url);
+            await axiosInstance.post(`${baseUrl}/close`);
+            setQuestion(current => current ? { ...current, status: QuestionStatus.Closed } : current);
+            setCloseConfirmOpen(false);
             loadQuestion();
         } catch {
-            setSendError('Не удалось закрыть вопрос');
+            setCloseError('Не удалось закрыть вопрос. Попробуйте ещё раз.');
         } finally {
+            closeInProgress.current = false;
             setClosing(false);
         }
     }
@@ -156,6 +276,23 @@ export default function QuestionDetailPage() {
                 Назад к вопросам
             </button>
 
+            {closeConfirmOpen && <dialog ref={closeDialogRef} className="qst-close-dialog"
+                aria-labelledby="close-question-title" aria-describedby="close-question-description"
+                onCancel={event => {
+                    event.preventDefault();
+                    if (!closeInProgress.current) setCloseConfirmOpen(false);
+                }}>
+                <h2 id="close-question-title">Закрыть вопрос?</h2>
+                <p id="close-question-description">Переписка сохранится, но отправлять новые сообщения и файлы будет нельзя.</p>
+                {closeError && <div className="qst-error" role="alert">{closeError}</div>}
+                <div className="qst-form-actions">
+                    <button type="button" className="qst-btn-secondary" autoFocus disabled={closing}
+                        onClick={() => setCloseConfirmOpen(false)}>Отмена</button>
+                    <button type="button" className="qst-btn-primary" disabled={closing}
+                        onClick={() => void handleClose()}>{closing ? 'Закрываем…' : 'Закрыть вопрос'}</button>
+                </div>
+            </dialog>}
+
             {loading && <DetailSkeleton panelClassName="qst-question-card" form />}
             {!loading && error && <div className="qst-error">{error}</div>}
 
@@ -172,7 +309,7 @@ export default function QuestionDetailPage() {
                     </div>
 
                     {question.laboratoryTitle && (
-                        <p style={{ fontSize: 12, color: '#027ef2', margin: '0 0 16px', fontWeight: 600 }}>
+                        <p className="qst-detail-lab">
                             {question.laboratoryTitle}
                         </p>
                     )}
@@ -193,7 +330,7 @@ export default function QuestionDetailPage() {
                     {question.messages.length > 0 ? (
                         <div className="qst-chat">
                             {question.messages.map(m => (
-                                <Message key={m.id} msg={m} isTeacherRole={isTeacher} />
+                                <Message key={m.id} msg={m} isTeacherRole={isTeacher} baseUrl={baseUrl} />
                             ))}
                             <div ref={chatEndRef} />
                         </div>
@@ -210,30 +347,70 @@ export default function QuestionDetailPage() {
                         <p className="qst-closed-notice">Вопрос закрыт — переписка завершена</p>
                     ) : (
                         <form className="qst-chat-bar" onSubmit={handleSend}>
-                            <textarea
-                                className="qst-chat-bar__input"
-                                placeholder="Написать сообщение… (Ctrl+Enter — отправить)"
-                                value={msgText}
-                                onChange={handleTextareaInput}
-                                onKeyDown={handleKeyDown}
-                                maxLength={3000}
-                                rows={1}
-                            />
-                            <button
-                                type="button"
-                                className="qst-chat-bar__close"
-                                onClick={handleClose}
-                                disabled={closing}
-                                title="Закрыть вопрос"
-                            >
-                                {closing ? '…' : 'Закрыть'}
-                            </button>
+                            <div className="qst-chat-bar__compose">
+                                <div className="qst-chat-bar__hint" id="attachment-hint">До 5 файлов по 10 МБ: JPG, PNG, GIF, PDF, DOCX</div>
+                                {files.length > 0 && <ul className="qst-selected-files">
+                                    {files.map((file, index) => <li key={`${file.name}-${index}`}>
+                                        <span>{file.name} · {fileSize(file.size)}</span>
+                                        <button type="button" disabled={sending} aria-label={`Удалить ${file.name}`}
+                                            onClick={() => setFiles(current => current.filter((_, i) => i !== index))}>×</button>
+                                    </li>)}
+                                </ul>}
+                                <input ref={fileInputRef} type="file" multiple hidden accept=".jpg,.jpeg,.png,.gif,.pdf,.docx"
+                                    aria-label="Вложения" onChange={selectFiles} disabled={isBusy} />
+                                <textarea
+                                    disabled={isBusy}
+                                    className="qst-chat-bar__input"
+                                    placeholder="Сообщение…"
+                                    aria-label="Сообщение"
+                                    title="Ctrl+Enter — отправить"
+                                    value={msgText}
+                                    onChange={handleTextareaInput}
+                                    onKeyDown={handleKeyDown}
+                                    maxLength={3000}
+                                    rows={1}
+                                />
+                            </div>
+                            <div className="qst-chat-actions" ref={actionsRef}
+                                onBlur={event => {
+                                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setActionsOpen(false);
+                                }}>
+                                <button ref={actionsToggleRef} type="button" className="qst-chat-actions__toggle"
+                                    aria-label="Действия с вопросом" aria-expanded={actionsOpen}
+                                    aria-controls="question-actions" disabled={isBusy}
+                                    onClick={() => setActionsOpen(open => !open)}>
+                                    <Icon name={actionsOpen ? 'x' : 'plus'} size={22} />
+                                </button>
+                                <div id="question-actions" className={`qst-chat-actions__panel${actionsOpen ? ' qst-chat-actions__panel--open' : ''}`}>
+                                    <button type="button" className="qst-chat-bar__close" disabled={isBusy || files.length >= MAX_ATTACHMENTS}
+                                        aria-describedby="attachment-hint" onClick={() => {
+                                            fileInputRef.current?.click();
+                                            setActionsOpen(false);
+                                            actionsToggleRef.current?.focus();
+                                        }}>Прикрепить</button>
+                                    <button type="button" className="qst-chat-bar__close" disabled={isBusy}
+                                        title="Закрыть вопрос" onClick={() => {
+                                            setActionsOpen(false);
+                                            actionsToggleRef.current?.focus();
+                                            setCloseError('');
+                                            setCloseConfirmOpen(true);
+                                        }}>
+                                        {closing ? '…' : 'Закрыть'}
+                                    </button>
+                                </div>
+                            </div>
                             <button
                                 type="submit"
                                 className="qst-chat-bar__send"
-                                disabled={sending || !msgText.trim()}
+                                aria-label={sending ? 'Отправка…' : 'Отправить'}
+                                disabled={isBusy || !hasMessage}
                             >
-                                {sending ? '…' : 'Отправить'}
+                                <span className="qst-chat-bar__send-label">{sending ? '…' : 'Отправить'}</span>
+                                <span className="qst-chat-bar__send-icon" aria-hidden="true">
+                                    {sending ? '…' : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="m5 12 7-7 7 7M12 5v14" />
+                                    </svg>}
+                                </span>
                             </button>
                         </form>
                     )}

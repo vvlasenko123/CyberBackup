@@ -1,0 +1,112 @@
+name: Rebuild dev frontend
+
+# Repairs dependencies for the checkout already deployed on the dev server.
+on:
+  workflow_dispatch:
+
+# Serialize recovery with the regular deployment workflow.
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild-frontend:
+    name: Reinstall and rebuild frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: dev
+    env:
+      DEV_HOST: ${{ vars.DEV_HOST }}
+      SSH_USER: ${{ vars.DEV_SSH_USER }}
+      SSH_PORT: ${{ vars.DEV_SSH_PORT || '22' }}
+      APP_DIR: ${{ vars.DEV_APP_DIR || 'CyberBackup' }}
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DEV_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DEV_HOST" ] || [ -z "$SSH_USER" ] || [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$SSH_KNOWN_HOSTS" ]; then
+            echo "::error::Set DEV_HOST, DEV_SSH_USER, DEV_SSH_PRIVATE_KEY and DEV_SSH_KNOWN_HOSTS in the GitHub environment 'dev'"
+            exit 1
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploy ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host dev
+            HostName $DEV_HOST
+            User $SSH_USER
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          EOF
+
+      - name: Reinstall dependencies and verify frontend
+        run: |
+          set -euo pipefail
+          # Quote the directory for the remote shell as well as the local shell.
+          printf -v remote_dir '%q' "$APP_DIR"
+          ssh dev "bash -s -- $remote_dir" <<'EOF'
+          set -euo pipefail
+          cd "$1"
+          test -f deploy/.env.dev.local
+          test -f frontend/package-lock.json
+          echo "Rebuilding deployed commit: $(git rev-parse HEAD)"
+
+          override=$(mktemp /tmp/cyberbackup-frontend-rebuild.XXXXXX.yml)
+          compose() {
+            docker compose -p cyberbackup-dev --env-file deploy/.env.dev.local \
+              -f deploy/docker-compose.dev.yml -f "$override" "$@"
+          }
+          cleanup() {
+            result=$?
+            if [ "$result" -ne 0 ]; then
+              compose logs --tail 100 frontend || true
+            fi
+            rm -f "$override"
+            exit "$result"
+          }
+          trap cleanup EXIT
+          printf '{}\n' > "$override"
+          if grep -Eq '^[[:space:]]*target:[[:space:]]*dev[[:space:]]*$' deploy/docker-compose.dev.yml; then
+            # Dependencies belong to the image in the current dev stack.
+            compose build --no-cache frontend
+          else
+            # Older deployed checkouts install dependencies at container startup.
+            cat > "$override" <<'YAML'
+          services:
+            frontend:
+              command: sh -c "npm ci --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port 5173"
+          YAML
+          fi
+          compose config --quiet
+          compose up -d --no-deps --force-recreate --renew-anon-volumes frontend
+
+          # Probe inside the container so the port matches the deployed config.
+          ready=false
+          for attempt in $(seq 1 120); do
+            if compose exec -T frontend node -e 'fetch("http://127.0.0.1:5173/").then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))' >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$ready" != true ]; then
+            echo "Frontend did not become ready within 10 minutes" >&2
+            exit 1
+          fi
+
+          # HTML alone can return 200 while Vite cannot resolve imports.
+          compose exec -T frontend npm run build
+          compose ps frontend
+          EOF

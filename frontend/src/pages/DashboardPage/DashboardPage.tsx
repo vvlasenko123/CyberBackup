@@ -1,6 +1,7 @@
 import { ListSkeleton, Skeleton, SkeletonRegion } from '../../components/Skeleton/Skeleton';
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
+import { DEMO_FALLBACK, DEMO_LEADERBOARD, DEMO_POSTS, DEMO_PROGRESS } from '../../utils/demoData';
 import './DashboardPage.css';
 
 
@@ -61,43 +62,43 @@ interface TeacherGradebookPagedResult {
 
 
 const CATEGORY_TABS = [
-    { label: 'Все',         value: null },
+    { label: 'Все', value: null },
     { label: 'Лабораторные', value: PostCategory.Laboratory },
-    { label: 'События',      value: PostCategory.Event },
-    { label: 'Информация',   value: PostCategory.Information },
+    { label: 'События', value: PostCategory.Event },
+    { label: 'Информация', value: PostCategory.Information },
 ] as const;
 
 const CATEGORY_META: Record<PostCategory, { badge: string; cls: string }> = {
-    [PostCategory.Event]:       { badge: 'СОБЫТИЕ', cls: 'event' },
-    [PostCategory.Laboratory]:  { badge: 'ЛАБА',    cls: 'laboratory' },
-    [PostCategory.Information]: { badge: 'ИНФО',    cls: 'information' },
+    [PostCategory.Event]: { badge: 'СОБЫТИЕ', cls: 'event' },
+    [PostCategory.Laboratory]: { badge: 'ЛАБА', cls: 'laboratory' },
+    [PostCategory.Information]: { badge: 'ИНФО', cls: 'information' },
 };
 
 const formatDate = (iso: string): string => {
     const d = new Date(iso);
     const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн',
-                    'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+        'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     return `Опубликовано: ${d.getDate()} ${months[d.getMonth()]}`;
 };
 
 
 const StudentSidebar: React.FC = () => {
-    const [progress, setProgress]       = useState<GetMyProgressResponse | null>(null);
+    const [progress, setProgress] = useState<GetMyProgressResponse | null>(null);
     const [leaderboard, setLeaderboard] = useState<GetGroupLeaderboardResponse | null>(null);
-    const [loadingP, setLoadingP]       = useState(true);
-    const [loadingL, setLoadingL]       = useState(true);
+    const [loadingP, setLoadingP] = useState(true);
+    const [loadingL, setLoadingL] = useState(true);
 
     useEffect(() => {
         axiosInstance
             .get<GetMyProgressResponse>('/public/api/v1/laboratories/progress/my')
             .then(res => setProgress(res.data))
-            .catch(() => setProgress(null))
+            .catch(() => setProgress(DEMO_FALLBACK ? DEMO_PROGRESS : null))
             .finally(() => setLoadingP(false));
 
         axiosInstance
             .get<GetGroupLeaderboardResponse>('/public/api/v1/laboratories/progress/leaderboard')
             .then(res => setLeaderboard(res.data))
-            .catch(() => setLeaderboard(null))
+            .catch(() => setLeaderboard(DEMO_FALLBACK ? DEMO_LEADERBOARD : null))
             .finally(() => setLoadingL(false));
     }, []);
 
@@ -153,7 +154,7 @@ const StudentSidebar: React.FC = () => {
                 <div className="dash-leaderboard-card">
                     <h3 className="dash-leaderboard-card__title">Рейтинг группы</h3>
                     {leaderboard.items.slice(0, 5).map(item => {
-                        const isMe   = item.isCurrentUser;
+                        const isMe = item.isCurrentUser;
                         const isTop3 = item.rank <= 3 && !isMe;
                         return (
                             <div
@@ -162,7 +163,7 @@ const StudentSidebar: React.FC = () => {
                             >
                                 <span className={
                                     'dash-leader-row__rank' +
-                                    (isMe   ? ' dash-leader-row__rank--me'   : '') +
+                                    (isMe ? ' dash-leader-row__rank--me' : '') +
                                     (isTop3 ? ' dash-leader-row__rank--top3' : '')
                                 }>
                                     #{item.rank}
@@ -218,7 +219,7 @@ const TeacherSidebar: React.FC = () => {
                     <div className="dash-sidebar-note">Студентов нет</div>
                 ) : (
                     ranked.map((item, idx) => {
-                        const rank   = idx + 1;
+                        const rank = idx + 1;
                         const isTop3 = rank <= 3;
                         return (
                             <div key={item.studentId} className="dash-leader-row">
@@ -240,23 +241,24 @@ const TeacherSidebar: React.FC = () => {
 interface NewsFeedProps { isTeacher: boolean; }
 
 const CATEGORY_OPTIONS = [
-    { label: 'Событие',       value: PostCategory.Event },
-    { label: 'Лабораторная',  value: PostCategory.Laboratory },
-    { label: 'Информация',    value: PostCategory.Information },
+    { label: 'Событие', value: PostCategory.Event },
+    { label: 'Лабораторная', value: PostCategory.Laboratory },
+    { label: 'Информация', value: PostCategory.Information },
 ] as const;
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ isTeacher }) => {
     const [activeCategory, setActiveCategory] = useState<PostCategory | null>(null);
-    const [posts, setPosts]   = useState<PostItemDto[]>([]);
+    const [posts, setPosts] = useState<PostItemDto[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError]   = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
-    const [formOpen,    setFormOpen]    = useState(false);
-    const [formTitle,   setFormTitle]   = useState('');
+    const [formOpen, setFormOpen] = useState(false);
+    const [formTitle, setFormTitle] = useState('');
     const [formContent, setFormContent] = useState('');
     const [formCategory, setFormCategory] = useState<PostCategory>(PostCategory.Information);
     const [formSubmitting, setFormSubmitting] = useState(false);
-    const [formError,   setFormError]   = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
+    const [demo, setDemo] = useState(false);
 
     const fetchPosts = (category: PostCategory | null) => {
         setLoading(true);
@@ -266,7 +268,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ isTeacher }) => {
         axiosInstance
             .get<PagedResult<PostItemDto>>(`/public/api/v1/posts?${params.toString()}`)
             .then(res => setPosts(res.data.items))
-            .catch(err => setError(err?.response?.data?.message || 'Не удалось загрузить новости'))
+            .catch(err => {
+                if (DEMO_FALLBACK) {
+                    setPosts(DEMO_POSTS.filter(p => category === null || p.category === category) as PostItemDto[]);
+                    setDemo(true);
+                    return;
+                }
+                setError(err?.response?.data?.message || 'Не удалось загрузить новости');
+            })
             .finally(() => setLoading(false));
     };
 
@@ -313,7 +322,10 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ isTeacher }) => {
     return (
         <div className="dash-feed">
             <div className="dash-feed-header">
-                <h2 className="dash-title">Новости и объявления</h2>
+                <h2 className="dash-title">
+                    Новости и объявления
+                    {demo && <span className="dash-demo-chip" title="Сервер недоступен — показан пример данных">Демо-данные</span>}
+                </h2>
                 {isTeacher && (
                     <button
                         className="dash-create-post-btn"

@@ -18,6 +18,43 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         _connection = connection;
     }
 
+    private static async Task SaveGroupsAsync(System.Data.Common.DbConnection connection,
+        System.Data.Common.DbTransaction transaction, Guid laboratoryId, IReadOnlyCollection<Guid>? groupIds)
+    {
+        var ids = groupIds?.Distinct().ToArray() ?? [];
+        await connection.ExecuteAsync("""
+            UPDATE laboratory_works SET restrict_to_groups = @Restricted WHERE id = @LaboratoryId;
+            DELETE FROM laboratory_groups WHERE laboratory_work_id = @LaboratoryId;
+            INSERT INTO laboratory_groups (laboratory_work_id, group_id)
+                SELECT @LaboratoryId, unnest(@GroupIds);
+            """, new { LaboratoryId = laboratoryId, Restricted = ids.Length > 0, GroupIds = ids }, transaction);
+    }
+
+    public Task<bool> CanAccessLaboratoryAsync(Guid studentId, Guid laboratoryId, CancellationToken cancellationToken)
+        => _connection.QueryFirstOrDefaultAsync<bool>("""
+            SELECT EXISTS (
+                SELECT 1 FROM laboratory_works lw
+                WHERE lw.id = @LaboratoryId AND lw.is_published AND lw.delete_date_utc IS NULL
+                  AND (NOT lw.restrict_to_groups OR EXISTS (
+                      SELECT 1 FROM laboratory_groups lg JOIN user_groups ug ON ug.group_id = lg.group_id
+                      WHERE lg.laboratory_work_id = lw.id AND ug.user_id = @StudentId
+                  ))
+            );
+            """, new { StudentId = studentId, LaboratoryId = laboratoryId }, cancellationToken);
+
+    public Task<IReadOnlyCollection<Guid>> GetStudentIdsForLaboratoryAsync(Guid laboratoryId, Guid teacherId, CancellationToken cancellationToken)
+        => _connection.QueryAsync<Guid>("""
+            SELECT DISTINCT ug.user_id
+            FROM user_groups ug
+            JOIN users u ON u.id = ug.user_id AND u.role = @StudentRole
+            JOIN laboratory_works lw ON lw.id = @LaboratoryId
+            WHERE (lw.restrict_to_groups AND EXISTS (
+                SELECT 1 FROM laboratory_groups lg WHERE lg.laboratory_work_id = lw.id AND lg.group_id = ug.group_id
+            )) OR (NOT lw.restrict_to_groups AND EXISTS (
+                SELECT 1 FROM teacher_groups tg WHERE tg.teacher_id = @TeacherId AND tg.group_id = ug.group_id
+            ));
+            """, new { LaboratoryId = laboratoryId, TeacherId = teacherId, StudentRole = (int)UserRole.Student }, cancellationToken);
+
     /// <inheritdoc />
     public async Task<PagedResultDto<GetLaboratoryListItemDto>> GetStudentLaboratoriesAsync(
         Guid studentId,
@@ -73,15 +110,20 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                LEFT JOIN flags f ON f.laboratory_work_id = lw.id
                                WHERE lw.is_published = true
                                  AND lw.delete_date_utc IS NULL
+                                 AND (NOT lw.restrict_to_groups OR EXISTS (
+                                     SELECT 1 FROM laboratory_groups lg
+                                     JOIN user_groups assigned_ug ON assigned_ug.group_id = lg.group_id
+                                     WHERE lg.laboratory_work_id = lw.id AND assigned_ug.user_id = @StudentId
+                                 ))
                                  AND (@Block IS NULL OR lw.block = @Block)
                                  AND (@Difficulty IS NULL OR lw.difficulty = @Difficulty)
                                  AND (@Search IS NULL OR LOWER(lw.title) LIKE LOWER('%' || @Search || '%'))
-                                 AND lw.created_by_teacher_id IN (
+                                 AND (lw.restrict_to_groups OR lw.created_by_teacher_id IN (
                                      SELECT DISTINCT tg.teacher_id
                                      FROM user_groups ug
                                      JOIN teacher_groups tg ON tg.group_id = ug.group_id
                                      WHERE ug.user_id = @StudentId
-                                 )
+                                 ))
                            )
                            SELECT COUNT(*) FROM source WHERE (@Status IS NULL OR "Status" = @Status);
 
@@ -133,15 +175,20 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                LEFT JOIN flags f ON f.laboratory_work_id = lw.id
                                WHERE lw.is_published = true
                                  AND lw.delete_date_utc IS NULL
+                                 AND (NOT lw.restrict_to_groups OR EXISTS (
+                                     SELECT 1 FROM laboratory_groups lg
+                                     JOIN user_groups assigned_ug ON assigned_ug.group_id = lg.group_id
+                                     WHERE lg.laboratory_work_id = lw.id AND assigned_ug.user_id = @StudentId
+                                 ))
                                  AND (@Block IS NULL OR lw.block = @Block)
                                  AND (@Difficulty IS NULL OR lw.difficulty = @Difficulty)
                                  AND (@Search IS NULL OR LOWER(lw.title) LIKE LOWER('%' || @Search || '%'))
-                                 AND lw.created_by_teacher_id IN (
+                                 AND (lw.restrict_to_groups OR lw.created_by_teacher_id IN (
                                      SELECT DISTINCT tg.teacher_id
                                      FROM user_groups ug
                                      JOIN teacher_groups tg ON tg.group_id = ug.group_id
                                      WHERE ug.user_id = @StudentId
-                                 )
+                                 ))
                            )
                            SELECT * FROM source
                            WHERE (@Status IS NULL OR "Status" = @Status)
@@ -222,6 +269,11 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                      WHERE lw.id = @LaboratoryId
                                        AND lw.is_published = true
                                        AND lw.delete_date_utc IS NULL
+                                       AND (NOT lw.restrict_to_groups OR EXISTS (
+                                           SELECT 1 FROM laboratory_groups lg
+                                           JOIN user_groups assigned_ug ON assigned_ug.group_id = lg.group_id
+                                           WHERE lg.laboratory_work_id = lw.id AND assigned_ug.user_id = @StudentId
+                                       ))
                                      LIMIT 1;
                                      """;
 
@@ -288,9 +340,14 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
               AND h.laboratory_work_id = @LaboratoryId
               AND lw.is_published = true
               AND lw.delete_date_utc IS NULL
+              AND (NOT lw.restrict_to_groups OR EXISTS (
+                  SELECT 1 FROM laboratory_groups lg
+                  JOIN user_groups assigned_ug ON assigned_ug.group_id = lg.group_id
+                  WHERE lg.laboratory_work_id = lw.id AND assigned_ug.user_id = @StudentId
+              ))
             LIMIT 1;
             """,
-            new { HintId = hintId, LaboratoryId = laboratoryId },
+            new { HintId = hintId, LaboratoryId = laboratoryId, StudentId = studentId },
             transaction);
 
         if (hint is null)
@@ -425,11 +482,15 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
         var laboratoryExists = await connection.QuerySingleAsync<bool>(
             """
             SELECT EXISTS (
-                SELECT 1 FROM laboratory_works
-                WHERE id = @LaboratoryId AND is_published = true AND delete_date_utc IS NULL
+                SELECT 1 FROM laboratory_works lw
+                WHERE lw.id = @LaboratoryId AND lw.is_published = true AND lw.delete_date_utc IS NULL
+                  AND (NOT lw.restrict_to_groups OR EXISTS (
+                      SELECT 1 FROM laboratory_groups lg JOIN user_groups ug ON ug.group_id = lg.group_id
+                      WHERE lg.laboratory_work_id = lw.id AND ug.user_id = @StudentId
+                  ))
             );
             """,
-            new { LaboratoryId = laboratoryId },
+            new { LaboratoryId = laboratoryId, StudentId = studentId },
             transaction);
 
         if (!laboratoryExists)
@@ -666,12 +727,17 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             LEFT JOIN laboratory_reports r ON r.laboratory_work_id = lw.id AND r.student_id = @StudentId
             LEFT JOIN laboratory_progress lp ON lp.laboratory_work_id = lw.id AND lp.student_id = @StudentId
             WHERE lw.is_published = true AND lw.delete_date_utc IS NULL
-              AND lw.created_by_teacher_id IN (
+              AND (NOT lw.restrict_to_groups OR EXISTS (
+                  SELECT 1 FROM laboratory_groups lg
+                  JOIN user_groups assigned_ug ON assigned_ug.group_id = lg.group_id
+                  WHERE lg.laboratory_work_id = lw.id AND assigned_ug.user_id = @StudentId
+              ))
+              AND (lw.restrict_to_groups OR lw.created_by_teacher_id IN (
                   SELECT DISTINCT tg.teacher_id
                   FROM user_groups ug
                   JOIN teacher_groups tg ON tg.group_id = ug.group_id
                   WHERE ug.user_id = @StudentId
-              )
+              ))
             ORDER BY lw.sort_order, lw.title;
             """,
             new { StudentId = studentId })).ToList();
@@ -730,8 +796,14 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                    COALESCE(SUM(
                                        GREATEST(
                                            COALESCE(
-                                               CASE WHEN r.status = 4 THEN r.points ELSE NULL END,
-                                               CASE WHEN COALESCE(f.is_correct, false)
+                                               CASE WHEN r.status = 4 AND (NOT lw.restrict_to_groups OR EXISTS (
+                                                   SELECT 1 FROM laboratory_groups lg JOIN user_groups aug ON aug.group_id = lg.group_id
+                                                   WHERE lg.laboratory_work_id = lw.id AND aug.user_id = gs.id
+                                               )) THEN r.points ELSE NULL END,
+                                               CASE WHEN COALESCE(f.is_correct, false) AND (NOT lw.restrict_to_groups OR EXISTS (
+                                                   SELECT 1 FROM laboratory_groups lg JOIN user_groups aug ON aug.group_id = lg.group_id
+                                                   WHERE lg.laboratory_work_id = lw.id AND aug.user_id = gs.id
+                                               ))
                                                     THEN lw.max_points - COALESCE(p.penalty_pts, 0)
                                                     ELSE 0 END
                                            ), 0
@@ -859,6 +931,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 has_flag AS "HasFlag",
                 CASE WHEN expected_flag_hash IS NULL THEN false ELSE true END AS "HasExpectedFlag",
                 is_published AS "IsPublished",
+                restrict_to_groups AS "RestrictToGroups",
                 sort_order AS "SortOrder",
                 deadline_at_utc AS "DeadlineAtUtc",
                 create_date_utc AS "CreateDateUtc",
@@ -890,7 +963,10 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             """,
             new { LaboratoryId = laboratoryId })).ToList();
 
-        return laboratory with { Hints = hints };
+        var groupIds = (await connection.QueryAsync<Guid>(
+            "SELECT group_id FROM laboratory_groups WHERE laboratory_work_id = @LaboratoryId ORDER BY group_id;",
+            new { LaboratoryId = laboratoryId })).ToArray();
+        return laboratory with { Hints = hints, GroupIds = groupIds };
     }
 
     /// <inheritdoc />
@@ -957,6 +1033,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             },
             transaction);
 
+        await SaveGroupsAsync(connection, transaction, laboratoryId, request.GroupIds);
         await InsertHintsAsync(connection, transaction, laboratoryId, request.Hints, nowUtc);
 
         await transaction.CommitAsync(cancellationToken);
@@ -1044,6 +1121,9 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                 NowUtc = nowUtc
             },
             transaction);
+
+        if (request.GroupIds is not null)
+            await SaveGroupsAsync(connection, transaction, laboratoryId, request.GroupIds);
 
         var keptHintIds = request.Hints
             .Where(x => x.Id.HasValue)
@@ -1556,8 +1636,12 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                COUNT(CASE WHEN r.status = 4 THEN 1 END)::int AS "CompletedLaboratories",
                                (
                                    SELECT COUNT(*)::int
-                                   FROM laboratory_works
+                                   FROM laboratory_works total_lw
                                    WHERE is_published = true AND delete_date_utc IS NULL
+                                     AND (NOT total_lw.restrict_to_groups OR EXISTS (
+                                         SELECT 1 FROM laboratory_groups lg JOIN user_groups aug ON aug.group_id = lg.group_id
+                                         WHERE lg.laboratory_work_id = total_lw.id AND aug.user_id = u.id
+                                     ))
                                      AND (@IncludeAll = true OR created_by_teacher_id = @TeacherId)
                                ) AS "TotalLaboratories"
                            FROM users u
@@ -1572,6 +1656,10 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                                      AND lw.is_published = true
                                      AND lw.delete_date_utc IS NULL
                                      AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
+                                     AND (NOT lw.restrict_to_groups OR EXISTS (
+                                         SELECT 1 FROM laboratory_groups lg JOIN user_groups aug ON aug.group_id = lg.group_id
+                                         WHERE lg.laboratory_work_id = lw.id AND aug.user_id = u.id
+                                     ))
                                )
                            WHERE u.role = @StudentRole
                              AND (
@@ -1935,6 +2023,10 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
                       AND lw.is_published = true
                       AND lw.delete_date_utc IS NULL
                       AND (@IncludeAll = true OR lw.created_by_teacher_id = @TeacherId)
+                      AND (NOT lw.restrict_to_groups OR EXISTS (
+                          SELECT 1 FROM laboratory_groups lg JOIN user_groups aug ON aug.group_id = lg.group_id
+                          WHERE lg.laboratory_work_id = lw.id AND aug.user_id = u.id
+                      ))
                 )
             WHERE u.role = @StudentRole
               AND (

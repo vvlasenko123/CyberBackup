@@ -53,6 +53,8 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, UpdateQuestionRepliesForChat_202605280001>();
         services.AddTransient<IDatabaseMigration, AddDeadlineToLaboratories_202605310001>();
         services.AddTransient<IDatabaseMigration, AddAttendanceLessons_202606100001>();
+        services.AddTransient<IDatabaseMigration, AddQuestionAttachments_202610140001>();
+        services.AddTransient<IDatabaseMigration, AddLaboratoryGroups_202610310001>();
         #endregion
 
         #region repositories
@@ -65,6 +67,7 @@ public static class InfrastructureStartUp
         services.AddScoped<IGroupRepository, GroupRepository>();
         services.AddScoped<IPostRepository, PostRepository>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();
+        services.AddScoped<IQuestionAttachmentStorage, QuestionAttachmentStorage>();
         #endregion
 
         #region auth

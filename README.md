@@ -91,3 +91,11 @@ docker compose -f deploy/docker-compose.dev.yml up --build --force-recreate
 | Secrets | `DEV_SSH_PRIVATE_KEY`, `DEV_SSH_KNOWN_HOSTS`, `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `JWT_SIGNING_KEY`, `PASSWORD_HASH_PEPPER`, `SUPERADMIN_PASSWORD` |
 
 Приватный SSH-ключ должен соответствовать ключу в `authorized_keys` на сервере. В `DEV_SSH_KNOWN_HOSTS` укажите проверенный ключ сервера. Используйте независимые пароли, JWT-ключ не короче 32 байт и pepper из 32 случайных байт в Base64. Значения не должны содержать одинарных кавычек и переводов строк.
+
+Состояние на сервере:
+
+```bash
+cd ~/CyberBackup
+docker compose -p cyberbackup-dev --env-file deploy/.env.dev.local -f deploy/docker-compose.dev.yml ps
+docker compose -p cyberbackup-dev --env-file deploy/.env.dev.local -f deploy/docker-compose.dev.yml logs -f backend
+```

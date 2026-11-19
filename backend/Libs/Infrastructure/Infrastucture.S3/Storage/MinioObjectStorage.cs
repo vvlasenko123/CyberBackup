@@ -69,6 +69,10 @@ public sealed class MinioObjectStorage
         return result;
     }
 
+    public Task DeleteAsync(string objectName, CancellationToken cancellationToken)
+        => _client.RemoveObjectAsync(new RemoveObjectArgs()
+            .WithBucket(_options.BucketName).WithObject(objectName), cancellationToken);
+
     private async Task EnsureBucketExistsAsync(CancellationToken cancellationToken)
     {
         var bucketExistsArgs = new BucketExistsArgs()

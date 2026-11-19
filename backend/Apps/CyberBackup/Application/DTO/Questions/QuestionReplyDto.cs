@@ -5,6 +5,7 @@ namespace Application.DTO.Questions;
 /// </summary>
 public sealed record QuestionReplyDto
 {
+    public IReadOnlyCollection<QuestionAttachmentDto> Attachments { get; init; } = [];
     public Guid Id { get; init; }
     public string SenderFullName { get; init; } = string.Empty;
     public bool IsFromTeacher { get; init; }

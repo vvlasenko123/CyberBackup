@@ -1,0 +1,133 @@
+.desktop-calendar {
+    background: #20252b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    color: #fff;
+}
+
+.desktop-calendar .rdp-root {
+    --rdp-accent-color: #fff;
+    --rdp-outside-opacity: 0.45;
+    --rdp-day-width: auto;
+    --rdp-day-height: auto;
+    --rdp-nav_button-width: 40px;
+}
+
+.desktop-calendar .rdp-months,
+.desktop-calendar .rdp-month,
+.desktop-calendar .rdp-month_grid {
+    width: 100%;
+    max-width: none;
+}
+
+.desktop-calendar .rdp-month_grid {
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.desktop-calendar .rdp-month_caption {
+    height: 54px;
+    justify-content: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    text-transform: capitalize;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.desktop-calendar .rdp-button_previous,
+.desktop-calendar .rdp-button_next {
+    height: 54px;
+    cursor: pointer;
+}
+
+.desktop-calendar .rdp-button_previous:hover,
+.desktop-calendar .rdp-button_next:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.desktop-calendar .rdp-weekday {
+    padding: 9px 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+    opacity: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.desktop-calendar .cal-day {
+    padding: 0;
+    vertical-align: top;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.desktop-calendar .cal-day:last-child {
+    border-right: none;
+}
+
+.desktop-calendar .cal-day--out {
+    background: #1c2126;
+    opacity: var(--rdp-outside-opacity);
+}
+
+.cal-day__content {
+    min-height: 90px;
+    padding: 7px 6px 6px;
+    box-sizing: border-box;
+}
+
+.cal-day__num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 4px;
+    border-radius: 50%;
+}
+
+.cal-day--today .cal-day__num {
+    background: rgba(2, 126, 242, 0.75);
+    color: #fff;
+    font-weight: 600;
+}
+
+.cal-day__events {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cal-event {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid #027ef2;
+    border-radius: 3px;
+    padding: 3px 5px;
+    overflow: hidden;
+    text-align: left;
+}
+
+.cal-event__text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cal-event__delete {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0 2px;
+    font-size: 12px;
+    opacity: 0.8;
+}

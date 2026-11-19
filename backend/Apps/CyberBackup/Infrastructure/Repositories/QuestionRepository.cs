@@ -246,6 +246,7 @@ public sealed class QuestionRepository : IQuestionRepository
 
         if (question == default) return (false, Guid.Empty);
 
+        var replyId = UUIDNext.Uuid.NewSequential();
         // Вставляем новое сообщение (не upsert — разрешены несколько сообщений)
         await connection.ExecuteAsync(
             """
@@ -254,7 +255,7 @@ public sealed class QuestionRepository : IQuestionRepository
             """,
             new
             {
-                Id = UUIDNext.Uuid.NewSequential(),
+                Id = replyId,
                 QuestionId = questionId,
                 SenderId = teacherId,
                 request.Content,
@@ -271,13 +272,14 @@ public sealed class QuestionRepository : IQuestionRepository
                 transaction);
         }
 
+        await SaveAttachmentsAsync(connection, transaction, replyId, request.Attachments, ct);
         await transaction.CommitAsync(ct);
 
         return (true, question.StudentId);
     }
 
     public async Task<bool> SendStudentMessageAsync(
-        Guid questionId, Guid studentId, string content, CancellationToken ct)
+        Guid questionId, Guid studentId, ReplyToQuestionRequest request, CancellationToken ct)
     {
         await using var connection = await _connection.CreateConnectionAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
@@ -293,6 +295,7 @@ public sealed class QuestionRepository : IQuestionRepository
             transaction);
 
         if (lockedId is null) return false;
+        var replyId = UUIDNext.Uuid.NewSequential();
 
         await connection.ExecuteAsync(
             """
@@ -301,14 +304,15 @@ public sealed class QuestionRepository : IQuestionRepository
             """,
             new
             {
-                Id = UUIDNext.Uuid.NewSequential(),
+                Id = replyId,
                 QuestionId = questionId,
                 SenderId = studentId,
-                Content = content,
+                request.Content,
                 NowUtc = DateTimeOffset.UtcNow
             },
             transaction);
 
+        await SaveAttachmentsAsync(connection, transaction, replyId, request.Attachments, ct);
         await transaction.CommitAsync(ct);
         return true;
     }
@@ -401,6 +405,13 @@ public sealed class QuestionRepository : IQuestionRepository
             """,
             new { QuestionId = question.Id });
 
+        var attachments = (await connection.QueryAsync<QuestionAttachmentDto>("""
+            SELECT a.id AS "Id", a.reply_id AS "ReplyId", a.file_name AS "FileName",
+                   a.content_type AS "ContentType", a.size_bytes AS "SizeBytes", a.storage_path AS "StoragePath"
+            FROM question_attachments a JOIN question_replies r ON r.id = a.reply_id
+            WHERE r.question_id = @QuestionId ORDER BY a.id;
+            """, new { QuestionId = question.Id })).ToLookup(a => a.ReplyId);
+
         return new QuestionDetailDto
         {
             Id = question.Id,
@@ -410,8 +421,20 @@ public sealed class QuestionRepository : IQuestionRepository
             Description = question.Description,
             Status = question.Status,
             CreatedAtUtc = question.CreatedAtUtc,
-            Messages = messages.ToList()
+            Messages = messages.Select(m => m with { Attachments = attachments[m.Id].ToList() }).ToList()
         };
+    }
+
+    private static async Task SaveAttachmentsAsync(Npgsql.NpgsqlConnection connection,
+        Npgsql.NpgsqlTransaction transaction, Guid replyId,
+        IReadOnlyCollection<QuestionAttachmentDto> attachments, CancellationToken ct)
+    {
+        foreach (var file in attachments)
+            await connection.ExecuteAsync(new CommandDefinition("""
+                INSERT INTO question_attachments(id, reply_id, file_name, content_type, size_bytes, storage_path)
+                VALUES (@Id, @ReplyId, @FileName, @ContentType, @SizeBytes, @StoragePath);
+                """, new { file.Id, ReplyId = replyId, file.FileName, file.ContentType, file.SizeBytes, file.StoragePath },
+                transaction, cancellationToken: ct));
     }
 
     private sealed record QuestionDetailDbModel

@@ -70,10 +70,10 @@ services:
       - JwtOptions__Audience=auth-api
       - JwtOptions__SigningKey=${JWT_SIGNING_KEY:-local-dev-signing-key-change-me-please-32-bytes-minimum}
       - JwtOptions__AccessTokenLifetimeMinutes=15
-    
+
       - RefreshTokenOptions__LifetimeDays=7
       - RefreshTokenOptions__TokenBytes=64
-    
+
       - AuthTokenOptions__ClientId=web-client
       - AuthTokenOptions__Scopes__0=identity
     
