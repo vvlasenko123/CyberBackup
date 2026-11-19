@@ -1,10 +1,10 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.User.Contracts;
 using Application.DTO.User;
 using Domain.Repositories;
 using Domain.User;
 using Domain.User.ValueObjects;
-using Infrastructure.Exceptions.User;
 
 namespace Application.Abstractions.Services.User;
 
@@ -40,7 +40,7 @@ public sealed class UpdateUserService : IUpdateUserService
 
         if (emailExists)
         {
-            throw new InvalidEmailException("Пользователь с такой почтой уже существует");
+            throw new BusinessException(ErrorCodes.UserEmailTaken, "Пользователь с такой почтой уже существует");
         }
 
         var user = await _userRepository.GetByIdAsync(
@@ -49,7 +49,7 @@ public sealed class UpdateUserService : IUpdateUserService
 
         if (user is null)
         {
-            throw new InvalidOperationException("Пользователь не найден");
+            throw new BusinessException(ErrorCodes.UserNotFound, "Пользователь не найден");
         }
 
         var password = user.Password;

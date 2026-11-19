@@ -1,3 +1,5 @@
+using Api.Errors;
+using Infrastructure.Exceptions;
 using Api.Controllers.Models.Request;
 using Api.Controllers.Models.Response;
 using Application.Abstractions.Services.Groups.Contracts;
@@ -99,10 +101,7 @@ public class UserController : PublicController
 
         if (user is null)
         {
-            return NotFound(new
-            {
-                Message = "Пользователь не найден"
-            });
+            throw new BusinessException(ErrorCodes.UserNotFound, "Пользователь не найден");
         }
 
         var response = _mapper.Map<UserResponse>(user);
@@ -132,15 +131,16 @@ public class UserController : PublicController
     public async Task<IActionResult> BulkImportStudents(
         IFormFile file,
         [FromForm] Guid? groupId,
+        [FromServices] ILogger<UserController> logger,
         CancellationToken token)
     {
         if (file is null || file.Length == 0)
-            return BadRequest(new { Message = "Файл не выбран" });
+            throw new BusinessException(ErrorCodes.UserImportFileRequired, "Файл не выбран");
 
         var students = RtfStudentParser.Parse(file.OpenReadStream());
 
         if (students.Count == 0)
-            return BadRequest(new { Message = "Не удалось распознать студентов в файле" });
+            throw new BusinessException(ErrorCodes.UserImportNoStudents, "Не удалось распознать студентов в файле");
 
         var results = new List<object>();
 
@@ -166,9 +166,13 @@ public class UserController : PublicController
 
                 results.Add(new { FullName = fullName, Email = email, Password = password, Success = true });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!token.IsCancellationRequested)
             {
-                results.Add(new { FullName = fullName, Email = email, Success = false, Error = ex.Message });
+                var (status, error) = ApiErrors.FromException(ex);
+                if (status >= StatusCodes.Status500InternalServerError)
+                    logger.LogError(ex, "Не удалось импортировать студента");
+
+                results.Add(new { FullName = fullName, Email = email, Success = false, Error = error });
             }
         }
 

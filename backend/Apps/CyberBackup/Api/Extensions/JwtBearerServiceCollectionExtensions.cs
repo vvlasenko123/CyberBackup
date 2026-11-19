@@ -42,6 +42,7 @@ public static class JwtBearerServiceCollectionExtensions
         var signingKeyBytes = Encoding.UTF8.GetBytes(jwtOptions.SigningKey);
 
         options.MapInboundClaims = false;
+        options.IncludeErrorDetails = false;
 
         options.TokenValidationParameters = new TokenValidationParameters
         {

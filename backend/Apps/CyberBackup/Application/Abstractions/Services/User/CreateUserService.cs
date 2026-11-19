@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.User.Contracts;
 using Application.DTO;
@@ -5,7 +6,6 @@ using Application.DTO.User;
 using Domain.Repositories;
 using Domain.User;
 using Domain.User.ValueObjects;
-using Infrastructure.Exceptions.User;
 
 namespace Application.Abstractions.Services.User;
 
@@ -32,7 +32,7 @@ public class CreateUserService : ICreateUserService
 
         if (exists)
         {
-            throw new InvalidEmailException("Пользователь с такой почтой уже существует");
+            throw new BusinessException(ErrorCodes.UserEmailTaken, "Пользователь с такой почтой уже существует");
         }
 
         var passwordHash = _passwordHashService.Hash(request.Password);

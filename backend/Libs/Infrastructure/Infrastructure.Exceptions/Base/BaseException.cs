@@ -8,7 +8,7 @@ public abstract class BaseException : Exception
     /// <summary>
     /// Код ошибки
     /// </summary>
-    protected string Code { get; }
+    public string Code { get; }
 
     /// <summary>
     /// Создает исключение с сообщением и кодом ошибки

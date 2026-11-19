@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.Calendar.Contracts;
 using Application.Abstractions.Services.Groups.Contracts;
@@ -91,7 +92,7 @@ public sealed class LaboratoryService : ILaboratoryService
         if (laboratory is null)
         {
             throw new LaboratoryException(
-                "laboratory.not_found",
+                ErrorCodes.LaboratoryNotFound,
                 "Лабораторная работа не найдена");
         }
 
@@ -117,7 +118,7 @@ public sealed class LaboratoryService : ILaboratoryService
         if (hint is null)
         {
             throw new LaboratoryException(
-                "laboratory_hint.not_found",
+                ErrorCodes.LaboratoryHintNotFound,
                 "Подсказка не найдена");
         }
 
@@ -136,12 +137,12 @@ public sealed class LaboratoryService : ILaboratoryService
 
         if (string.IsNullOrWhiteSpace(request.Flag))
         {
-            throw new LaboratoryException("laboratory_flag.required", "Флаг обязателен");
+            throw new LaboratoryException(ErrorCodes.LaboratoryFlagRequired, "Флаг обязателен");
         }
 
         if (request.Flag.Length > 500)
         {
-            throw new LaboratoryException("laboratory_flag.too_long", "Флаг слишком длинный");
+            throw new LaboratoryException(ErrorCodes.LaboratoryFlagTooLong, "Флаг слишком длинный");
         }
 
         var details = await _repository.GetStudentLaboratoryDetailsAsync(
@@ -151,12 +152,12 @@ public sealed class LaboratoryService : ILaboratoryService
 
         if (details is null)
         {
-            throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
+            throw new LaboratoryException(ErrorCodes.LaboratoryNotFound, "Лабораторная работа не найдена");
         }
 
         if (!details.HasFlag)
         {
-            throw new LaboratoryException("laboratory_flag.disabled", "Для лабораторной работы не включена сдача флага");
+            throw new LaboratoryException(ErrorCodes.LaboratoryFlagDisabled, "Для лабораторной работы не включена сдача флага");
         }
 
         var expectedHash = await GetExpectedFlagHashAsync(laboratoryId, cancellationToken);
@@ -184,11 +185,11 @@ public sealed class LaboratoryService : ILaboratoryService
 
         var labDetails = await _repository.GetStudentLaboratoryDetailsAsync(currentUser.UserId, laboratoryId, cancellationToken);
         if (labDetails is null)
-            throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
+            throw new LaboratoryException(ErrorCodes.LaboratoryNotFound, "Лабораторная работа не найдена");
         if (labDetails.DeadlineAtUtc.HasValue && DateTimeOffset.UtcNow > labDetails.DeadlineAtUtc.Value)
         {
             throw new LaboratoryException(
-                "laboratory_report.deadline_expired",
+                ErrorCodes.LaboratoryReportDeadlineExpired,
                 "Срок сдачи отчёта по этой лабораторной истёк.");
         }
 
@@ -248,7 +249,7 @@ public sealed class LaboratoryService : ILaboratoryService
         if (report is null)
         {
             throw new LaboratoryException(
-                "laboratory_report.not_found",
+                ErrorCodes.LaboratoryReportNotFound,
                 "Отчет не найден");
         }
 
@@ -282,7 +283,7 @@ public sealed class LaboratoryService : ILaboratoryService
         if (gradebook is null)
         {
             throw new LaboratoryException(
-                "gradebook.not_found",
+                ErrorCodes.GradebookNotFound,
                 "Запись ведомости не найдена");
         }
 
@@ -322,7 +323,7 @@ public sealed class LaboratoryService : ILaboratoryService
         if (laboratory is null)
         {
             throw new LaboratoryException(
-                "laboratory.not_found",
+                ErrorCodes.LaboratoryNotFound,
                 "Лабораторная работа не найдена");
         }
 
@@ -465,7 +466,7 @@ public sealed class LaboratoryService : ILaboratoryService
         if (report is null)
         {
             throw new LaboratoryException(
-                "laboratory_report.not_found",
+                ErrorCodes.LaboratoryReportNotFound,
                 "Отчет не найден");
         }
 
@@ -491,7 +492,7 @@ public sealed class LaboratoryService : ILaboratoryService
         if (file is null)
         {
             throw new LaboratoryException(
-                "laboratory_report_version.not_found",
+                ErrorCodes.LaboratoryReportVersionNotFound,
                 "Версия отчета не найдена");
         }
 
@@ -515,7 +516,7 @@ public sealed class LaboratoryService : ILaboratoryService
         if (file is null)
         {
             throw new LaboratoryException(
-                "laboratory_report_version.not_found",
+                ErrorCodes.LaboratoryReportVersionNotFound,
                 "Версия отчета не найдена");
         }
 
@@ -536,27 +537,27 @@ public sealed class LaboratoryService : ILaboratoryService
             and not LaboratoryReportStatus.RevisionRequired
             and not LaboratoryReportStatus.UnderReview)
         {
-            throw new LaboratoryException("laboratory_review.invalid_status", "Некорректный статус проверки");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReviewInvalidStatus, "Некорректный статус проверки");
         }
 
         if (request.Status == LaboratoryReportStatus.Accepted && !request.Points.HasValue)
         {
-            throw new LaboratoryException("laboratory_review.points_required", "Баллы обязательны при принятии отчета");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReviewPointsRequired, "Баллы обязательны при принятии отчета");
         }
 
         if (request.Points is < 0)
         {
-            throw new LaboratoryException("laboratory_review.points_out_of_range", "Баллы не могут быть отрицательными");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReviewPointsOutOfRange, "Баллы не могут быть отрицательными");
         }
 
         if (request.Status == LaboratoryReportStatus.RevisionRequired && string.IsNullOrWhiteSpace(request.Comment))
         {
-            throw new LaboratoryException("laboratory_review.comment_required", "Комментарий обязателен при отклонении отчета");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReviewCommentRequired, "Комментарий обязателен при отклонении отчета");
         }
 
         if (request.Comment?.Length > 4000)
         {
-            throw new LaboratoryException("laboratory_review.comment_too_long", "Комментарий слишком длинный");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReviewCommentTooLong, "Комментарий слишком длинный");
         }
 
         var result = await _repository.ReviewReportAsync(
@@ -634,7 +635,7 @@ public sealed class LaboratoryService : ILaboratoryService
 
         if (request.LessonsAttended < 0 || request.TotalLessons < 0 || request.LessonsAttended > request.TotalLessons)
         {
-            throw new LaboratoryException("gradebook.attendance_invalid", "Число посещённых занятий не может превышать общее число занятий");
+            throw new LaboratoryException(ErrorCodes.GradebookAttendanceInvalid, "Число посещённых занятий не может превышать общее число занятий");
         }
 
         var result = await _repository.UpdateGradebookAsync(
@@ -698,19 +699,19 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         if (file.Length <= 0)
         {
-            throw new LaboratoryException("laboratory_report.file_required", "Файл отчета обязателен");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportFileRequired, "Файл отчета обязателен");
         }
 
         if (file.Length > MaxReportFileSizeBytes)
         {
-            throw new LaboratoryException("laboratory_report.file_too_large", "Размер файла отчета не должен превышать 10 MB");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportFileTooLarge, "Размер файла отчета не должен превышать 10 MB");
         }
 
         var extension = Path.GetExtension(file.FileName);
 
         if (!AllowedReportExtensions.Contains(extension) || !AllowedReportContentTypes.Contains(file.ContentType))
         {
-            throw new LaboratoryException("laboratory_report.invalid_file_type", "Разрешены только PDF и DOCX файлы");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportInvalidFileType, "Разрешены только PDF и DOCX файлы");
         }
     }
 
@@ -718,48 +719,53 @@ public sealed class LaboratoryService : ILaboratoryService
     {
         if (string.IsNullOrWhiteSpace(request.Title))
         {
-            throw new LaboratoryException("laboratory.title_required", "Название лабораторной работы обязательно");
+            throw new LaboratoryException(ErrorCodes.LaboratoryTitleRequired, "Название лабораторной работы обязательно");
         }
 
         if (request.Title.Length > 255)
         {
-            throw new LaboratoryException("laboratory.title_too_long", "Название лабораторной работы слишком длинное");
+            throw new LaboratoryException(ErrorCodes.LaboratoryTitleTooLong, "Название лабораторной работы слишком длинное");
         }
 
         if (request.ShortDescription.Length > 1000)
         {
-            throw new LaboratoryException("laboratory.short_description_too_long", "Краткое описание слишком длинное");
+            throw new LaboratoryException(ErrorCodes.LaboratoryShortDescriptionTooLong, "Краткое описание слишком длинное");
         }
 
         if (string.IsNullOrWhiteSpace(request.Description))
         {
-            throw new LaboratoryException("laboratory.description_required", "Описание лабораторной работы обязательно");
+            throw new LaboratoryException(ErrorCodes.LaboratoryDescriptionRequired, "Описание лабораторной работы обязательно");
         }
 
         if (!Enum.IsDefined(request.Difficulty))
         {
-            throw new LaboratoryException("laboratory.difficulty_invalid", "Некорректная сложность лабораторной работы");
+            throw new LaboratoryException(ErrorCodes.LaboratoryDifficultyInvalid, "Некорректная сложность лабораторной работы");
         }
 
         if (string.IsNullOrWhiteSpace(request.Block))
         {
-            throw new LaboratoryException("laboratory.block_required", "Блок лабораторной работы обязателен");
+            throw new LaboratoryException(ErrorCodes.LaboratoryBlockRequired, "Блок лабораторной работы обязателен");
+        }
+
+        if (request.Block.Trim().Length > 255)
+        {
+            throw new LaboratoryException(ErrorCodes.LaboratoryBlockTooLong, "Название блока слишком длинное");
         }
 
         if (request.MaxPoints <= 0)
         {
-            throw new LaboratoryException("laboratory.max_points_invalid", "Максимальный балл должен быть больше 0");
+            throw new LaboratoryException(ErrorCodes.LaboratoryMaxPointsInvalid, "Максимальный балл должен быть больше 0");
         }
 
         if (!string.IsNullOrWhiteSpace(request.EnvironmentUrl)
             && !Uri.TryCreate(request.EnvironmentUrl, UriKind.Absolute, out _))
         {
-            throw new LaboratoryException("laboratory.environment_url_invalid", "Некорректная ссылка на окружение");
+            throw new LaboratoryException(ErrorCodes.LaboratoryEnvironmentUrlInvalid, "Некорректная ссылка на окружение");
         }
 
         if (expectedFlagRequired && string.IsNullOrWhiteSpace(request.ExpectedFlag))
         {
-            throw new LaboratoryException("laboratory.expected_flag_required", "Флаг обязателен для лабораторной работы со сдачей флага");
+            throw new LaboratoryException(ErrorCodes.LaboratoryExpectedFlagRequired, "Флаг обязателен для лабораторной работы со сдачей флага");
         }
 
         var duplicateHintOrderNumber = request.Hints
@@ -768,24 +774,24 @@ public sealed class LaboratoryService : ILaboratoryService
 
         if (duplicateHintOrderNumber is not null)
         {
-            throw new LaboratoryException("laboratory_hint.order_duplicate", "Номера подсказок должны быть уникальны");
+            throw new LaboratoryException(ErrorCodes.LaboratoryHintOrderDuplicate, "Номера подсказок должны быть уникальны");
         }
 
         foreach (var hint in request.Hints)
         {
             if (hint.OrderNumber <= 0)
             {
-                throw new LaboratoryException("laboratory_hint.order_invalid", "Номер подсказки должен быть больше 0");
+                throw new LaboratoryException(ErrorCodes.LaboratoryHintOrderInvalid, "Номер подсказки должен быть больше 0");
             }
 
             if (string.IsNullOrWhiteSpace(hint.Text))
             {
-                throw new LaboratoryException("laboratory_hint.text_required", "Текст подсказки обязателен");
+                throw new LaboratoryException(ErrorCodes.LaboratoryHintTextRequired, "Текст подсказки обязателен");
             }
 
             if (hint.PenaltyPoints < 0)
             {
-                throw new LaboratoryException("laboratory_hint.penalty_invalid", "Штраф за подсказку не может быть отрицательным");
+                throw new LaboratoryException(ErrorCodes.LaboratoryHintPenaltyInvalid, "Штраф за подсказку не может быть отрицательным");
             }
         }
     }
@@ -808,13 +814,13 @@ public sealed class LaboratoryService : ILaboratoryService
         var available = await _groups.GetTeacherGroupsAsync(user.UserId, IsAdmin(user), cancellationToken);
         var allowedIds = available.Select(g => g.Id).ToHashSet();
         if (groupIds.Any(id => !allowedIds.Contains(id)))
-            throw new LaboratoryException("laboratory.groups_forbidden", "Можно выбрать только доступные вам группы");
+            throw new LaboratoryException(ErrorCodes.LaboratoryGroupsForbidden, "Можно выбрать только доступные вам группы");
     }
 
     private async Task EnsureLaboratoryAccessAsync(Guid studentId, Guid laboratoryId, CancellationToken cancellationToken)
     {
         if (!await _repository.CanAccessLaboratoryAsync(studentId, laboratoryId, cancellationToken))
-            throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
+            throw new LaboratoryException(ErrorCodes.LaboratoryNotFound, "Лабораторная работа не найдена");
     }
 
     private CurrentTokenUserDto GetCurrentUser()

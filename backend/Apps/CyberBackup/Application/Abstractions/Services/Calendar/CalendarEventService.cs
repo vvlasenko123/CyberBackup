@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Calendar.Contracts;
 using Application.DTO.Calendar;
 using Domain.Calendar;
@@ -174,17 +175,22 @@ public sealed class CalendarEventService : ICalendarEventService
     {
         if (string.IsNullOrWhiteSpace(request.Title))
         {
-            throw new InvalidOperationException("Название события не должно быть пустым");
+            throw new BusinessException(ErrorCodes.CalendarTitleRequired, "Название события не должно быть пустым");
+        }
+
+        if (request.Title.Trim().Length > 255)
+        {
+            throw new BusinessException(ErrorCodes.CalendarTitleTooLong, "Название события слишком длинное");
         }
 
         if (request.EndsAtUtc <= request.StartsAtUtc)
         {
-            throw new InvalidOperationException("Дата окончания события должна быть больше даты начала");
+            throw new BusinessException(ErrorCodes.CalendarInvalidDates, "Дата окончания события должна быть больше даты начала");
         }
 
         if (request.NotifyAtUtc is not null && request.NotifyAtUtc > request.StartsAtUtc)
         {
-            throw new InvalidOperationException("Дата уведомления не может быть позже даты начала события");
+            throw new BusinessException(ErrorCodes.CalendarInvalidNotificationDate, "Дата уведомления не может быть позже даты начала события");
         }
     }
 }

@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.User.Contracts;
 using Application.Abstractions.UseCases.User.Contracts;
@@ -28,7 +29,7 @@ public sealed class UpdateUserUseCaseManager : IUpdateUserUseCaseManager
 
         if (user is null)
         {
-            throw new InvalidOperationException("Пользователь не найден");
+            throw new BusinessException(ErrorCodes.UserNotFound, "Пользователь не найден");
         }
 
         UserRolePermissionValidator.ValidateUpdate(

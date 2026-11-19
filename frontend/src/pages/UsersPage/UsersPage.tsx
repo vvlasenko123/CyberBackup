@@ -27,7 +27,7 @@ interface ImportResult {
     email: string;
     password?: string;
     success: boolean;
-    error?: string;
+    error?: { code: string; message: string };
 }
 
 interface GroupListItem {
@@ -627,7 +627,7 @@ export const UsersPage: React.FC = () => {
                                         <CopyButton text={r.password} />
                                     </span>
                                 )}
-                                {!r.success && r.error && <span> — {r.error}</span>}
+                                {!r.success && r.error && <span> — {r.error.message}</span>}
                             </div>
                         ))}
                     </div>

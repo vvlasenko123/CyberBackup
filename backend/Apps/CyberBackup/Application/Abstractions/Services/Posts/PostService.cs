@@ -3,6 +3,7 @@ using Application.Abstractions.Services.Posts.Contracts;
 using Application.DTO.Laboratories;
 using Application.DTO.Posts;
 using Domain.User.Enums;
+using Infrastructure.Exceptions;
 
 namespace Application.Abstractions.Services.Posts;
 
@@ -36,6 +37,9 @@ public sealed class PostService : IPostService
     /// <inheritdoc />
     public async Task<CreatePostResponse> CreatePostAsync(CreatePostRequest request, CancellationToken cancellationToken)
     {
+        if (request.Title.Length > 255 || request.Content.Length > 2000 || !Enum.IsDefined(request.Category))
+            throw new BusinessException(ErrorCodes.PostInvalid, "Проверьте категорию, заголовок до 255 символов и текст до 2000 символов");
+
         var currentUser = _jwtService.GetCurrentUser();
         var id = await _repository.CreatePostAsync(currentUser.UserId, request, cancellationToken);
 

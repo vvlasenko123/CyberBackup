@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.User.Contracts;
 using Application.Abstractions.UseCases.User.Contracts;
@@ -27,12 +28,12 @@ public sealed class DeleteUserUseCaseManager : IDeleteUserUseCaseManager
 
         if (user is null)
         {
-            throw new InvalidOperationException("Пользователь не найден");
+            throw new BusinessException(ErrorCodes.UserNotFound, "Пользователь не найден");
         }
 
         if (currentUser.UserId == id)
         {
-            throw new InvalidOperationException("Нельзя удалить самого себя");
+            throw new BusinessException(ErrorCodes.UserSelfDeleteForbidden, "Нельзя удалить самого себя");
         }
 
         UserRolePermissionValidator.ValidateDelete(currentUserRole: currentUser.Role, deletedUserRole: user.Role);

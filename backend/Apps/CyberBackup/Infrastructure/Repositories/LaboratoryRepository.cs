@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.DTO.Laboratories;
@@ -495,7 +496,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         if (!laboratoryExists)
         {
-            throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
+            throw new LaboratoryException(ErrorCodes.LaboratoryNotFound, "Лабораторная работа не найдена");
         }
 
         await EnsureProgressStartedAsync(connection, studentId, laboratoryId, transaction);
@@ -516,17 +517,17 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         if (report?.Status is LaboratoryReportStatus.Submitted or LaboratoryReportStatus.UnderReview)
         {
-            throw new LaboratoryException("laboratory_report.pending_review", "Предыдущая версия отчета ожидает проверки");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportPendingReview, "Предыдущая версия отчета ожидает проверки");
         }
 
         if (report?.Status == LaboratoryReportStatus.Accepted)
         {
-            throw new LaboratoryException("laboratory_report.accepted_final", "Принятый отчет нельзя отправить повторно");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportAcceptedFinal, "Принятый отчет нельзя отправить повторно");
         }
 
         if (report is not null && !report.AllowResubmit)
         {
-            throw new LaboratoryException("laboratory_report.resubmit_forbidden", "Повторная отправка отчета запрещена");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportResubmitForbidden, "Повторная отправка отчета запрещена");
         }
 
         var nowUtc = DateTimeOffset.UtcNow;
@@ -1069,7 +1070,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         if (!exists)
         {
-            throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
+            throw new LaboratoryException(ErrorCodes.LaboratoryNotFound, "Лабораторная работа не найдена");
         }
 
         var nowUtc = DateTimeOffset.UtcNow;
@@ -1202,7 +1203,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         if (affected == 0)
         {
-            throw new LaboratoryException("laboratory.not_found", "Лабораторная работа не найдена");
+            throw new LaboratoryException(ErrorCodes.LaboratoryNotFound, "Лабораторная работа не найдена");
         }
     }
 
@@ -1492,17 +1493,17 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         if (report is null)
         {
-            throw new LaboratoryException("laboratory_report.not_found", "Отчет не найден");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportNotFound, "Отчет не найден");
         }
 
         if (request.Points > report.MaxPoints)
         {
-            throw new LaboratoryException("laboratory_review.points_out_of_range", "Баллы не могут быть больше максимального балла");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReviewPointsOutOfRange, "Баллы не могут быть больше максимального балла");
         }
 
         if (report.Status is not LaboratoryReportStatus.Submitted and not LaboratoryReportStatus.UnderReview)
         {
-            throw new LaboratoryException("laboratory_report.not_pending_review", "Проверить можно только отчет в статусе ожидания проверки");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportNotPendingReview, "Проверить можно только отчет в статусе ожидания проверки");
         }
 
         var version = await connection.QueryFirstOrDefaultAsync<Guid?>(
@@ -1517,7 +1518,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         if (!version.HasValue)
         {
-            throw new LaboratoryException("laboratory_report_version.not_found", "Версия отчета не найдена");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportVersionNotFound, "Версия отчета не найдена");
         }
 
         var nowUtc = DateTimeOffset.UtcNow;
@@ -1739,7 +1740,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
 
         if (!hasAccess)
         {
-            throw new LaboratoryException("gradebook.not_found", "Запись ведомости не найдена");
+            throw new LaboratoryException(ErrorCodes.GradebookNotFound, "Запись ведомости не найдена");
         }
 
         await connection.ExecuteAsync(
@@ -1791,7 +1792,7 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             cancellationToken);
 
         return gradebook.Items.FirstOrDefault(x => x.StudentId == studentId)
-               ?? throw new LaboratoryException("gradebook.not_found", "Запись ведомости не найдена");
+               ?? throw new LaboratoryException(ErrorCodes.GradebookNotFound, "Запись ведомости не найдена");
     }
 
     private static async Task InsertHintsAsync(

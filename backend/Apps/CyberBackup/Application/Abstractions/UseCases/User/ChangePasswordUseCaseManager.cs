@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.UseCases.User.Contracts;
 using Application.DTO.Auth;
@@ -34,12 +35,12 @@ public sealed class ChangePasswordUseCaseManager : IChangePasswordUseCaseManager
 
         if (user is null)
         {
-            throw new InvalidOperationException("Пользователь не найден");
+            throw new BusinessException(ErrorCodes.UserNotFound, "Пользователь не найден");
         }
 
         if (!user.IsActive)
         {
-            throw new InvalidOperationException("Пользователь отключен");
+            throw new BusinessException(ErrorCodes.AuthAccountDeactivated, "Пользователь отключен");
         }
 
         var currentPasswordIsValid = _passwordHashService.Verify(
@@ -48,7 +49,7 @@ public sealed class ChangePasswordUseCaseManager : IChangePasswordUseCaseManager
 
         if (!currentPasswordIsValid)
         {
-            throw new InvalidOperationException("Текущий пароль указан неверно");
+            throw new BusinessException(ErrorCodes.UserCurrentPasswordInvalid, "Текущий пароль указан неверно");
         }
 
         var passwordHash = _passwordHashService.Hash(request.NewPassword);

@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Laboratories;
 using Application.DTO.Laboratories;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +13,7 @@ public sealed class LaboratoryReportUploadRequestFactory : ILaboratoryReportUplo
     {
         if (file is null)
         {
-            throw new LaboratoryException("laboratory_report.file_required", "Файл отчета обязателен");
+            throw new LaboratoryException(ErrorCodes.LaboratoryReportFileRequired, "Файл отчета обязателен");
         }
 
         var stream = file.OpenReadStream();

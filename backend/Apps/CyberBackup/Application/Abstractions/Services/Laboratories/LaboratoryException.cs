@@ -1,18 +1,6 @@
+using Infrastructure.Exceptions.Base;
+
 namespace Application.Abstractions.Services.Laboratories;
 
-/// <summary>
-/// Бизнес-ошибка лабораторных работ
-/// </summary>
-public sealed class LaboratoryException : Exception
-{
-    public LaboratoryException(string code, string message)
-        : base(message)
-    {
-        Code = code;
-    }
-
-    /// <summary>
-    /// Код ошибки
-    /// </summary>
-    public string Code { get; }
-}
+/// <summary>Бизнес-ошибка лабораторных работ.</summary>
+public sealed class LaboratoryException(string code, string message) : BaseException(message, code);

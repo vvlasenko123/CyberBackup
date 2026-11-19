@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Domain.User.Enums;
 
 namespace Application.DTO.User.Validate;
@@ -14,7 +15,7 @@ public static class UserRolePermissionValidator
     {
         if (newUserRole is UserRole.SuperAdmin)
         {
-            throw new InvalidOperationException("Нельзя создать суперадминистратора через API");
+            throw new BusinessException(ErrorCodes.UserRoleForbidden, "Нельзя создать суперадминистратора через API");
         }
 
         if (currentUserRole is UserRole.SuperAdmin)
@@ -28,7 +29,7 @@ public static class UserRolePermissionValidator
             return;
         }
 
-        throw new InvalidOperationException("Недостаточно прав для создания пользователя с такой ролью");
+        throw new BusinessException(ErrorCodes.UserRoleForbidden, "Недостаточно прав для создания пользователя с такой ролью");
     }
 
     /// <summary>
@@ -38,7 +39,7 @@ public static class UserRolePermissionValidator
     {
         if (oldUserRole is UserRole.SuperAdmin || newUserRole is UserRole.SuperAdmin)
         {
-            throw new InvalidOperationException("Нельзя изменить суперадминистратора через API");
+            throw new BusinessException(ErrorCodes.UserRoleForbidden, "Нельзя изменить суперадминистратора через API");
         }
 
         if (currentUserRole == UserRole.SuperAdmin)
@@ -53,7 +54,7 @@ public static class UserRolePermissionValidator
             return;
         }
 
-        throw new InvalidOperationException("Недостаточно прав для изменения пользователя с такой ролью");
+        throw new BusinessException(ErrorCodes.UserRoleForbidden, "Недостаточно прав для изменения пользователя с такой ролью");
     }
 
     /// <summary>
@@ -63,7 +64,7 @@ public static class UserRolePermissionValidator
     {
         if (deletedUserRole is UserRole.SuperAdmin)
         {
-            throw new InvalidOperationException("Нельзя удалить суперадминистратора через API");
+            throw new BusinessException(ErrorCodes.UserRoleForbidden, "Нельзя удалить суперадминистратора через API");
         }
 
         if (currentUserRole is UserRole.SuperAdmin)
@@ -76,6 +77,6 @@ public static class UserRolePermissionValidator
             return;
         }
 
-        throw new InvalidOperationException("Недостаточно прав для удаления пользователя с такой ролью");
+        throw new BusinessException(ErrorCodes.UserRoleForbidden, "Недостаточно прав для удаления пользователя с такой ролью");
     }
 }

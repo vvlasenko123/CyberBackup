@@ -1,4 +1,3 @@
-using Application.Abstractions.Services.Groups;
 using Application.Abstractions.Services.Groups.Contracts;
 using Application.DTO.Groups;
 using Infrastructure.Core.Controllers.Public;
@@ -35,15 +34,8 @@ public sealed class GroupController : PublicController
     [HttpGet("{groupId:guid}")]
     public async Task<IActionResult> GetGroup(Guid groupId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var group = await _groupService.GetGroupDetailsAsync(groupId, cancellationToken);
-            return Ok(group);
-        }
-        catch (GroupException ex)
-        {
-            return NotFound(new { ex.Code, Message = ex.Message });
-        }
+        var group = await _groupService.GetGroupDetailsAsync(groupId, cancellationToken);
+        return Ok(group);
     }
 
     /// <summary>Создать группу</summary>
@@ -52,15 +44,8 @@ public sealed class GroupController : PublicController
         [FromBody] CreateGroupRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var id = await _groupService.CreateGroupAsync(request, cancellationToken);
-            return Ok(new { id });
-        }
-        catch (GroupException ex)
-        {
-            return BadRequest(new { ex.Code, Message = ex.Message });
-        }
+        var id = await _groupService.CreateGroupAsync(request, cancellationToken);
+        return Ok(new { id });
     }
 
     /// <summary>Переименовать группу</summary>
@@ -70,15 +55,8 @@ public sealed class GroupController : PublicController
         [FromBody] CreateGroupRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await _groupService.RenameGroupAsync(groupId, request.Name, cancellationToken);
-            return NoContent();
-        }
-        catch (GroupException ex)
-        {
-            return BadRequest(new { ex.Code, Message = ex.Message });
-        }
+        await _groupService.RenameGroupAsync(groupId, request.Name, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>Удалить группу</summary>

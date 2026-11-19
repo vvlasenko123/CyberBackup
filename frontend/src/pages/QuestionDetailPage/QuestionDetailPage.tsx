@@ -211,8 +211,7 @@ export default function QuestionDetailPage() {
             setMsgText('');
             loadQuestion();
         } catch (error) {
-            const message = isAxiosError(error) && error.response?.status === 400
-                ? error.response.data?.message : null;
+            const message = isAxiosError(error) ? error.response?.data?.message : null;
             setSendError(typeof message === 'string' ? message : 'Не удалось отправить сообщение');
         } finally {
             setSending(false);

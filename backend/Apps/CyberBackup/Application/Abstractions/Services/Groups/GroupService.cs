@@ -1,3 +1,4 @@
+using Infrastructure.Exceptions;
 using Application.Abstractions.Services.Groups.Contracts;
 using Application.DTO.Groups;
 
@@ -27,27 +28,29 @@ public sealed class GroupService : IGroupService
         var result = await _repository.GetGroupDetailsAsync(groupId, cancellationToken);
 
         if (result is null)
-            throw new GroupException("group.not_found", "Группа не найдена");
+            throw new GroupException(ErrorCodes.GroupNotFound, "Группа не найдена");
 
         return result;
     }
 
     /// <inheritdoc />
     public Task<Guid> CreateGroupAsync(CreateGroupRequest request, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(request.Name))
-            throw new GroupException("group.name_required", "Название группы не может быть пустым");
-
-        return _repository.CreateGroupAsync(request.Name.Trim(), cancellationToken);
-    }
+        => _repository.CreateGroupAsync(ValidateName(request.Name), cancellationToken);
 
     /// <inheritdoc />
     public Task RenameGroupAsync(Guid groupId, string name, CancellationToken cancellationToken)
+        => _repository.RenameGroupAsync(groupId, ValidateName(name), cancellationToken);
+
+    private static string ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new GroupException("group.name_required", "Название группы не может быть пустым");
+            throw new GroupException(ErrorCodes.GroupNameRequired, "Название группы не может быть пустым");
 
-        return _repository.RenameGroupAsync(groupId, name.Trim(), cancellationToken);
+        var trimmed = name.Trim();
+        if (trimmed.Length > 255)
+            throw new GroupException(ErrorCodes.GroupNameTooLong, "Название группы слишком длинное");
+
+        return trimmed;
     }
 
     /// <inheritdoc />
