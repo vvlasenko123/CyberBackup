@@ -4,31 +4,44 @@ import './Sidebar.css';
 import type { User, UserRole } from '../../../utils/types';
 import { navigationByRole } from './navigation';
 import { Icon } from '../../Icon';
+import { isMobileReady } from '../../../utils/mobileReady';
 
 type Props = {
     role: UserRole;
     user: User;
     onLogout: () => void;
+    open?: boolean;
+    onClose?: () => void;
+    touchDevice?: boolean;
 };
 
-export const Sidebar: React.FC<Props> = ({ role, user, onLogout }) => {
+export const Sidebar: React.FC<Props> = ({ role, user, onLogout, open = false, onClose, touchDevice = false }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const nav = navigationByRole[role];
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+    const go = (path: string) => {
+        navigate(path);
+        onClose?.();
+    };
+
     return (
-        <aside className="sidebar">
+        <aside className={`sidebar${open ? ' sidebar--open' : ''}`}>
             <div className="sidebar__logo">
                 Neo<span>Lab</span>
             </div>
+
+            <button className="sidebar__close" onClick={onClose} aria-label="Закрыть меню">
+                <Icon name="x" size={18} />
+            </button>
 
             <nav className="sidebar__nav">
                 {nav.map((item) => (
                     <button
                         key={item.id}
-                        className={`sidebar__item ${location.pathname === item.path ? 'sidebar__item--active' : ''}`}
-                        onClick={() => navigate(item.path)}
+                        className={`sidebar__item ${location.pathname === item.path ? 'sidebar__item--active' : ''}${touchDevice && !isMobileReady(item.path) ? ' sidebar__item--desktop-only' : ''}`}
+                        onClick={() => go(item.path)}
                     >
                         <Icon
                             name={item.icon}
@@ -36,12 +49,19 @@ export const Sidebar: React.FC<Props> = ({ role, user, onLogout }) => {
                             color={location.pathname === item.path ? '#ffffff' : '#8A94A6'}
                         />
                         <span>{item.label}</span>
+                        {touchDevice && !isMobileReady(item.path) && (
+                            <em className="sidebar__badge">ПК</em>
+                        )}
                     </button>
                 ))}
             </nav>
 
             <div className="sidebar__footer">
-                <div className="sidebar__user">
+                <button
+                    className={`sidebar__user${location.pathname === '/profile' ? ' sidebar__user--active' : ''}`}
+                    onClick={() => go('/profile')}
+                    title="Открыть профиль"
+                >
                     <div className="sidebar__avatar">
                         {user.name ? user.name[0].toUpperCase() : '?'}
                     </div>
@@ -49,7 +69,7 @@ export const Sidebar: React.FC<Props> = ({ role, user, onLogout }) => {
                         <div className="sidebar__name">{user.name || 'Пользователь'}</div>
                         <div className="sidebar__role">{role}</div>
                     </div>
-                </div>
+                </button>
 
                 <div className="sidebar__logout-wrap">
                     <button className="sidebar__logout" onClick={() => setShowLogoutConfirm(true)}>

@@ -15,6 +15,18 @@ public sealed class GroupRepository : IGroupRepository
         _connection = connection;
     }
 
+    public Task<IReadOnlyCollection<GetGroupListItemDto>> GetTeacherGroupsAsync(Guid teacherId, bool includeAll, CancellationToken cancellationToken)
+        => _connection.QueryAsync<GetGroupListItemDto>("""
+            SELECT g.id AS "Id", g.name AS "Name", g.created_at AS "CreatedAt",
+                (SELECT COUNT(*)::int FROM user_groups ug WHERE ug.group_id = g.id) AS "StudentCount",
+                (SELECT COUNT(*)::int FROM teacher_groups tg WHERE tg.group_id = g.id) AS "TeacherCount"
+            FROM groups g
+            WHERE @IncludeAll OR EXISTS (
+                SELECT 1 FROM teacher_groups tg WHERE tg.group_id = g.id AND tg.teacher_id = @TeacherId
+            )
+            ORDER BY g.name;
+            """, new { TeacherId = teacherId, IncludeAll = includeAll }, cancellationToken);
+
     /// <inheritdoc />
     public async Task<IReadOnlyCollection<GetGroupListItemDto>> GetGroupsAsync(CancellationToken cancellationToken)
     {
