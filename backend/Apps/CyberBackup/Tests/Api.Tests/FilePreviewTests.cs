@@ -7,6 +7,7 @@ using Api.Extensions;
 using Api.Services.Laboratories;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.Services.Calendar.Contracts;
+using Application.Abstractions.Services.Groups.Contracts;
 using Application.Abstractions.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
 using Application.Abstractions.Services.Posts.Contracts;
@@ -67,6 +68,8 @@ public sealed class FilePreviewTests : IDisposable
 
     public FilePreviewTests()
     {
+        _laboratories.Setup(x => x.CanAccessLaboratoryAsync(StudentId, LaboratoryId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
         _laboratories.Setup(x => x.GetStudentReportFileAsync(
                 StudentId, LaboratoryId, VersionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => ReportFile());
@@ -113,6 +116,7 @@ public sealed class FilePreviewTests : IDisposable
                 services.AddSingleton(_questions.Object);
                 services.AddSingleton(_reportStorage.Object);
                 services.AddSingleton(_attachmentStorage.Object);
+                services.AddSingleton(Mock.Of<IGroupRepository>());
                 services.AddSingleton(Mock.Of<INotificationRepository>());
                 services.AddSingleton(Mock.Of<INotificationPushService>());
                 services.AddSingleton(Mock.Of<IPostRepository>());
