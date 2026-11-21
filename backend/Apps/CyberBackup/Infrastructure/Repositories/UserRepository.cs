@@ -1,3 +1,4 @@
+using Dapper;
 using Domain.Repositories;
 using Domain.User;
 using Domain.User.Enums;
@@ -76,17 +77,172 @@ public sealed class UserRepository : IUserRepository
     }
 
     /// <inheritdoc />
-    public async Task DeleteUserAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<string?> DeleteUserAsync(Guid id, CancellationToken cancellationToken)
     {
         const string sql = """
                                DELETE FROM users
                                WHERE id = @Id
+                               RETURNING avatar_path
                            """;
 
-        await _connection.ExecuteAsync(sql, new
+        var avatarPath = await _connection.QueryFirstOrDefaultAsync<string?>(sql, new
         {
             Id = id
         }, cancellationToken);
+
+        return avatarPath;
+    }
+
+    /// <inheritdoc />
+    public async Task<UserAvatarState?> GetAvatarStateAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               SELECT
+                                   avatar_path AS Path,
+                                   avatar_updated_at AS UpdatedAt
+                               FROM users
+                               WHERE id = @UserId
+                               LIMIT 1;
+                           """;
+
+        var state = await _connection.QueryFirstOrDefaultAsync<AvatarStateDbModel>(sql, new
+        {
+            UserId = userId
+        }, cancellationToken);
+
+        return state is null ? null : new UserAvatarState(state.Path, state.UpdatedAt);
+    }
+
+    /// <inheritdoc />
+    public async Task<AvatarChangeResult> SetAvatarAsync(
+        Guid userId,
+        string avatarPath,
+        DateTimeOffset avatarUpdatedAt,
+        CancellationToken cancellationToken)
+    {
+        const string selectSql = """
+                                     SELECT avatar_path
+                                     FROM users
+                                     WHERE id = @UserId
+                                     FOR UPDATE;
+                                 """;
+
+        const string updateSql = """
+                                     UPDATE users
+                                     SET
+                                         avatar_path = @AvatarPath,
+                                         avatar_updated_at = @AvatarUpdatedAt
+                                     WHERE id = @UserId;
+                                 """;
+
+        await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        // Строка выбирается через QueryAsync, потому что у пользователя без аватара avatar_path равен NULL,
+        // а отсутствие строки означает, что пользователя нет
+        var rows = (await connection.QueryAsync<string?>(
+            new CommandDefinition(selectSql, new { UserId = userId }, transaction, cancellationToken: cancellationToken))).ToList();
+
+        if (rows.Count == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+
+            return new AvatarChangeResult(UserFound: false, PreviousPath: null);
+        }
+
+        await connection.ExecuteAsync(new CommandDefinition(
+            updateSql,
+            new { UserId = userId, AvatarPath = avatarPath, AvatarUpdatedAt = avatarUpdatedAt },
+            transaction,
+            cancellationToken: cancellationToken));
+
+        try
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            // Ответ на COMMIT мог потеряться уже после применения транзакции
+            throw new AvatarWriteOutcomeUnknownException(exception);
+        }
+
+        return new AvatarChangeResult(UserFound: true, PreviousPath: rows[0]);
+    }
+
+    /// <inheritdoc />
+    public async Task<AvatarChangeResult> ClearAvatarAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        const string selectSql = """
+                                     SELECT avatar_path
+                                     FROM users
+                                     WHERE id = @UserId
+                                     FOR UPDATE;
+                                 """;
+
+        const string updateSql = """
+                                     UPDATE users
+                                     SET
+                                         avatar_path = NULL,
+                                         avatar_updated_at = NULL
+                                     WHERE id = @UserId;
+                                 """;
+
+        await using var connection = await _connection.CreateConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        var rows = (await connection.QueryAsync<string?>(
+            new CommandDefinition(selectSql, new { UserId = userId }, transaction, cancellationToken: cancellationToken))).ToList();
+
+        if (rows.Count == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+
+            return new AvatarChangeResult(UserFound: false, PreviousPath: null);
+        }
+
+        if (rows[0] is not null)
+        {
+            await connection.ExecuteAsync(new CommandDefinition(
+                updateSql,
+                new { UserId = userId },
+                transaction,
+                cancellationToken: cancellationToken));
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return new AvatarChangeResult(UserFound: true, PreviousPath: rows[0]);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> UpdateContactsAsync(
+        Guid userId,
+        PhoneNumber? phone,
+        string? telegram,
+        string? vk,
+        DateTimeOffset updatedAt,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+                               UPDATE users
+                               SET
+                                   phone = @Phone,
+                                   telegram = @Telegram,
+                                   vk = @Vk,
+                                   updated_at = @UpdatedAt
+                               WHERE id = @UserId
+                           """;
+
+        var affected = await _connection.ExecuteAsync(sql, new
+        {
+            UserId = userId,
+            Phone = phone?.Value,
+            Telegram = telegram,
+            Vk = vk,
+            UpdatedAt = updatedAt
+        }, cancellationToken);
+
+        return affected > 0;
     }
 
     /// <inheritdoc />
@@ -103,7 +259,12 @@ public sealed class UserRepository : IUserRepository
                                    must_change_password AS MustChangePassword,
                                    created_by AS CreatedBy,
                                    created_at AS CreatedAt,
-                                   updated_at AS UpdatedAt
+                                   updated_at AS UpdatedAt,
+                                   avatar_path AS AvatarPath,
+                                   avatar_updated_at AS AvatarUpdatedAt,
+                                   phone AS Phone,
+                                   telegram AS Telegram,
+                                   vk AS Vk
                                FROM users
                                WHERE id = @Id
                                LIMIT 1;
@@ -134,7 +295,12 @@ public sealed class UserRepository : IUserRepository
                                    must_change_password AS MustChangePassword,
                                    created_by AS CreatedBy,
                                    created_at AS CreatedAt,
-                                   updated_at AS UpdatedAt
+                                   updated_at AS UpdatedAt,
+                                   avatar_path AS AvatarPath,
+                                   avatar_updated_at AS AvatarUpdatedAt,
+                                   phone AS Phone,
+                                   telegram AS Telegram,
+                                   vk AS Vk
                                FROM users
                                ORDER BY created_at DESC;
                            """;
@@ -211,7 +377,12 @@ public sealed class UserRepository : IUserRepository
                                    must_change_password AS MustChangePassword,
                                    created_by AS CreatedBy,
                                    created_at AS CreatedAt,
-                                   updated_at AS UpdatedAt
+                                   updated_at AS UpdatedAt,
+                                   avatar_path AS AvatarPath,
+                                   avatar_updated_at AS AvatarUpdatedAt,
+                                   phone AS Phone,
+                                   telegram AS Telegram,
+                                   vk AS Vk
                                FROM users
                                WHERE LOWER(email) = LOWER(@Email)
                                LIMIT 1;
@@ -302,6 +473,18 @@ public sealed class UserRepository : IUserRepository
             mustChangePassword: user.MustChangePassword,
             createdBy: user.CreatedBy,
             createdAt: user.CreatedAt,
-            updatedAt: user.UpdatedAt);
+            updatedAt: user.UpdatedAt,
+            avatarPath: user.AvatarPath,
+            avatarUpdatedAt: user.AvatarUpdatedAt,
+            phone: PhoneNumber.TryParse(user.Phone, out var phone) ? phone : null,
+            telegram: user.Telegram,
+            vk: user.Vk);
+    }
+
+    private sealed class AvatarStateDbModel
+    {
+        public string? Path { get; init; }
+
+        public DateTimeOffset? UpdatedAt { get; init; }
     }
 }

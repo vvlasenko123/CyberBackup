@@ -1,8 +1,12 @@
-﻿using Application.Abstractions.Services.Calendar;
+﻿using Application.Abstractions.Services.Avatars;
+using Application.Abstractions.Services.Avatars.Contracts;
+using Application.Abstractions.Services.Calendar;
 using Application.Abstractions.Services.Calendar.Contracts;
 using Application.Abstractions.Services.Groups;
 using Application.Abstractions.Services.Groups.Contracts;
 using Application.Abstractions.Services.User;
+using Application.Abstractions.Services.UserProfiles;
+using Application.Abstractions.Services.UserProfiles.Contracts;
 using Application.Abstractions.Services.User.Contracts;
 using Application.Abstractions.Services.Laboratories;
 using Application.Abstractions.Services.Laboratories.Contracts;
@@ -53,6 +57,9 @@ public static class ApplicationStartUp
         services.AddScoped<ILaboratoryService, LaboratoryService>();
         services.AddScoped<ILaboratoryFlagHashService, LaboratoryFlagHashService>();
         services.AddScoped<IGroupService, GroupService>();
+        services.AddSingleton<IAvatarImageProcessor, AvatarImageProcessor>();
+        services.AddScoped<IUserAvatarService, UserAvatarService>();
+        services.AddScoped<IUserProfileService, UserProfileService>();
         services.AddScoped<IPostService, PostService>();
         services.AddScoped<IQuestionService, QuestionService>();
     }

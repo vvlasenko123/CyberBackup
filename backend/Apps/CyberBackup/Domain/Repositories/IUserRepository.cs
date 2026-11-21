@@ -21,7 +21,38 @@ public interface IUserRepository
     /// <summary>
     /// Удалить пользователя
     /// </summary>
-    Task DeleteUserAsync(Guid id, CancellationToken cancellationToken);
+    Task<string?> DeleteUserAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Получить состояние аватара пользователя, null - пользователя нет
+    /// </summary>
+    Task<UserAvatarState?> GetAvatarStateAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Задать аватар и вернуть вытесненный ключ. Строка пользователя блокируется на время транзакции.
+    /// Если исход коммита неизвестен, выбрасывается <see cref="AvatarWriteOutcomeUnknownException"/>
+    /// </summary>
+    Task<AvatarChangeResult> SetAvatarAsync(
+        Guid userId,
+        string avatarPath,
+        DateTimeOffset avatarUpdatedAt,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Очистить аватар и вернуть прежний ключ. Строка пользователя блокируется на время транзакции
+    /// </summary>
+    Task<AvatarChangeResult> ClearAvatarAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Заменить контакты пользователя, false - пользователя нет
+    /// </summary>
+    Task<bool> UpdateContactsAsync(
+        Guid userId,
+        PhoneNumber? phone,
+        string? telegram,
+        string? vk,
+        DateTimeOffset updatedAt,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Получить пользователя по id

@@ -54,4 +54,29 @@ internal sealed class UserDbModel
     /// Дата обновления пользователя.
     /// </summary>
     public DateTimeOffset UpdatedAt { get; init; }
+
+    /// <summary>
+    /// Ключ объекта аватара в хранилище, null - аватара нет.
+    /// </summary>
+    public string? AvatarPath { get; init; }
+
+    /// <summary>
+    /// Дата последней загрузки аватара, null - аватара нет.
+    /// </summary>
+    public DateTimeOffset? AvatarUpdatedAt { get; init; }
+
+    /// <summary>
+    /// Номер телефона в нормализованном виде.
+    /// </summary>
+    public string? Phone { get; init; }
+
+    /// <summary>
+    /// Имя пользователя в Telegram без символа @.
+    /// </summary>
+    public string? Telegram { get; init; }
+
+    /// <summary>
+    /// Короткое имя или идентификатор страницы VK.
+    /// </summary>
+    public string? Vk { get; init; }
 }
