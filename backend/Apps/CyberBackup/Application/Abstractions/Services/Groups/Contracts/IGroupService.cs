@@ -7,6 +7,9 @@ namespace Application.Abstractions.Services.Groups.Contracts;
 /// </summary>
 public interface IGroupService
 {
+    /// <summary>Получить группы преподавателя (для администратора — все группы).</summary>
+    Task<IReadOnlyCollection<GetGroupListItemDto>> GetTeacherGroupsAsync(Guid teacherId, bool includeAll, CancellationToken cancellationToken);
+
     /// <summary>Получить список всех групп</summary>
     Task<IReadOnlyCollection<GetGroupListItemDto>> GetGroupsAsync(CancellationToken cancellationToken);
 

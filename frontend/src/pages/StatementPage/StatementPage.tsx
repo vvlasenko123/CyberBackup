@@ -155,7 +155,7 @@ const StudentGradebook: React.FC = () => {
 
             {/* Таблица лабораторных */}
             <div className="stmt-table-card">
-                <table className="stmt-table">
+                <table className="stmt-table stmt-table--responsive">
                     <thead>
                         <tr>
                             <th>Лабораторная</th>
@@ -169,14 +169,14 @@ const StudentGradebook: React.FC = () => {
                             const reportBadge = getReportStatusBadge(lab.status);
                             return (
                                 <tr key={lab.laboratoryId}>
-                                    <td>{lab.title}</td>
-                                    <td><Badge info={labBadge} /></td>
-                                    <td>
+                                    <td className="stmt-table__name">{lab.title}</td>
+                                    <td data-label="Статус"><span className="stmt-table__value"><Badge info={labBadge} /></span></td>
+                                    <td data-label="Отчет"><span className="stmt-table__value">
                                         {reportBadge
                                             ? <Badge info={reportBadge} />
                                             : <span className="stmt-dash">—</span>
                                         }
-                                    </td>
+                                    </span></td>
                                 </tr>
                             );
                         })}
@@ -310,6 +310,7 @@ const TeacherGradebook: React.FC = () => {
                 <div className="stmt-filters">
                     <select
                         className="stmt-filter-select"
+                        aria-label="Группа"
                         value={groupFilter}
                         onChange={e => handleGroupChange(e.target.value)}
                     >
@@ -322,6 +323,8 @@ const TeacherGradebook: React.FC = () => {
                         className="stmt-filter-input"
                         type="text"
                         placeholder="Поиск по студентам..."
+                        aria-label="Поиск по студентам"
+                        enterKeyHint="search"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         onKeyDown={handleSearch}
@@ -342,7 +345,7 @@ const TeacherGradebook: React.FC = () => {
                 <div className="stmt-error">{error}</div>
             ) : (
                 <div className="stmt-table-card">
-                    <table className="stmt-table">
+                    <table className="stmt-table stmt-table--responsive">
                         <thead>
                             <tr>
                                 <th>Студент</th>
@@ -357,27 +360,27 @@ const TeacherGradebook: React.FC = () => {
                         <tbody>
                             {items.map(item => (
                                 <tr key={item.studentId}>
-                                    <td>{item.fullName}</td>
-                                    <td>{item.groupName ?? <span className="stmt-dash">—</span>}</td>
-                                    <td>
+                                    <td className="stmt-table__name">{item.fullName}</td>
+                                    <td data-label="Группа"><span className="stmt-table__value">{item.groupName ?? <span className="stmt-dash">—</span>}</span></td>
+                                    <td data-label="Посещаемость"><span className="stmt-table__value">
                                         {item.totalLessons > 0
                                             ? <>{item.lessonsAttended} / {item.totalLessons} <span className="stmt-dash">({Math.round(item.attendancePercent)}%)</span></>
                                             : <span className="stmt-dash">—</span>
                                         }
-                                    </td>
-                                    <td>{item.completedLaboratories} / {item.totalLaboratories}</td>
-                                    <td>
+                                    </span></td>
+                                    <td data-label="Лаб. выполнено"><span className="stmt-table__value">{item.completedLaboratories} / {item.totalLaboratories}</span></td>
+                                    <td data-label="Допуск"><span className="stmt-table__value">
                                         <Badge info={{
                                             label: item.isExamAllowed ? 'Допущен' : 'Не допущен',
                                             color: item.isExamAllowed ? 'green' : 'red',
                                         }} />
-                                    </td>
-                                    <td className="stmt-autograde">
+                                    </span></td>
+                                    <td className="stmt-autograde" data-label="Автомат"><span className="stmt-table__value">
                                         {item.hasAutomaticGrade
                                             ? item.totalPoints
                                             : <span className="stmt-dash">—</span>
                                         }
-                                    </td>
+                                    </span></td>
                                     <td>
                                         <button
                                             className="stmt-edit-btn"

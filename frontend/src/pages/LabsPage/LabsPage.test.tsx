@@ -59,7 +59,7 @@ describe('LabsPage', () => {
         await user.type(screen.getByPlaceholderText('Поиск по студенту или лабораторной...'), 'иван');
         expect(screen.getByText('Иван Петров')).toBeInTheDocument();
         expect(screen.queryByText('Анна Сидорова')).not.toBeInTheDocument();
-        await user.selectOptions(screen.getByRole('combobox'), '4');
+        await user.selectOptions(screen.getByRole('combobox', { name: 'Статус отчёта' }), '4');
         expect(screen.getByText('Отчёты не найдены')).toBeInTheDocument();
         await user.clear(screen.getByRole('textbox'));
         await user.click(screen.getByText('Анна Сидорова'));
@@ -76,6 +76,33 @@ function teacherData(labs: typeof lab[] = [], reports: object[] = []) {
 }
 
 describe('laboratory lists', () => {
+    it('combines group, status and search filters without narrowing the group options', async () => {
+        const base = { laboratoryTitle: 'Сети', laboratoryId: 'lab-1', currentVersionNumber: 1, maxPoints: 10, points: null, lastSubmitDateUtc: '2026-01-01T12:00:00Z' };
+        teacherData([], [
+            { ...base, reportId: 'r1', studentFullName: 'Иван', groupName: 'РИ-101', status: 1 },
+            { ...base, reportId: 'r2', studentFullName: 'Анна', groupName: 'РИ-102', status: 4 },
+            { ...base, reportId: 'r3', studentFullName: 'Ольга', groupName: 'РИ-101', status: 4 },
+            { ...base, reportId: 'r4', studentFullName: 'Пётр', groupName: null, status: 1 },
+        ]);
+        renderPage(<LabsPage />, '/labs');
+        const user = userEvent.setup();
+        await user.click(await screen.findByRole('button', { name: /Отчёты студентов/ }));
+        const groups = screen.getByRole('combobox', { name: 'Группа' });
+        expect(within(groups).getAllByRole('option')).toHaveLength(3);
+        await user.selectOptions(groups, 'РИ-101');
+        expect(screen.getByText('Иван')).toBeInTheDocument();
+        expect(screen.queryByText('Анна')).not.toBeInTheDocument();
+        expect(screen.queryByText('Пётр')).not.toBeInTheDocument();
+        await user.selectOptions(screen.getByRole('combobox', { name: 'Статус отчёта' }), '4');
+        expect(screen.queryByText('Иван')).not.toBeInTheDocument();
+        expect(screen.getByText('Ольга')).toBeInTheDocument();
+        await user.type(screen.getByPlaceholderText('Поиск по студенту или лабораторной...'), 'Анна');
+        expect(screen.getByText('Отчёты не найдены')).toBeInTheDocument();
+        expect(within(groups).getAllByRole('option')).toHaveLength(3);
+        await user.selectOptions(groups, '');
+        expect(screen.getByText('Анна')).toBeInTheDocument();
+    });
+
     it('groups student labs alphabetically and sorts within each block', async () => {
         setSession();
         server.use(
@@ -150,9 +177,9 @@ describe('laboratory lists', () => {
         await user.type(screen.getByRole('textbox'), 'LINUX');
         expect(screen.queryByText('Сети')).not.toBeInTheDocument();
         expect(screen.getByText('Linux')).toBeInTheDocument();
-        await user.selectOptions(screen.getByRole('combobox'), '4');
+        await user.selectOptions(screen.getByRole('combobox', { name: 'Статус отчёта' }), '4');
         expect(screen.getByText('Отчёты не найдены')).toBeInTheDocument();
-        await user.selectOptions(screen.getByRole('combobox'), '');
+        await user.selectOptions(screen.getByRole('combobox', { name: 'Статус отчёта' }), '');
         expect(screen.getByText('Linux')).toBeInTheDocument();
     });
 });

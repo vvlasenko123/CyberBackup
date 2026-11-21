@@ -7,6 +7,8 @@ namespace Application.Abstractions.Services.Laboratories.Contracts;
 /// </summary>
 public interface ILaboratoryRepository
 {
+    Task<bool> CanAccessLaboratoryAsync(Guid studentId, Guid laboratoryId, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<Guid>> GetStudentIdsForLaboratoryAsync(Guid laboratoryId, Guid teacherId, CancellationToken cancellationToken);
     /// <summary>
     /// Получить список лабораторных работ для студента
     /// </summary>

@@ -84,7 +84,7 @@ const LabReportContent = () => {
     const location = useLocation();
     const state = location.state as LocationState | null;
 
-    const [view, setView] = useState<'upload' | 'history'>('upload');
+    const [view, setView] = useState<'upload' | 'history'>('history');
     const [titleLoading, setTitleLoading] = useState(!state?.labTitle);
     const [report, setReport] = useState<MyReport | null>(null);
     const [labTitle, setLabTitle] = useState(state?.labTitle ?? '');
