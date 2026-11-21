@@ -1,4 +1,4 @@
-using Application.Abstractions.Services.Questions;
+using Api.Errors;
 using System.Reflection;
 using Application;
 using Infrastructure;
@@ -12,6 +12,7 @@ using Api.Auth;
 using Api.Extensions;
 using Application.Abstractions.Services.Calendar.Hubs;
 using Infrastucture.S3;
+using Api.Services.Avatars;
 using Api.Services.Laboratories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics;
@@ -63,6 +64,7 @@ public class StartUp
         services.AddApplication();
         services.AddHttpContextAccessor();
         services.AddScoped<ILaboratoryReportUploadRequestFactory, LaboratoryReportUploadRequestFactory>();
+        services.AddScoped<IAvatarUploadRequestFactory, AvatarUploadRequestFactory>();
     }
 
     /// <summary>
@@ -71,29 +73,7 @@ public class StartUp
     public void Configure(IApplicationBuilder app)
     {
         // Глобальный JSON-обработчик ошибок — должен быть ПЕРВЫМ в пайплайне
-        app.UseExceptionHandler(errorApp => errorApp.Run(async ctx =>
-        {
-            var feature = ctx.Features.Get<IExceptionHandlerFeature>();
-            var ex = feature?.Error;
-
-            ctx.Response.ContentType = "application/json; charset=utf-8";
-
-            ctx.Response.StatusCode = ex switch
-            {
-                QuestionException { Code: "question.not_found" or "question.attachment_not_found" } => 404,
-                QuestionException => 400,
-                InvalidOperationException => 400,
-                UnauthorizedAccessException => 403,
-                KeyNotFoundException       => 404,
-                _                          => 500
-            };
-
-            var message = ctx.Response.StatusCode == 500
-                ? "Внутренняя ошибка сервера"
-                : ex?.Message ?? "Ошибка запроса";
-
-            await ctx.Response.WriteAsJsonAsync(new { message });
-        }));
+        app.UseExceptionHandler(errorApp => errorApp.Run(ApiExceptionHandler.HandleAsync));
 
         app.UseRouting();
         app.UseCyberCors();

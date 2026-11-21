@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.103.0" />
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.0" />
   </ItemGroup>
 
   <ItemGroup>

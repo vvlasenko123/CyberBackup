@@ -14,4 +14,8 @@ public sealed record UserResponse(
     bool MustChangePassword,
     Guid? CreatedBy,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    DateTimeOffset? AvatarUpdatedAt,
+    string? Phone,
+    string? Telegram,
+    string? Vk);

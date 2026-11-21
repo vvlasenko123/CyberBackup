@@ -38,7 +38,11 @@ public sealed class UserMapper : Profile
             .ForMember(x => x.MustChangePassword, y => y.MapFrom(z => z.MustChangePassword))
             .ForMember(x => x.CreatedBy, y => y.MapFrom(z => z.CreatedBy))
             .ForMember(x => x.CreatedAt, y => y.MapFrom(z => z.CreatedAt))
-            .ForMember(x => x.UpdatedAt, y => y.MapFrom(z => z.UpdatedAt));
+            .ForMember(x => x.UpdatedAt, y => y.MapFrom(z => z.UpdatedAt))
+            .ForMember(x => x.AvatarUpdatedAt, y => y.MapFrom(z => z.AvatarUpdatedAt))
+            .ForMember(x => x.Phone, y => y.MapFrom(z => z.Phone == null ? null : z.Phone.Value.Value))
+            .ForMember(x => x.Telegram, y => y.MapFrom(z => z.Telegram))
+            .ForMember(x => x.Vk, y => y.MapFrom(z => z.Vk));
         
         CreateMap<ChangePasswordRequest, ChangePasswordDto>()
             .ForMember(x => x.CurrentPassword, y => y.MapFrom(z => z.CurrentPassword))

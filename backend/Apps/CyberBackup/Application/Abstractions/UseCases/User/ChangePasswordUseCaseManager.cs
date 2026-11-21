@@ -1,3 +1,4 @@
+using Application.Abstractions.Services.Auth;
 using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.UseCases.User.Contracts;
 using Application.DTO.Auth;
@@ -12,12 +13,15 @@ public sealed class ChangePasswordUseCaseManager : IChangePasswordUseCaseManager
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
     private readonly IPasswordHashService _passwordHashService;
+    private readonly IPasswordAttemptLimiter _attemptLimiter;
 
     public ChangePasswordUseCaseManager(
         IUserRepository userRepository,
         IJwtService jwtService,
-        IPasswordHashService passwordHashService)
+        IPasswordHashService passwordHashService,
+        IPasswordAttemptLimiter attemptLimiter)
     {
+        _attemptLimiter = attemptLimiter;
         _userRepository = userRepository;
         _jwtService = jwtService;
         _passwordHashService = passwordHashService;
@@ -27,6 +31,15 @@ public sealed class ChangePasswordUseCaseManager : IChangePasswordUseCaseManager
     public async Task Execute(ChangePasswordDto request, CancellationToken token)
     {
         var currentUser = _jwtService.GetCurrentUser();
+
+        // Текущий пароль тоже можно перебирать, если украден токен, поэтому лимит тот же, что при входе
+        var attemptKey = $"password-change:{currentUser.UserId}";
+        var attempt = await _attemptLimiter.BeginAttemptAsync(attemptKey, token);
+
+        if (!attempt.IsAllowed)
+        {
+            throw new PasswordAttemptsLimitedException(attempt);
+        }
 
         var user = await _userRepository.GetByIdAsync(
             currentUser.UserId,
@@ -48,8 +61,10 @@ public sealed class ChangePasswordUseCaseManager : IChangePasswordUseCaseManager
 
         if (!currentPasswordIsValid)
         {
-            throw new InvalidOperationException("Текущий пароль указан неверно");
+            throw new InvalidPasswordAttemptException("Текущий пароль указан неверно", attempt);
         }
+
+        await _attemptLimiter.ResetAsync(attemptKey, token);
 
         var passwordHash = _passwordHashService.Hash(request.NewPassword);
 

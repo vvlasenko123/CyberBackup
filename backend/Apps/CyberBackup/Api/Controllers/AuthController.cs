@@ -1,5 +1,7 @@
 ﻿using Api.Auth;
 using Api.Controllers.Models.Request;
+using Api.Errors;
+using Application.Abstractions.Services.Auth;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.DTO.Auth;
 using Application.Features.Auth.Login;
@@ -55,7 +57,7 @@ public sealed class AuthController : PublicController
         CancellationToken cancellationToken)
     {
         var dto = _mapper.Map<LoginRequestDto>(request);
-        LoginResultDto? result;
+        LoginResultDto result;
         try
         {
             result = await _loginUseCaseManager.Execute(dto, cancellationToken);
@@ -64,10 +66,10 @@ public sealed class AuthController : PublicController
         {
             return Unauthorized(new { Message = ex.Message });
         }
-
-        if (result is null)
+        catch (InvalidPasswordAttemptException ex)
         {
-            return Unauthorized(new { Message = SecurityText.InvalidEmailOrPassword });
+            // Блокировку после серии неверных попыток (429) отдаёт глобальный обработчик ошибок
+            return Unauthorized(PasswordAttemptResponses.Invalid(PasswordAttemptResponses.InvalidCredentials, ex));
         }
 
         return Ok(result);

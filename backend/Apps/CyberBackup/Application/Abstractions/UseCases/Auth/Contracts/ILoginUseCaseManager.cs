@@ -8,9 +8,10 @@ namespace Application.Abstractions.UseCases.Auth.Contracts;
 public interface ILoginUseCaseManager
 {
     /// <summary>
-    /// Выполнить вход.
+    /// Выполнить вход. Неверные данные дают <c>InvalidPasswordAttemptException</c>,
+    /// заблокированный из-за перебора вход — <c>PasswordAttemptsLimitedException</c>.
     /// </summary>
-    Task<LoginResultDto?> Execute(
+    Task<LoginResultDto> Execute(
         LoginRequestDto request,
         CancellationToken cancellationToken);
 }
