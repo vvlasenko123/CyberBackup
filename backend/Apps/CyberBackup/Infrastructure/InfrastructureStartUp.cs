@@ -58,11 +58,13 @@ public static class InfrastructureStartUp
         services.AddTransient<IDatabaseMigration, AddAvatarToUsers_202610230001>();
         services.AddTransient<IDatabaseMigration, AddContactsToUsers_202610230002>();
         services.AddTransient<IDatabaseMigration, AddLaboratoryGroups_202610310001>();
+        services.AddTransient<IDatabaseMigration, AddLoginAttempts_202611210001>();
         #endregion
 
         #region repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
         services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<ILaboratoryRepository, LaboratoryRepository>();

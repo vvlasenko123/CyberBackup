@@ -1,4 +1,5 @@
-﻿using Application.Abstractions.Services.Auth.Contracts;
+﻿using Application.Abstractions.Services.Auth;
+using Application.Abstractions.Services.Auth.Contracts;
 using Application.Abstractions.UseCases.Auth.Contracts;
 using Application.DTO.Auth;
 using Domain.Auth;
@@ -11,12 +12,15 @@ namespace Application.Features.Auth.Login;
 /// <inheritdoc />
 public sealed class LoginUseCaseManager : ILoginUseCaseManager
 {
+    private const string InvalidCredentialsMessage = "Неверная почта или пароль";
+
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IPasswordHashService _passwordHashService;
     private readonly IJwtService _jwtService;
     private readonly IRefreshTokenService _refreshTokenService;
     private readonly IAuthTokenDefaultsService _authTokenDefaultsService;
+    private readonly IPasswordAttemptLimiter _attemptLimiter;
 
     public LoginUseCaseManager(
         IUserRepository userRepository,
@@ -24,8 +28,10 @@ public sealed class LoginUseCaseManager : ILoginUseCaseManager
         IPasswordHashService passwordHashService,
         IJwtService jwtService,
         IRefreshTokenService refreshTokenService,
-        IAuthTokenDefaultsService authTokenDefaultsService)
+        IAuthTokenDefaultsService authTokenDefaultsService,
+        IPasswordAttemptLimiter attemptLimiter)
     {
+        _attemptLimiter = attemptLimiter;
         _userRepository = userRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _passwordHashService = passwordHashService;
@@ -35,16 +41,27 @@ public sealed class LoginUseCaseManager : ILoginUseCaseManager
     }
 
     /// <inheritdoc />
-    public async Task<LoginResultDto?> Execute(
+    public async Task<LoginResultDto> Execute(
         LoginRequestDto request,
         CancellationToken cancellationToken)
     {
         var email = new Email(request.Email);
+
+        // Попытка засчитывается до проверки, в том числе для несуществующей почты:
+        // иначе по ответу можно было бы отличить её от настоящей
+        var attemptKey = $"login:{email.Value.ToLowerInvariant()}";
+        var attempt = await _attemptLimiter.BeginAttemptAsync(attemptKey, cancellationToken);
+
+        if (!attempt.IsAllowed)
+        {
+            throw new PasswordAttemptsLimitedException(attempt);
+        }
+
         var user = await _userRepository.GetByEmailAsync(email.Value, cancellationToken);
 
         if (user is null)
         {
-            return null;
+            throw new InvalidPasswordAttemptException(InvalidCredentialsMessage, attempt);
         }
 
         if (!user.IsActive)
@@ -58,8 +75,10 @@ public sealed class LoginUseCaseManager : ILoginUseCaseManager
 
         if (!passwordIsValid)
         {
-            return null;
+            throw new InvalidPasswordAttemptException(InvalidCredentialsMessage, attempt);
         }
+
+        await _attemptLimiter.ResetAsync(attemptKey, cancellationToken);
 
         var nowUtc = DateTimeOffset.UtcNow;
         var sessionId = UUIDNext.Uuid.NewSequential();

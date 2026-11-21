@@ -1,4 +1,5 @@
 using Application.Abstractions.Services;
+using Application.Abstractions.Services.Auth;
 using Application.Abstractions.Services.Questions;
 using Microsoft.AspNetCore.Diagnostics;
 
@@ -19,6 +20,24 @@ public static class ApiExceptionHandler
         var ex = feature?.Error;
 
         ctx.Response.ContentType = "application/json; charset=utf-8";
+
+        if (ex is PasswordAttemptsLimitedException limited)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            ctx.Response.Headers.RetryAfter = limited.RetryAfterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            await ctx.Response.WriteAsJsonAsync(PasswordAttemptResponses.Limited(limited));
+
+            return;
+        }
+
+        if (ex is InvalidPasswordAttemptException invalidPassword)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await ctx.Response.WriteAsJsonAsync(
+                PasswordAttemptResponses.Invalid(PasswordAttemptResponses.InvalidPassword, invalidPassword));
+
+            return;
+        }
 
         ctx.Response.StatusCode = ex switch
         {

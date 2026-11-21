@@ -1,4 +1,6 @@
-﻿using Application.Abstractions.Services.Avatars;
+﻿using Application.Abstractions.Services.Auth;
+using Application.Abstractions.Services.Auth.Contracts;
+using Application.Abstractions.Services.Avatars;
 using Application.Abstractions.Services.Avatars.Contracts;
 using Application.Abstractions.Services.Calendar;
 using Application.Abstractions.Services.Calendar.Contracts;
@@ -22,6 +24,7 @@ using Application.Abstractions.UseCases.User;
 using Application.Abstractions.UseCases.User.Contracts;
 using Application.Features.Auth.Login;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Application;
 
@@ -51,6 +54,10 @@ public static class ApplicationStartUp
 
         services.AddScoped<ICalendarEventService, CalendarEventService>();
         services.AddHostedService<CalendarNotificationHostedService>();
+
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton(PasswordAttemptPolicy.Default);
+        services.AddScoped<IPasswordAttemptLimiter, PasswordAttemptLimiter>();
 
         services.AddScoped<IRegisterUseCaseManager, RegisterUseCaseManager>();
         services.AddScoped<ILoginUseCaseManager, LoginUseCaseManager>();
