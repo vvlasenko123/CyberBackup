@@ -49,24 +49,29 @@ public sealed class MinioObjectStorage
     }
 
     /// <summary>
-    /// Открыть объект из Minio на чтение
+    /// Передать диапазон объекта из Minio непосредственно в целевой поток
     /// </summary>
-    public async Task<Stream> OpenReadAsync(string objectName, CancellationToken cancellationToken)
+    public async Task CopyToAsync(
+        string objectName,
+        Stream destination,
+        long offset,
+        long length,
+        CancellationToken cancellationToken)
     {
-        await EnsureBucketExistsAsync(cancellationToken);
-
-        var result = new MemoryStream();
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        ArgumentOutOfRangeException.ThrowIfNegative(length);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (length == 0)
+            return;
 
         var getObjectArgs = new GetObjectArgs()
             .WithBucket(_options.BucketName)
             .WithObject(objectName)
-            .WithCallbackStream(stream => stream.CopyTo(result));
+            .WithOffsetAndLength(offset, length)
+            .WithCallbackStream((stream, ct) => stream.CopyToAsync(destination, 64 * 1024, ct));
 
         await _client.GetObjectAsync(getObjectArgs, cancellationToken);
-
-        result.Position = 0;
-
-        return result;
     }
 
     public Task DeleteAsync(string objectName, CancellationToken cancellationToken)

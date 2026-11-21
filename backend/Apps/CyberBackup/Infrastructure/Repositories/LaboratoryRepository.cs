@@ -1407,7 +1407,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             SELECT
                 rv.storage_path AS "StoragePath",
                 rv.original_file_name AS "OriginalFileName",
-                rv.content_type AS "ContentType"
+                rv.content_type AS "ContentType",
+                rv.file_size_bytes AS "FileSizeBytes"
             FROM laboratory_report_versions rv
             JOIN laboratory_reports r ON r.id = rv.laboratory_report_id
             JOIN laboratory_works lw ON lw.id = r.laboratory_work_id
@@ -1440,7 +1441,8 @@ public sealed class LaboratoryRepository : ILaboratoryRepository
             SELECT
                 rv.storage_path AS "StoragePath",
                 rv.original_file_name AS "OriginalFileName",
-                rv.content_type AS "ContentType"
+                rv.content_type AS "ContentType",
+                rv.file_size_bytes AS "FileSizeBytes"
             FROM laboratory_report_versions rv
             JOIN laboratory_reports r ON r.id = rv.laboratory_report_id
             WHERE rv.id = @VersionId

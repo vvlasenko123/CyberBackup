@@ -1,4 +1,5 @@
 using Api.Controllers.Models.Request.Questions;
+using Api.Extensions;
 using Application.Abstractions.Services.Questions.Contracts;
 using Application.DTO.Questions;
 using Domain.Questions.Enums;
@@ -18,8 +19,13 @@ namespace Api.Controllers;
 public sealed class TeacherQuestionsController : PublicController
 {
     private readonly IQuestionService _service;
+    private readonly IQuestionAttachmentStorage _storage;
 
-    public TeacherQuestionsController(IQuestionService service) => _service = service;
+    public TeacherQuestionsController(IQuestionService service, IQuestionAttachmentStorage storage)
+    {
+        _service = service;
+        _storage = storage;
+    }
 
     /// <summary>Список вопросов студентов</summary>
     [HttpGet]
@@ -84,12 +90,15 @@ public sealed class TeacherQuestionsController : PublicController
     }
 
     [HttpGet("{questionId:guid}/attachments/{attachmentId:guid}")]
-    public async Task<IActionResult> DownloadAttachment(Guid questionId, Guid attachmentId, CancellationToken ct)
+    public async Task<IActionResult> DownloadAttachment(
+        Guid questionId,
+        Guid attachmentId,
+        CancellationToken ct,
+        [FromQuery] bool inline = false)
     {
         var file = await _service.DownloadAttachmentAsync(questionId, attachmentId, ct);
-        Response.Headers["X-Content-Type-Options"] = "nosniff";
-        Response.Headers.CacheControl = "private, no-store";
-        return File(file.Content, file.ContentType, file.FileName);
+        return this.ProtectedFile(file.ContentType, file.FileName, file.FileSizeBytes, inline,
+            (destination, offset, length, token) => _storage.CopyToAsync(file.StoragePath, destination, offset, length, token));
     }
 
     /// <summary>Закрыть вопрос</summary>

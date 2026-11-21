@@ -39,10 +39,6 @@ public sealed class LaboratoryReportFileStorage : ILaboratoryReportFileStorage
     }
 
     /// <inheritdoc />
-    public Task<Stream> OpenReadAsync(string storagePath, CancellationToken cancellationToken)
-    {
-        var result = _storage.OpenReadAsync(storagePath, cancellationToken);
-
-        return result;
-    }
+    public Task CopyToAsync(string storagePath, Stream destination, long offset, long length, CancellationToken cancellationToken)
+        => _storage.CopyToAsync(storagePath, destination, offset, length, cancellationToken);
 }

@@ -174,8 +174,7 @@ public sealed class QuestionService : IQuestionService
         var detail = await GetAccessibleQuestionAsync(questionId, ct);
         var attachment = detail.Messages.SelectMany(m => m.Attachments).FirstOrDefault(a => a.Id == attachmentId)
             ?? throw new QuestionException("question.attachment_not_found", "Вложение не найдено");
-        var stream = await _attachmentStorage.OpenReadAsync(attachment.StoragePath, ct);
-        return new(stream, attachment.FileName, attachment.ContentType);
+        return new(attachment.StoragePath, attachment.FileName, attachment.ContentType, attachment.SizeBytes);
     }
 
     private Task<QuestionDetailDto> GetAccessibleQuestionAsync(Guid questionId, CancellationToken ct)
